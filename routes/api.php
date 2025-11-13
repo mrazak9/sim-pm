@@ -1,6 +1,10 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\UnitKerjaController;
+use App\Http\Controllers\Api\ProgramStudiController;
+use App\Http\Controllers\Api\JabatanController;
+use App\Http\Controllers\Api\TahunAkademikController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -26,4 +30,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    // Master Data Routes
+    Route::apiResource('unit-kerja', UnitKerjaController::class);
+    Route::apiResource('program-studi', ProgramStudiController::class);
+    Route::apiResource('jabatan', JabatanController::class);
+    Route::apiResource('tahun-akademik', TahunAkademikController::class);
 });
