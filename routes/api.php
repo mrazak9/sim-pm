@@ -6,6 +6,9 @@ use App\Http\Controllers\Api\ProgramStudiController;
 use App\Http\Controllers\Api\JabatanController;
 use App\Http\Controllers\Api\TahunAkademikController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\IKUController;
+use App\Http\Controllers\Api\IKUTargetController;
+use App\Http\Controllers\Api\IKUProgressController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -42,4 +45,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('users', UserController::class);
     Route::post('users/{id}/assign-roles', [UserController::class, 'assignRoles']);
     Route::post('users/{id}/assign-permissions', [UserController::class, 'assignPermissions']);
+
+    // IKU Management Routes
+    Route::get('iku/categories', [IKUController::class, 'categories']);
+    Route::apiResource('iku', IKUController::class);
+
+    // IKU Target Routes
+    Route::get('iku-targets/{id}/statistics', [IKUTargetController::class, 'statistics']);
+    Route::apiResource('iku-targets', IKUTargetController::class);
+
+    // IKU Progress Routes
+    Route::get('iku-progress/{id}/download', [IKUProgressController::class, 'downloadDocument']);
+    Route::get('iku-progress/target/{targetId}/summary', [IKUProgressController::class, 'summaryByTarget']);
+    Route::apiResource('iku-progress', IKUProgressController::class);
 });

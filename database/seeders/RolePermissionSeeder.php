@@ -52,6 +52,18 @@ class RolePermissionSeeder extends Seeder
             'iku.edit',
             'iku.delete',
 
+            // IKU Target management
+            'iku-target.view',
+            'iku-target.create',
+            'iku-target.edit',
+            'iku-target.delete',
+
+            // IKU Progress management
+            'iku-progress.view',
+            'iku-progress.create',
+            'iku-progress.edit',
+            'iku-progress.delete',
+
             // Survey/Questionnaire management
             'survey.view',
             'survey.create',
@@ -88,6 +100,8 @@ class RolePermissionSeeder extends Seeder
             'audit.view', 'audit.create', 'audit.edit',
             'accreditation.view', 'accreditation.create', 'accreditation.edit',
             'iku.view', 'iku.create', 'iku.edit',
+            'iku-target.view', 'iku-target.create', 'iku-target.edit',
+            'iku-progress.view', 'iku-progress.create', 'iku-progress.edit',
             'survey.view', 'survey.create', 'survey.edit',
             'spmi.view', 'spmi.create', 'spmi.edit',
             'dashboard.view', 'report.view', 'report.export',
@@ -108,6 +122,8 @@ class RolePermissionSeeder extends Seeder
             'audit.view',
             'accreditation.view', 'accreditation.create', 'accreditation.edit',
             'iku.view', 'iku.create', 'iku.edit',
+            'iku-target.view', 'iku-target.create', 'iku-target.edit',
+            'iku-progress.view', 'iku-progress.create', 'iku-progress.edit',
             'survey.view', 'survey.respond',
             'spmi.view', 'spmi.create', 'spmi.edit',
             'dashboard.view', 'report.view',
@@ -118,6 +134,9 @@ class RolePermissionSeeder extends Seeder
         $staff->givePermissionTo([
             'document.view', 'document.create',
             'audit.view',
+            'iku.view',
+            'iku-target.view',
+            'iku-progress.view', 'iku-progress.create',
             'survey.view', 'survey.respond',
             'dashboard.view',
         ]);
