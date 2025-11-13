@@ -129,12 +129,24 @@ class RolePermissionSeeder extends Seeder
             'dashboard.view',
         ]);
 
+        // Get UnitKerja and Jabatan IDs for demo users
+        $lpm = \App\Models\UnitKerja::where('kode_unit', 'LPM')->first();
+        $fakultasTeknik = \App\Models\UnitKerja::where('kode_unit', 'FT')->first();
+        $jabatanRektor = \App\Models\Jabatan::where('kode_jabatan', 'REKTOR')->first();
+        $jabatanDekan = \App\Models\Jabatan::where('kode_jabatan', 'DEKAN')->first();
+        $jabatanDosen = \App\Models\Jabatan::where('kode_jabatan', 'DOSEN')->first();
+
         // Create default super admin user
         $superAdminUser = User::create([
             'name' => 'Super Admin',
             'email' => 'admin@sim-pm.test',
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
+            'nip' => '198001012005011001',
+            'phone' => '081234567890',
+            'unit_kerja_id' => $lpm?->id,
+            'jabatan_id' => $jabatanRektor?->id,
+            'is_active' => true,
         ]);
         $superAdminUser->assignRole('super-admin');
 
@@ -144,6 +156,11 @@ class RolePermissionSeeder extends Seeder
             'email' => 'demo@sim-pm.test',
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
+            'nip' => '198505152010121002',
+            'phone' => '081234567891',
+            'unit_kerja_id' => $fakultasTeknik?->id,
+            'jabatan_id' => $jabatanDekan?->id,
+            'is_active' => true,
         ]);
         $demoAdmin->assignRole('admin');
 
@@ -152,6 +169,12 @@ class RolePermissionSeeder extends Seeder
             'email' => 'user@sim-pm.test',
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
+            'nip' => '199203202015031003',
+            'nidn' => '0020039201',
+            'phone' => '081234567892',
+            'unit_kerja_id' => $fakultasTeknik?->id,
+            'jabatan_id' => $jabatanDosen?->id,
+            'is_active' => true,
         ]);
         $demoUser->assignRole('user');
     }

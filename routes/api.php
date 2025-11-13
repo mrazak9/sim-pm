@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\UnitKerjaController;
 use App\Http\Controllers\Api\ProgramStudiController;
 use App\Http\Controllers\Api\JabatanController;
 use App\Http\Controllers\Api\TahunAkademikController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -36,4 +37,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('program-studi', ProgramStudiController::class);
     Route::apiResource('jabatan', JabatanController::class);
     Route::apiResource('tahun-akademik', TahunAkademikController::class);
+
+    // User Management Routes
+    Route::apiResource('users', UserController::class);
+    Route::post('users/{id}/assign-roles', [UserController::class, 'assignRoles']);
+    Route::post('users/{id}/assign-permissions', [UserController::class, 'assignPermissions']);
 });
