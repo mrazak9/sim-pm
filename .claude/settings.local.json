@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(test -f:*)",
+      "Bash(php -v:*)",
+      "Bash(composer:*)",
+      "Bash(xcopy /E /I /Y /Q \"..\\sim-pm-temp\\*\" \".\" /EXCLUDE:dev-doc)",
+      "Bash(robocopy:*)",
+      "Bash(pwsh:*)",
+      "Bash(php artisan:*)",
+      "Bash(psql:*)",
+      "Bash(npm install:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
