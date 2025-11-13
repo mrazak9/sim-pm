@@ -12,9 +12,16 @@
           </div>
 
           <!-- User menu -->
-          <div class="flex items-center">
-            <button class="text-gray-500 hover:text-gray-700">
-              Menu
+          <div class="flex items-center space-x-4">
+            <span v-if="user" class="text-sm text-gray-700">
+              {{ user.name }}
+            </span>
+            <button
+              v-if="isAuthenticated"
+              @click="handleLogout"
+              class="text-gray-500 hover:text-gray-700"
+            >
+              Logout
             </button>
           </div>
         </div>
@@ -31,5 +38,18 @@
 </template>
 
 <script setup>
-//
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+
+const router = useRouter();
+const authStore = useAuthStore();
+
+const user = computed(() => authStore.currentUser);
+const isAuthenticated = computed(() => authStore.isLoggedIn);
+
+const handleLogout = async () => {
+  await authStore.logout();
+  router.push('/login');
+};
 </script>

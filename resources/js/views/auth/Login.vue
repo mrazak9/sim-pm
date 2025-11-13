@@ -10,6 +10,11 @@
         </p>
       </div>
       <form class="mt-8 space-y-6" @submit.prevent="handleLogin">
+        <!-- Error Message -->
+        <div v-if="error" class="rounded-md bg-red-50 p-4">
+          <p class="text-sm text-red-800">{{ error }}</p>
+        </div>
+
         <div class="rounded-md shadow-sm -space-y-px">
           <div>
             <label for="email" class="sr-only">Email</label>
@@ -40,9 +45,11 @@
         <div>
           <button
             type="submit"
-            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            :disabled="loading"
+            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            Sign in
+            <span v-if="loading">Loading...</span>
+            <span v-else>Sign in</span>
           </button>
         </div>
       </form>
@@ -51,19 +58,38 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 const form = reactive({
   email: '',
   password: '',
 });
 
-const handleLogin = () => {
-  console.log('Login attempt:', form);
-  // TODO: Implement authentication logic
-  router.push('/');
+const loading = ref(false);
+const error = ref('');
+
+const handleLogin = async () => {
+  loading.value = true;
+  error.value = '';
+
+  try {
+    const result = await authStore.login(form);
+
+    if (result.success) {
+      router.push('/');
+    } else {
+      error.value = result.message || 'Login failed';
+    }
+  } catch (err) {
+    error.value = 'An error occurred during login';
+    console.error('Login error:', err);
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
