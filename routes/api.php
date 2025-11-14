@@ -112,6 +112,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Periode Akreditasi Routes
     Route::get('periode-akreditasi/{id}/statistics', [PeriodeAkreditasiController::class, 'statistics']);
+    Route::get('periode-akreditasi/{id}/export/pdf', [PeriodeAkreditasiController::class, 'exportPDF']);
+    Route::get('periode-akreditasi/{id}/export/excel', [PeriodeAkreditasiController::class, 'exportExcel']);
     Route::apiResource('periode-akreditasi', PeriodeAkreditasiController::class);
 
     // Butir Akreditasi Routes

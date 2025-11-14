@@ -180,4 +180,43 @@ class PeriodeAkreditasiController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Export periode akreditasi to PDF.
+     */
+    public function exportPDF(string $id)
+    {
+        try {
+            $exporter = new \App\Exports\PeriodeAkreditasiPDF($id);
+            return $exporter->download();
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal export PDF',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Export periode akreditasi to Excel.
+     */
+    public function exportExcel(string $id)
+    {
+        try {
+            $periode = $this->periodeAkreditasiService->getPeriodeAkreditasiById($id);
+            $filename = 'Laporan_Akreditasi_' . str_replace(' ', '_', $periode->nama) . '_' . date('Y-m-d') . '.xlsx';
+
+            return \Excel::download(
+                new \App\Exports\PeriodeAkreditasiExcel($id),
+                $filename
+            );
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal export Excel',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

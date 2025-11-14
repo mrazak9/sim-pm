@@ -90,6 +90,30 @@ export function useAkreditasiApi() {
         }
     }
 
+    const exportPeriodePDF = async (id) => {
+        try {
+            const response = await axios.get(`/api/periode-akreditasi/${id}/export/pdf`, {
+                responseType: 'blob'
+            })
+            return response
+        } catch (err) {
+            error.value = err.response?.data?.message || err.message
+            throw err
+        }
+    }
+
+    const exportPeriodeExcel = async (id) => {
+        try {
+            const response = await axios.get(`/api/periode-akreditasi/${id}/export/excel`, {
+                responseType: 'blob'
+            })
+            return response
+        } catch (err) {
+            error.value = err.response?.data?.message || err.message
+            throw err
+        }
+    }
+
     // Butir Akreditasi API
     const getButirList = async (filters = {}) => {
         loading.value = true
@@ -385,6 +409,8 @@ export function useAkreditasiApi() {
         updatePeriode,
         deletePeriode,
         getPeriodeStatistics,
+        exportPeriodePDF,
+        exportPeriodeExcel,
         // Butir Akreditasi
         getButirList,
         getButirByKategori,
