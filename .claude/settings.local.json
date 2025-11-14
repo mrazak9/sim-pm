@@ -16,7 +16,16 @@
       "Bash(git config:*)",
       "Bash(npx tailwindcss:*)",
       "Bash(npm exec:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(mkdir:*)",
+      "Bash(php -l app/Repositories/UnitKerjaRepository.php app/Services/UnitKerjaService.php app/Http/Requests/MasterData/StoreUnitKerjaRequest.php app/Http/Resources/MasterData/UnitKerjaResource.php app/Http/Controllers/Api/UnitKerjaController.php)",
+      "Bash(cat app/Http/Controllers/Api/ProgramStudiController.php)",
+      "Bash(app/Http/Controllers/Api/ProgramStudiController.php.bak)",
+      "Bash(cat app/Http/Controllers/Api/JabatanController.php)",
+      "Bash(app/Http/Controllers/Api/JabatanController.php.bak)",
+      "Bash(cat app/Http/Controllers/Api/TahunAkademikController.php)",
+      "Bash(app/Http/Controllers/Api/TahunAkademikController.php.bak)",
+      "Bash(php -l:*)"
     ],
     "deny": [],
     "ask": []

@@ -3,138 +3,250 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Jabatan;
+use App\Http\Requests\MasterData\StoreJabatanRequest;
+use App\Http\Requests\MasterData\UpdateJabatanRequest;
+use App\Http\Resources\MasterData\JabatanResource;
+use App\Services\JabatanService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\JsonResponse;
 
 class JabatanController extends Controller
 {
-    public function index(Request $request)
+    protected JabatanService $jabatanService;
+
+    public function __construct(JabatanService $jabatanService)
     {
-        $query = Jabatan::query();
-
-        if ($request->has('is_active')) {
-            $query->where('is_active', $request->is_active);
-        }
-
-        if ($request->has('kategori')) {
-            $query->where('kategori', $request->kategori);
-        }
-
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('nama_jabatan', 'LIKE', "%{$search}%")
-                  ->orWhere('kode_jabatan', 'LIKE', "%{$search}%");
-            });
-        }
-
-        $jabatans = $query->orderBy('level')->orderBy('nama_jabatan')->paginate($request->get('per_page', 15));
-
-        return response()->json([
-            'success' => true,
-            'data' => $jabatans,
-        ]);
+        $this->jabatanService = $jabatanService;
     }
 
-    public function store(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'kode_jabatan' => 'required|string|max:20|unique:jabatans',
-            'nama_jabatan' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'kategori' => 'required|in:struktural,fungsional,dosen,tendik',
-            'level' => 'nullable|integer|min:1',
-            'is_active' => 'boolean',
-        ]);
+        try {
+            $filters = $request->only(['is_active', 'kategori', 'level', 'search']);
+            $perPage = $request->get('per_page', 15);
 
-        if ($validator->fails()) {
+            $jabatans = $this->jabatanService->getAllJabatan($filters, $perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => JabatanResource::collection($jabatans)->response()->getData(true)['data'],
+                'meta' => [
+                    'current_page' => $jabatans->currentPage(),
+                    'from' => $jabatans->firstItem(),
+                    'last_page' => $jabatans->lastPage(),
+                    'per_page' => $jabatans->perPage(),
+                    'to' => $jabatans->lastItem(),
+                    'total' => $jabatans->total(),
+                ],
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors(),
+                'message' => 'Failed to fetch Jabatan',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function store(StoreJabatanRequest $request): JsonResponse
+    {
+        try {
+            $jabatan = $this->jabatanService->createJabatan($request->validated());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Jabatan created successfully',
+                'data' => new JabatanResource($jabatan),
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        $jabatan = Jabatan::create($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Jabatan created successfully',
-            'data' => $jabatan,
-        ], 201);
     }
 
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
-        $jabatan = Jabatan::find($id);
+        try {
+            $jabatan = $this->jabatanService->getJabatanById($id);
 
-        if (!$jabatan) {
+            if (!$jabatan) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Jabatan not found',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => new JabatanResource($jabatan),
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Jabatan not found',
-            ], 404);
+                'message' => 'Failed to fetch Jabatan',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'data' => $jabatan,
-        ]);
     }
 
-    public function update(Request $request, string $id)
+    public function update(UpdateJabatanRequest $request, string $id): JsonResponse
     {
-        $jabatan = Jabatan::find($id);
+        try {
+            $jabatan = $this->jabatanService->updateJabatan($id, $request->validated());
 
-        if (!$jabatan) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Jabatan updated successfully',
+                'data' => new JabatanResource($jabatan),
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Jabatan not found',
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'kode_jabatan' => 'required|string|max:20|unique:jabatans,kode_jabatan,' . $id,
-            'nama_jabatan' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'kategori' => 'required|in:struktural,fungsional,dosen,tendik',
-            'level' => 'nullable|integer|min:1',
-            'is_active' => 'boolean',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors(),
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        $jabatan->update($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Jabatan updated successfully',
-            'data' => $jabatan,
-        ]);
     }
 
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
-        $jabatan = Jabatan::find($id);
+        try {
+            $this->jabatanService->deleteJabatan($id);
 
-        if (!$jabatan) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Jabatan deleted successfully',
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Jabatan not found',
-            ], 404);
+                'message' => $e->getMessage(),
+            ], 422);
         }
+    }
 
-        $jabatan->delete();
+    public function active(): JsonResponse
+    {
+        try {
+            $jabatans = $this->jabatanService->getActiveJabatan();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Jabatan deleted successfully',
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => JabatanResource::collection($jabatans),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch active Jabatan',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function byKategori(Request $request): JsonResponse
+    {
+        try {
+            $kategori = $request->get('kategori');
+
+            if (!$kategori) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kategori parameter is required',
+                ], 400);
+            }
+
+            $jabatans = $this->jabatanService->getJabatanByKategori($kategori);
+
+            return response()->json([
+                'success' => true,
+                'data' => JabatanResource::collection($jabatans),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function byLevel(Request $request): JsonResponse
+    {
+        try {
+            $level = $request->get('level');
+
+            if (!$level) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Level parameter is required',
+                ], 400);
+            }
+
+            $jabatans = $this->jabatanService->getJabatanByLevel((int) $level);
+
+            return response()->json([
+                'success' => true,
+                'data' => JabatanResource::collection($jabatans),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function categories(): JsonResponse
+    {
+        try {
+            $categories = $this->jabatanService->getCategories();
+
+            return response()->json([
+                'success' => true,
+                'data' => $categories,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch categories',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function statistics(): JsonResponse
+    {
+        try {
+            $statistics = $this->jabatanService->getStatistics();
+
+            return response()->json([
+                'success' => true,
+                'data' => $statistics,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch statistics',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function toggleActive(string $id): JsonResponse
+    {
+        try {
+            $jabatan = $this->jabatanService->toggleActiveStatus($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Jabatan status updated successfully',
+                'data' => new JabatanResource($jabatan),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 }

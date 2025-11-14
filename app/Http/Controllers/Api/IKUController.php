@@ -3,181 +3,204 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\IKU;
+use App\Http\Requests\IKU\StoreIKURequest;
+use App\Http\Requests\IKU\UpdateIKURequest;
+use App\Http\Resources\IKUResource;
+use App\Services\IKUService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\JsonResponse;
 
 class IKUController extends Controller
 {
+    protected IKUService $ikuService;
+
+    public function __construct(IKUService $ikuService)
+    {
+        $this->ikuService = $ikuService;
+    }
+
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $query = IKU::with(['targets']);
+        try {
+            $filters = $request->only(['is_active', 'kategori', 'target_type', 'search']);
+            $perPage = $request->get('per_page', 15);
 
-        // Filter by active status
-        if ($request->has('is_active')) {
-            $query->where('is_active', $request->is_active);
+            $ikus = $this->ikuService->getAllIKUs($filters, $perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => IKUResource::collection($ikus)->response()->getData(true)['data'],
+                'meta' => [
+                    'current_page' => $ikus->currentPage(),
+                    'from' => $ikus->firstItem(),
+                    'last_page' => $ikus->lastPage(),
+                    'per_page' => $ikus->perPage(),
+                    'to' => $ikus->lastItem(),
+                    'total' => $ikus->total(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch IKUs',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        // Filter by kategori
-        if ($request->has('kategori')) {
-            $query->where('kategori', $request->kategori);
-        }
-
-        // Filter by target_type
-        if ($request->has('target_type')) {
-            $query->where('target_type', $request->target_type);
-        }
-
-        // Search
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('nama_iku', 'LIKE', "%{$search}%")
-                  ->orWhere('kode_iku', 'LIKE', "%{$search}%")
-                  ->orWhere('deskripsi', 'LIKE', "%{$search}%");
-            });
-        }
-
-        $ikus = $query->orderBy('kode_iku')->paginate($request->get('per_page', 15));
-
-        return response()->json([
-            'success' => true,
-            'data' => $ikus,
-        ]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreIKURequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'kode_iku' => 'required|string|max:20|unique:ikus',
-            'nama_iku' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'satuan' => 'required|in:persen,jumlah,skor,nilai',
-            'target_type' => 'required|in:increase,decrease',
-            'kategori' => 'nullable|string|max:100',
-            'bobot' => 'nullable|integer|min:0|max:100',
-            'is_active' => 'boolean',
-        ]);
+        try {
+            $iku = $this->ikuService->createIKU($request->validated());
 
-        if ($validator->fails()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'IKU created successfully',
+                'data' => new IKUResource($iku->load(['targets'])),
+            ], 201);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors(),
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        $iku = IKU::create($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'IKU created successfully',
-            'data' => $iku->load(['targets']),
-        ], 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
-        $iku = IKU::with(['targets.tahunAkademik', 'targets.unitKerja', 'targets.programStudi', 'targets.progress'])->find($id);
+        try {
+            $iku = $this->ikuService->getIKUById($id);
 
-        if (!$iku) {
+            if (!$iku) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'IKU not found',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => new IKUResource($iku),
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'IKU not found',
-            ], 404);
+                'message' => 'Failed to fetch IKU',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'data' => $iku,
-        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateIKURequest $request, string $id): JsonResponse
     {
-        $iku = IKU::find($id);
+        try {
+            $iku = $this->ikuService->updateIKU($id, $request->validated());
 
-        if (!$iku) {
+            return response()->json([
+                'success' => true,
+                'message' => 'IKU updated successfully',
+                'data' => new IKUResource($iku),
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'IKU not found',
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'kode_iku' => 'required|string|max:20|unique:ikus,kode_iku,' . $id,
-            'nama_iku' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'satuan' => 'required|in:persen,jumlah,skor,nilai',
-            'target_type' => 'required|in:increase,decrease',
-            'kategori' => 'nullable|string|max:100',
-            'bobot' => 'nullable|integer|min:0|max:100',
-            'is_active' => 'boolean',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors(),
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        $iku->update($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'IKU updated successfully',
-            'data' => $iku->load(['targets']),
-        ]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
-        $iku = IKU::find($id);
+        try {
+            $this->ikuService->deleteIKU($id);
 
-        if (!$iku) {
+            return response()->json([
+                'success' => true,
+                'message' => 'IKU deleted successfully',
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'IKU not found',
-            ], 404);
+                'message' => $e->getMessage(),
+            ], 422);
         }
-
-        $iku->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'IKU deleted successfully',
-        ]);
     }
 
     /**
      * Get list of unique categories
      */
-    public function categories()
+    public function categories(): JsonResponse
     {
-        $categories = IKU::whereNotNull('kategori')
-            ->distinct()
-            ->pluck('kategori');
+        try {
+            $categories = $this->ikuService->getCategories();
 
-        return response()->json([
-            'success' => true,
-            'data' => $categories,
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $categories,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch categories',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get IKU statistics for dashboard
+     */
+    public function statistics(): JsonResponse
+    {
+        try {
+            $statistics = $this->ikuService->getStatistics();
+
+            return response()->json([
+                'success' => true,
+                'data' => $statistics,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch statistics',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Toggle IKU active status
+     */
+    public function toggleActive(string $id): JsonResponse
+    {
+        try {
+            $iku = $this->ikuService->toggleActiveStatus($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'IKU status updated successfully',
+                'data' => new IKUResource($iku),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 }
