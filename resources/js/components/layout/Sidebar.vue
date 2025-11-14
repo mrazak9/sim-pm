@@ -62,12 +62,32 @@
 
       <!-- Menu Group: Master Data -->
       <div class="mb-6">
-        <h3 class="mb-4 text-xs uppercase text-gray-400 font-semibold">
+        <button
+          @click="toggleMasterData"
+          class="mb-2 flex w-full items-center justify-between rounded-lg px-2 py-2 text-xs font-semibold uppercase text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
           <span v-if="sidebarExpanded || sidebarMobileOpen">MASTER DATA</span>
-          <span v-else class="flex justify-center">•••</span>
-        </h3>
+          <span v-else class="flex w-full justify-center">•••</span>
+          <svg
+            v-if="sidebarExpanded || sidebarMobileOpen"
+            :class="['h-4 w-4 transition-transform', masterDataOpen ? 'rotate-180' : '']"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-        <ul class="space-y-2">
+        <transition
+          enter-active-class="transition-all duration-200 ease-out"
+          enter-from-class="max-h-0 opacity-0"
+          enter-to-class="max-h-96 opacity-100"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="max-h-96 opacity-100"
+          leave-to-class="max-h-0 opacity-0"
+        >
+          <ul v-show="masterDataOpen" class="space-y-2 overflow-hidden">
           <!-- Unit Kerja -->
           <li>
             <router-link
@@ -162,7 +182,8 @@
               <span v-if="sidebarExpanded || sidebarMobileOpen">User Management</span>
             </router-link>
           </li>
-        </ul>
+          </ul>
+        </transition>
       </div>
 
       <!-- Menu Group: Dokumen -->
@@ -223,12 +244,32 @@
 
       <!-- Menu Group: IKU -->
       <div class="mb-6">
-        <h3 class="mb-4 text-xs uppercase text-gray-400 font-semibold">
+        <button
+          @click="toggleIKU"
+          class="mb-2 flex w-full items-center justify-between rounded-lg px-2 py-2 text-xs font-semibold uppercase text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
           <span v-if="sidebarExpanded || sidebarMobileOpen">IKU</span>
-          <span v-else class="flex justify-center">•••</span>
-        </h3>
+          <span v-else class="flex w-full justify-center">•••</span>
+          <svg
+            v-if="sidebarExpanded || sidebarMobileOpen"
+            :class="['h-4 w-4 transition-transform', ikuOpen ? 'rotate-180' : '']"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-        <ul class="space-y-2">
+        <transition
+          enter-active-class="transition-all duration-200 ease-out"
+          enter-from-class="max-h-0 opacity-0"
+          enter-to-class="max-h-48 opacity-100"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="max-h-48 opacity-100"
+          leave-to-class="max-h-0 opacity-0"
+        >
+          <ul v-show="ikuOpen" class="space-y-2 overflow-hidden">
           <!-- IKU Dashboard -->
           <li>
             <router-link
@@ -266,17 +307,38 @@
               <span v-if="sidebarExpanded || sidebarMobileOpen">Kelola IKU</span>
             </router-link>
           </li>
-        </ul>
+          </ul>
+        </transition>
       </div>
 
       <!-- Menu Group: Akreditasi -->
       <div class="mb-6">
-        <h3 class="mb-4 text-xs uppercase text-gray-400 font-semibold">
+        <button
+          @click="toggleAkreditasi"
+          class="mb-2 flex w-full items-center justify-between rounded-lg px-2 py-2 text-xs font-semibold uppercase text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
           <span v-if="sidebarExpanded || sidebarMobileOpen">AKREDITASI</span>
-          <span v-else class="flex justify-center">•••</span>
-        </h3>
+          <span v-else class="flex w-full justify-center">•••</span>
+          <svg
+            v-if="sidebarExpanded || sidebarMobileOpen"
+            :class="['h-4 w-4 transition-transform', akreditasiOpen ? 'rotate-180' : '']"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-        <ul class="space-y-2">
+        <transition
+          enter-active-class="transition-all duration-200 ease-out"
+          enter-from-class="max-h-0 opacity-0"
+          enter-to-class="max-h-96 opacity-100"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="max-h-96 opacity-100"
+          leave-to-class="max-h-0 opacity-0"
+        >
+          <ul v-show="akreditasiOpen" class="space-y-2 overflow-hidden">
           <!-- Akreditasi Dashboard -->
           <li>
             <router-link
@@ -371,7 +433,8 @@
               <span v-if="sidebarExpanded || sidebarMobileOpen">Dokumen</span>
             </router-link>
           </li>
-        </ul>
+          </ul>
+        </transition>
       </div>
     </nav>
 
@@ -391,7 +454,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useSidebar } from '@/composables/useSidebar';
 import { useAuthStore } from '@/stores/auth';
 
@@ -403,5 +466,37 @@ const userRole = computed(() => authStore.user?.roles?.[0]?.name || 'User');
 const userInitials = computed(() => {
   const name = authStore.user?.name || 'U';
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+});
+
+// Collapsible menu states
+const masterDataOpen = ref(true);
+const ikuOpen = ref(true);
+const akreditasiOpen = ref(true);
+
+// Toggle functions
+const toggleMasterData = () => {
+  masterDataOpen.value = !masterDataOpen.value;
+  localStorage.setItem('sidebar_masterData', masterDataOpen.value);
+};
+
+const toggleIKU = () => {
+  ikuOpen.value = !ikuOpen.value;
+  localStorage.setItem('sidebar_iku', ikuOpen.value);
+};
+
+const toggleAkreditasi = () => {
+  akreditasiOpen.value = !akreditasiOpen.value;
+  localStorage.setItem('sidebar_akreditasi', akreditasiOpen.value);
+};
+
+// Load saved states from localStorage
+onMounted(() => {
+  const savedMasterData = localStorage.getItem('sidebar_masterData');
+  const savedIKU = localStorage.getItem('sidebar_iku');
+  const savedAkreditasi = localStorage.getItem('sidebar_akreditasi');
+
+  if (savedMasterData !== null) masterDataOpen.value = savedMasterData === 'true';
+  if (savedIKU !== null) ikuOpen.value = savedIKU === 'true';
+  if (savedAkreditasi !== null) akreditasiOpen.value = savedAkreditasi === 'true';
 });
 </script>
