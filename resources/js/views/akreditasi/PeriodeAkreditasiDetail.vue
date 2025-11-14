@@ -82,6 +82,11 @@
           <AkreditasiProgressDashboard :periode-id="periode.id" ref="dashboardRef" />
         </div>
 
+        <!-- Gap Analysis Panel -->
+        <div class="mb-6">
+          <GapAnalysisPanel :periode-id="periode.id" ref="gapAnalysisRef" />
+        </div>
+
         <!-- Main Content Grid -->
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <!-- Left Column - Details -->
@@ -244,6 +249,7 @@ import { useRoute } from 'vue-router'
 import { useAkreditasiApi } from '@/composables/useAkreditasiApi'
 import MainLayout from '@/layouts/MainLayout.vue'
 import AkreditasiProgressDashboard from '@/components/akreditasi/AkreditasiProgressDashboard.vue'
+import GapAnalysisPanel from '@/components/akreditasi/GapAnalysisPanel.vue'
 
 const route = useRoute()
 const { loading, error, getPeriodeDetail, exportPeriodePDF, exportPeriodeExcel } = useAkreditasiApi()

@@ -204,6 +204,28 @@ class PeriodeAkreditasiController extends Controller
     }
 
     /**
+     * Get gap analysis for periode akreditasi.
+     */
+    public function gapAnalysis(string $id): JsonResponse
+    {
+        try {
+            $gapAnalysis = $this->periodeAkreditasiService->getGapAnalysis($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Gap analysis berhasil diambil',
+                'data' => $gapAnalysis,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil gap analysis',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Export periode akreditasi to PDF.
      */
     public function exportPDF(string $id)

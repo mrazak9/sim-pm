@@ -375,6 +375,238 @@ class PeriodeAkreditasiService
     }
 
     /**
+     * Get gap analysis for periode akreditasi
+     */
+    public function getGapAnalysis(int $id): array
+    {
+        $periode = $this->findById($id);
+
+        if (!$periode) {
+            throw new \Exception('Periode Akreditasi tidak ditemukan');
+        }
+
+        // Load relationships
+        $periode->load([
+            'butirAkreditasis',
+            'pengisianButirs.butirAkreditasi',
+            'pengisianButirs.picUser'
+        ]);
+
+        $allButir = $periode->butirAkreditasis;
+        $pengisianButirs = $periode->pengisianButirs->keyBy('butir_akreditasi_id');
+
+        // 1. Missing Butir (belum ada pengisian sama sekali)
+        $missingButir = $allButir->filter(function ($butir) use ($pengisianButirs) {
+            return !isset($pengisianButirs[$butir->id]);
+        })->map(function ($butir) {
+            return [
+                'id' => $butir->id,
+                'kode' => $butir->kode,
+                'nama' => $butir->nama,
+                'kategori' => $butir->kategori ?? 'Tanpa Kategori',
+                'is_mandatory' => $butir->is_mandatory ?? false,
+                'bobot' => $butir->bobot ?? 0,
+                'reason' => 'Belum ada pengisian',
+                'severity' => $butir->is_mandatory ? 'critical' : 'high',
+            ];
+        })->values()->toArray();
+
+        // 2. Incomplete Butir (draft atau completion < 100%)
+        $incompleteButir = $pengisianButirs->filter(function ($pengisian) {
+            return $pengisian->status === 'draft' || ($pengisian->completion_percentage ?? 0) < 100;
+        })->map(function ($pengisian) {
+            $isMandatory = $pengisian->butirAkreditasi->is_mandatory ?? false;
+            return [
+                'id' => $pengisian->butir_akreditasi_id,
+                'kode' => $pengisian->butirAkreditasi->kode ?? '-',
+                'nama' => $pengisian->butirAkreditasi->nama ?? '-',
+                'kategori' => $pengisian->butirAkreditasi->kategori ?? 'Tanpa Kategori',
+                'is_mandatory' => $isMandatory,
+                'bobot' => $pengisian->butirAkreditasi->bobot ?? 0,
+                'status' => $pengisian->status,
+                'completion' => $pengisian->completion_percentage ?? 0,
+                'pic_name' => $pengisian->picUser->name ?? '-',
+                'reason' => 'Pengisian belum lengkap',
+                'severity' => $isMandatory ? 'critical' : 'medium',
+            ];
+        })->values()->toArray();
+
+        // 3. Butir Perlu Revisi
+        $needsRevisionButir = $pengisianButirs->filter(function ($pengisian) {
+            return $pengisian->status === 'revision';
+        })->map(function ($pengisian) {
+            $isMandatory = $pengisian->butirAkreditasi->is_mandatory ?? false;
+            return [
+                'id' => $pengisian->butir_akreditasi_id,
+                'kode' => $pengisian->butirAkreditasi->kode ?? '-',
+                'nama' => $pengisian->butirAkreditasi->nama ?? '-',
+                'kategori' => $pengisian->butirAkreditasi->kategori ?? 'Tanpa Kategori',
+                'is_mandatory' => $isMandatory,
+                'bobot' => $pengisian->butirAkreditasi->bobot ?? 0,
+                'status' => $pengisian->status,
+                'completion' => $pengisian->completion_percentage ?? 0,
+                'pic_name' => $pengisian->picUser->name ?? '-',
+                'review_notes' => $pengisian->review_notes,
+                'reason' => 'Memerlukan perbaikan',
+                'severity' => $isMandatory ? 'high' : 'medium',
+            ];
+        })->values()->toArray();
+
+        // 4. Mandatory Butir yang belum approved
+        $mandatoryNotApproved = $allButir->filter(function ($butir) use ($pengisianButirs) {
+            if (!($butir->is_mandatory ?? false)) {
+                return false;
+            }
+            $pengisian = $pengisianButirs[$butir->id] ?? null;
+            return !$pengisian || $pengisian->status !== 'approved';
+        })->map(function ($butir) use ($pengisianButirs) {
+            $pengisian = $pengisianButirs[$butir->id] ?? null;
+            return [
+                'id' => $butir->id,
+                'kode' => $butir->kode,
+                'nama' => $butir->nama,
+                'kategori' => $butir->kategori ?? 'Tanpa Kategori',
+                'is_mandatory' => true,
+                'bobot' => $butir->bobot ?? 0,
+                'status' => $pengisian ? $pengisian->status : 'not_started',
+                'completion' => $pengisian ? ($pengisian->completion_percentage ?? 0) : 0,
+                'pic_name' => $pengisian ? ($pengisian->picUser->name ?? '-') : '-',
+                'reason' => $pengisian ? 'Butir wajib belum disetujui' : 'Butir wajib belum dikerjakan',
+                'severity' => 'critical',
+            ];
+        })->values()->toArray();
+
+        // 5. Gap Analysis per Kategori
+        $kategoriGaps = $allButir->groupBy(function ($butir) {
+            return $butir->kategori ?? 'Tanpa Kategori';
+        })->map(function ($butirs, $kategori) use ($pengisianButirs) {
+            $totalButir = $butirs->count();
+            $completedButir = $butirs->filter(function ($butir) use ($pengisianButirs) {
+                $pengisian = $pengisianButirs[$butir->id] ?? null;
+                return $pengisian && $pengisian->status === 'approved';
+            })->count();
+
+            $missingCount = $butirs->filter(function ($butir) use ($pengisianButirs) {
+                return !isset($pengisianButirs[$butir->id]);
+            })->count();
+
+            $incompleteCount = $butirs->filter(function ($butir) use ($pengisianButirs) {
+                $pengisian = $pengisianButirs[$butir->id] ?? null;
+                return $pengisian && $pengisian->status !== 'approved';
+            })->count();
+
+            $gap = $totalButir - $completedButir;
+            $gapPercentage = $totalButir > 0 ? round(($gap / $totalButir) * 100, 2) : 0;
+
+            return [
+                'kategori' => $kategori,
+                'total_butir' => $totalButir,
+                'completed' => $completedButir,
+                'missing' => $missingCount,
+                'incomplete' => $incompleteCount,
+                'gap' => $gap,
+                'gap_percentage' => $gapPercentage,
+                'completion_percentage' => $totalButir > 0 ? round(($completedButir / $totalButir) * 100, 2) : 0,
+            ];
+        })->values()->toArray();
+
+        // 6. Overall Summary
+        $totalButir = $allButir->count();
+        $totalMandatory = $allButir->where('is_mandatory', true)->count();
+        $completedButir = $pengisianButirs->where('status', 'approved')->count();
+        $totalGap = $totalButir - $completedButir;
+        $criticalGap = count($missingButir) + count($mandatoryNotApproved);
+
+        // 7. Recommendations
+        $recommendations = [];
+
+        if (count($missingButir) > 0) {
+            $recommendations[] = [
+                'priority' => 'critical',
+                'title' => 'Butir Belum Dikerjakan',
+                'description' => count($missingButir) . ' butir belum memiliki pengisian. Segera assign PIC dan mulai pengisian.',
+                'action' => 'Assign PIC untuk butir yang missing',
+                'count' => count($missingButir),
+            ];
+        }
+
+        if (count($mandatoryNotApproved) > 0) {
+            $recommendations[] = [
+                'priority' => 'critical',
+                'title' => 'Butir Wajib Belum Selesai',
+                'description' => count($mandatoryNotApproved) . ' butir wajib belum disetujui. Ini akan menghambat proses akreditasi.',
+                'action' => 'Prioritaskan penyelesaian butir wajib',
+                'count' => count($mandatoryNotApproved),
+            ];
+        }
+
+        if (count($needsRevisionButir) > 0) {
+            $recommendations[] = [
+                'priority' => 'high',
+                'title' => 'Butir Perlu Revisi',
+                'description' => count($needsRevisionButir) . ' butir memerlukan perbaikan berdasarkan review.',
+                'action' => 'Review catatan revisi dan perbaiki secepatnya',
+                'count' => count($needsRevisionButir),
+            ];
+        }
+
+        if (count($incompleteButir) > 0) {
+            $recommendations[] = [
+                'priority' => 'medium',
+                'title' => 'Pengisian Belum Lengkap',
+                'description' => count($incompleteButir) . ' butir masih dalam status draft atau belum 100% lengkap.',
+                'action' => 'Lanjutkan pengisian hingga selesai',
+                'count' => count($incompleteButir),
+            ];
+        }
+
+        // Calculate readiness score
+        $readinessScore = $totalButir > 0 ? round(($completedButir / $totalButir) * 100, 2) : 0;
+        $mandatoryScore = $totalMandatory > 0
+            ? round((($totalMandatory - count($mandatoryNotApproved)) / $totalMandatory) * 100, 2)
+            : 100;
+
+        return [
+            'summary' => [
+                'total_butir' => $totalButir,
+                'total_mandatory' => $totalMandatory,
+                'completed_butir' => $completedButir,
+                'total_gap' => $totalGap,
+                'critical_gap' => $criticalGap,
+                'readiness_score' => $readinessScore,
+                'mandatory_score' => $mandatoryScore,
+                'readiness_status' => $this->getReadinessStatus($readinessScore, $mandatoryScore),
+            ],
+            'missing_butir' => $missingButir,
+            'incomplete_butir' => $incompleteButir,
+            'needs_revision' => $needsRevisionButir,
+            'mandatory_not_approved' => $mandatoryNotApproved,
+            'kategori_gaps' => $kategoriGaps,
+            'recommendations' => $recommendations,
+        ];
+    }
+
+    /**
+     * Determine readiness status based on scores
+     */
+    protected function getReadinessStatus(float $readinessScore, float $mandatoryScore): string
+    {
+        if ($mandatoryScore < 100) {
+            return 'not_ready'; // Butir wajib belum selesai
+        }
+
+        if ($readinessScore >= 90) {
+            return 'ready';
+        } elseif ($readinessScore >= 70) {
+            return 'almost_ready';
+        } elseif ($readinessScore >= 50) {
+            return 'in_progress';
+        } else {
+            return 'at_risk';
+        }
+    }
+
+    /**
      * Get periode by program studi
      */
     public function getByProgram(int $programStudiId): Collection
