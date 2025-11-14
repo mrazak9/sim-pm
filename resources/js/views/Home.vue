@@ -57,6 +57,55 @@
       />
     </div>
 
+    <!-- Executive Summary Charts -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-6">
+      <!-- IKU Overview Chart -->
+      <div class="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
+        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Status Target IKU
+        </h4>
+        <DoughnutChart
+          :labels="ikuStatusData.labels"
+          :data="ikuStatusData.data"
+          :backgroundColor="ikuStatusData.colors"
+          :height="200"
+        />
+      </div>
+
+      <!-- Akreditasi Status Chart -->
+      <div class="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
+        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Status Periode Akreditasi
+        </h4>
+        <PieChart
+          :labels="akreditasiStatusData.labels"
+          :data="akreditasiStatusData.data"
+          :backgroundColor="akreditasiStatusData.colors"
+          :height="200"
+        />
+      </div>
+
+      <!-- Overall Progress Chart -->
+      <div class="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
+        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Tingkat Pencapaian
+        </h4>
+        <BarChart
+          :labels="['IKU', 'Akreditasi', 'Master Data']"
+          :datasets="[{
+            label: 'Kelengkapan (%)',
+            data: [progressData.iku, progressData.akreditasi, progressData.masterData],
+            backgroundColor: [
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(16, 185, 129, 0.8)',
+              'rgba(168, 85, 247, 0.8)'
+            ]
+          }]"
+          :height="200"
+        />
+      </div>
+    </div>
+
     <!-- Content Grid -->
     <div class="grid grid-cols-12 gap-4 md:gap-6">
       <!-- Activities Section -->
@@ -226,9 +275,71 @@
 </template>
 
 <script setup>
-import { h } from 'vue';
+import { h, ref, onMounted } from 'vue';
 import MainLayout from '@/layouts/MainLayout.vue';
 import MetricCard from '@/components/dashboard/MetricCard.vue';
+import DoughnutChart from '@/components/charts/DoughnutChart.vue';
+import PieChart from '@/components/charts/PieChart.vue';
+import BarChart from '@/components/charts/BarChart.vue';
+import axios from 'axios';
+
+// Chart data refs
+const ikuStatusData = ref({
+  labels: ['Tercapai', 'Sesuai Target', 'Perlu Perhatian', 'Kritis'],
+  data: [5, 8, 3, 2],
+  colors: [
+    'rgba(59, 130, 246, 0.8)',
+    'rgba(16, 185, 129, 0.8)',
+    'rgba(251, 191, 36, 0.8)',
+    'rgba(239, 68, 68, 0.8)'
+  ]
+});
+
+const akreditasiStatusData = ref({
+  labels: ['Persiapan', 'Pengisian', 'Review', 'Submit', 'Visitasi', 'Selesai'],
+  data: [2, 3, 2, 1, 0, 4],
+  colors: [
+    'rgba(156, 163, 175, 0.8)',
+    'rgba(59, 130, 246, 0.8)',
+    'rgba(251, 191, 36, 0.8)',
+    'rgba(168, 85, 247, 0.8)',
+    'rgba(249, 115, 22, 0.8)',
+    'rgba(16, 185, 129, 0.8)'
+  ]
+});
+
+const progressData = ref({
+  iku: 75,
+  akreditasi: 68,
+  masterData: 85
+});
+
+// Fetch dashboard summary data
+const fetchDashboardSummary = async () => {
+  try {
+    // Fetch IKU statistics
+    const ikuStats = await axios.get('/api/iku-targets/dashboard-statistics');
+    if (ikuStats.data.success) {
+      const stats = ikuStats.data.data;
+      ikuStatusData.value.data = [
+        stats.achieved || 0,
+        stats.on_track || 0,
+        stats.warning || 0,
+        stats.critical || 0
+      ];
+      progressData.value.iku = Math.round(stats.avg_achievement || 0);
+    }
+
+    // Fetch Akreditasi statistics (basic implementation)
+    // This can be enhanced with actual API endpoints
+  } catch (error) {
+    console.error('Failed to fetch dashboard summary:', error);
+  }
+};
+
+onMounted(() => {
+  fetchDashboardSummary();
+});
 
 // Icon components as functions
 const DocumentIcon = () => h('svg', {

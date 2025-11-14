@@ -85,6 +85,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // IKU Management Routes
     Route::get('iku/statistics', [IKUController::class, 'statistics']);
     Route::get('iku/categories', [IKUController::class, 'categories']);
+    Route::get('iku/export/excel', [IKUController::class, 'exportExcel']);
+    Route::get('iku/export/pdf', [IKUController::class, 'exportPDF']);
     Route::post('iku/{id}/toggle-active', [IKUController::class, 'toggleActive']);
     Route::apiResource('iku', IKUController::class);
 
@@ -92,6 +94,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('iku-targets/dashboard-statistics', [IKUTargetController::class, 'dashboardStatistics']);
     Route::get('iku-targets/need-attention', [IKUTargetController::class, 'needAttention']);
     Route::get('iku-targets/by-status', [IKUTargetController::class, 'byStatus']);
+    Route::get('iku-targets/export/excel', [IKUTargetController::class, 'exportExcel']);
+    Route::get('iku-targets/export/pdf', [IKUTargetController::class, 'exportPDF']);
     Route::get('iku-targets/{id}/statistics', [IKUTargetController::class, 'statistics']);
     Route::get('iku-targets/{id}/check-risk', [IKUTargetController::class, 'checkRisk']);
     Route::apiResource('iku-targets', IKUTargetController::class);

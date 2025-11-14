@@ -86,6 +86,35 @@
         </div>
       </div>
 
+      <!-- Charts Row -->
+      <div class="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <!-- Status Distribution Chart -->
+        <div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+          <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+            Distribusi Status Periode
+          </h3>
+          <PieChart
+            :labels="statusChartData.labels"
+            :data="statusChartData.data"
+            :backgroundColor="statusChartData.colors"
+            :height="300"
+          />
+        </div>
+
+        <!-- Progress Comparison Chart -->
+        <div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+          <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+            Progress Periode Aktif
+          </h3>
+          <BarChart
+            :labels="progressChartData.labels"
+            :datasets="progressChartData.datasets"
+            :height="300"
+            :horizontal="true"
+          />
+        </div>
+      </div>
+
       <!-- Active Periods List -->
       <div class="rounded-lg bg-white shadow dark:bg-gray-800">
         <div class="border-b border-gray-200 p-6 dark:border-gray-700">
@@ -176,7 +205,9 @@
 
 <script setup>
 import MainLayout from '@/layouts/MainLayout.vue'
-import { ref, onMounted } from 'vue'
+import PieChart from '@/components/charts/PieChart.vue'
+import BarChart from '@/components/charts/BarChart.vue'
+import { ref, onMounted, computed } from 'vue'
 import { useAkreditasiApi } from '@/composables/useAkreditasiApi'
 
 const { loading, getPeriodeList } = useAkreditasiApi()
@@ -189,6 +220,60 @@ const stats = ref({
 })
 
 const periodes = ref([])
+const allPeriodes = ref([])
+
+// Computed properties for chart data
+const statusChartData = computed(() => {
+  const statusCounts = {
+    persiapan: 0,
+    pengisian: 0,
+    review: 0,
+    submit: 0,
+    visitasi: 0,
+    selesai: 0,
+  }
+
+  allPeriodes.value.forEach(p => {
+    if (statusCounts.hasOwnProperty(p.status)) {
+      statusCounts[p.status]++
+    }
+  })
+
+  return {
+    labels: ['Persiapan', 'Pengisian', 'Review', 'Submitted', 'Visitasi', 'Selesai'],
+    data: [
+      statusCounts.persiapan,
+      statusCounts.pengisian,
+      statusCounts.review,
+      statusCounts.submit,
+      statusCounts.visitasi,
+      statusCounts.selesai,
+    ],
+    colors: [
+      'rgba(156, 163, 175, 0.8)',
+      'rgba(59, 130, 246, 0.8)',
+      'rgba(251, 191, 36, 0.8)',
+      'rgba(168, 85, 247, 0.8)',
+      'rgba(249, 115, 22, 0.8)',
+      'rgba(16, 185, 129, 0.8)',
+    ],
+  }
+})
+
+const progressChartData = computed(() => {
+  const activePeriodes = periodes.value.slice(0, 5)
+
+  return {
+    labels: activePeriodes.map(p => p.nama.length > 30 ? p.nama.substring(0, 30) + '...' : p.nama),
+    datasets: [
+      {
+        label: 'Progress (%)',
+        data: activePeriodes.map(p => p.progress_persentase || 0),
+        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+      },
+    ],
+  }
+})
 
 const fetchDashboardData = async () => {
   try {
@@ -204,13 +289,13 @@ const fetchDashboardData = async () => {
 
     // Calculate stats
     const allPeriodesResponse = await getPeriodeList({ per_page: 100 })
-    const allPeriodes = allPeriodesResponse.data.data || []
+    allPeriodes.value = allPeriodesResponse.data.data || []
 
     stats.value = {
-      total: allPeriodes.length,
-      ongoing: allPeriodes.filter(p => ['persiapan', 'pengisian', 'review', 'submit'].includes(p.status)).length,
-      completed: allPeriodes.filter(p => p.status === 'selesai').length,
-      institusi: allPeriodes.filter(p => p.jenis_akreditasi === 'institusi').length,
+      total: allPeriodes.value.length,
+      ongoing: allPeriodes.value.filter(p => ['persiapan', 'pengisian', 'review', 'submit'].includes(p.status)).length,
+      completed: allPeriodes.value.filter(p => p.status === 'selesai').length,
+      institusi: allPeriodes.value.filter(p => p.jenis_akreditasi === 'institusi').length,
     }
   } catch (error) {
     console.error('Error fetching dashboard data:', error)
