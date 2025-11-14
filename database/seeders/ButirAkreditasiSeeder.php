@@ -22,13 +22,14 @@ class ButirAkreditasiSeeder extends Seeder
             foreach ($butirList as $butirData) {
                 $parent = null;
 
-                // Create parent butir if exists
+                // Create parent butir if exists (as TEMPLATE - periode_akreditasi_id = null)
                 if (isset($butirData['parent'])) {
                     $parent = ButirAkreditasi::create([
                         'kode' => $butirData['parent']['kode'],
                         'nama' => $butirData['parent']['nama'],
                         'deskripsi' => $butirData['parent']['deskripsi'] ?? null,
-                        'instrumen' => '4.0',
+                        'instrumen' => 'BANPT 4.0',
+                        'periode_akreditasi_id' => null, // Template butir
                         'kategori' => $kategori,
                         'bobot' => $butirData['parent']['bobot'] ?? 0,
                         'urutan' => $butirData['parent']['urutan'],
@@ -37,14 +38,15 @@ class ButirAkreditasiSeeder extends Seeder
                     ]);
                 }
 
-                // Create child butir
+                // Create child butir (as TEMPLATE - periode_akreditasi_id = null)
                 if (isset($butirData['children'])) {
                     foreach ($butirData['children'] as $child) {
                         ButirAkreditasi::create([
                             'kode' => $child['kode'],
                             'nama' => $child['nama'],
                             'deskripsi' => $child['deskripsi'] ?? null,
-                            'instrumen' => '4.0',
+                            'instrumen' => 'BANPT 4.0',
+                            'periode_akreditasi_id' => null, // Template butir
                             'kategori' => $kategori,
                             'bobot' => $child['bobot'] ?? 0,
                             'parent_id' => $parent?->id,
@@ -54,12 +56,13 @@ class ButirAkreditasiSeeder extends Seeder
                         ]);
                     }
                 } else {
-                    // Single butir without children
+                    // Single butir without children (as TEMPLATE - periode_akreditasi_id = null)
                     ButirAkreditasi::create([
                         'kode' => $butirData['kode'],
                         'nama' => $butirData['nama'],
                         'deskripsi' => $butirData['deskripsi'] ?? null,
-                        'instrumen' => '4.0',
+                        'instrumen' => 'BANPT 4.0',
+                        'periode_akreditasi_id' => null, // Template butir
                         'kategori' => $kategori,
                         'bobot' => $butirData['bobot'] ?? 0,
                         'urutan' => $butirData['urutan'],
