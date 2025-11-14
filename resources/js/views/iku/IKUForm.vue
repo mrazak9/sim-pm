@@ -1,70 +1,70 @@
 <template>
-  <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+  <div class="rounded-lg border border-gray-200 bg-white shadow dark:border-gray-700 dark:bg-gray-800">
     <!-- Header -->
-    <div class="border-b border-stroke px-7 py-4 dark:border-strokedark">
-      <h3 class="font-medium text-black dark:text-white">
+    <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
         {{ isEdit ? 'Edit' : 'Tambah' }} Indikator Kinerja Utama (IKU)
       </h3>
     </div>
 
     <!-- Form -->
-    <form @submit.prevent="submitForm" class="p-7">
-      <div class="mb-5.5 space-y-5.5">
+    <form @submit.prevent="submitForm" class="p-6">
+      <div class="space-y-6">
         <!-- Kode IKU -->
         <div>
-          <label class="mb-3 block text-sm font-medium text-black dark:text-white">
-            Kode IKU <span class="text-danger">*</span>
+          <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+            Kode IKU <span class="text-red-600">*</span>
           </label>
           <input
             v-model="form.kode_iku"
             type="text"
             placeholder="Contoh: IKU-001"
-            class="w-full rounded border border-stroke bg-gray px-4.5 py-3 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-            :class="{ 'border-danger': errors.kode_iku }"
+            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+            :class="{ 'border-red-600': errors.kode_iku }"
             required
           />
-          <p v-if="errors.kode_iku" class="mt-1 text-sm text-danger">{{ errors.kode_iku }}</p>
+          <p v-if="errors.kode_iku" class="mt-1 text-sm text-red-600">{{ errors.kode_iku }}</p>
         </div>
 
         <!-- Nama IKU -->
         <div>
-          <label class="mb-3 block text-sm font-medium text-black dark:text-white">
-            Nama IKU <span class="text-danger">*</span>
+          <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+            Nama IKU <span class="text-red-600">*</span>
           </label>
           <input
             v-model="form.nama_iku"
             type="text"
             placeholder="Nama lengkap IKU"
-            class="w-full rounded border border-stroke bg-gray px-4.5 py-3 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-            :class="{ 'border-danger': errors.nama_iku }"
+            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+            :class="{ 'border-red-600': errors.nama_iku }"
             required
           />
-          <p v-if="errors.nama_iku" class="mt-1 text-sm text-danger">{{ errors.nama_iku }}</p>
+          <p v-if="errors.nama_iku" class="mt-1 text-sm text-red-600">{{ errors.nama_iku }}</p>
         </div>
 
         <!-- Deskripsi -->
         <div>
-          <label class="mb-3 block text-sm font-medium text-black dark:text-white">
+          <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
             Deskripsi
           </label>
           <textarea
             v-model="form.deskripsi"
             rows="4"
             placeholder="Deskripsi IKU..."
-            class="w-full rounded border border-stroke bg-gray px-4.5 py-3 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
           ></textarea>
         </div>
 
         <!-- Row: Satuan & Target Type -->
-        <div class="grid grid-cols-1 gap-5.5 md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <label class="mb-3 block text-sm font-medium text-black dark:text-white">
-              Satuan <span class="text-danger">*</span>
+            <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+              Satuan <span class="text-red-600">*</span>
             </label>
             <select
               v-model="form.satuan"
-              class="w-full rounded border border-stroke bg-gray px-4.5 py-3 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-              :class="{ 'border-danger': errors.satuan }"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
+              :class="{ 'border-red-600': errors.satuan }"
               required
             >
               <option value="">Pilih Satuan</option>
@@ -73,43 +73,43 @@
               <option value="skor">Skor</option>
               <option value="nilai">Nilai</option>
             </select>
-            <p v-if="errors.satuan" class="mt-1 text-sm text-danger">{{ errors.satuan }}</p>
+            <p v-if="errors.satuan" class="mt-1 text-sm text-red-600">{{ errors.satuan }}</p>
           </div>
 
           <div>
-            <label class="mb-3 block text-sm font-medium text-black dark:text-white">
-              Tipe Target <span class="text-danger">*</span>
+            <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+              Tipe Target <span class="text-red-600">*</span>
             </label>
             <select
               v-model="form.target_type"
-              class="w-full rounded border border-stroke bg-gray px-4.5 py-3 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-              :class="{ 'border-danger': errors.target_type }"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
+              :class="{ 'border-red-600': errors.target_type }"
               required
             >
               <option value="">Pilih Tipe Target</option>
               <option value="increase">Meningkat (semakin besar semakin baik)</option>
               <option value="decrease">Menurun (semakin kecil semakin baik)</option>
             </select>
-            <p v-if="errors.target_type" class="mt-1 text-sm text-danger">{{ errors.target_type }}</p>
+            <p v-if="errors.target_type" class="mt-1 text-sm text-red-600">{{ errors.target_type }}</p>
           </div>
         </div>
 
         <!-- Row: Kategori & Bobot -->
-        <div class="grid grid-cols-1 gap-5.5 md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <label class="mb-3 block text-sm font-medium text-black dark:text-white">
+            <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
               Kategori
             </label>
             <input
               v-model="form.kategori"
               type="text"
               placeholder="Contoh: SDM, Akademik, Penelitian"
-              class="w-full rounded border border-stroke bg-gray px-4.5 py-3 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label class="mb-3 block text-sm font-medium text-black dark:text-white">
+            <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
               Bobot (0-100)
             </label>
             <input
@@ -118,50 +118,49 @@
               min="0"
               max="100"
               placeholder="Bobot IKU"
-              class="w-full rounded border border-stroke bg-gray px-4.5 py-3 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-              :class="{ 'border-danger': errors.bobot }"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+              :class="{ 'border-red-600': errors.bobot }"
             />
-            <p v-if="errors.bobot" class="mt-1 text-sm text-danger">{{ errors.bobot }}</p>
+            <p v-if="errors.bobot" class="mt-1 text-sm text-red-600">{{ errors.bobot }}</p>
           </div>
         </div>
 
         <!-- Status Aktif -->
-        <div>
-          <label class="mb-3 flex items-center">
-            <input
-              v-model="form.is_active"
-              type="checkbox"
-              class="mr-2 h-5 w-5 rounded border-stroke"
-            />
-            <span class="text-sm font-medium text-black dark:text-white">IKU Aktif</span>
+        <div class="flex items-center">
+          <input
+            v-model="form.is_active"
+            type="checkbox"
+            id="is_active"
+            class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+          />
+          <label for="is_active" class="ml-2 text-sm font-medium text-gray-900 dark:text-white">
+            IKU Aktif
           </label>
         </div>
 
         <!-- Error Alert -->
-        <div v-if="errorMessage" class="rounded-sm border border-danger bg-danger bg-opacity-10 px-4 py-3">
-          <p class="text-sm text-danger">{{ errorMessage }}</p>
+        <div v-if="errorMessage" class="rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-gray-800">
+          <p class="text-sm text-red-800 dark:text-red-400">{{ errorMessage }}</p>
         </div>
 
         <!-- Buttons -->
-        <div class="flex justify-end gap-4.5">
+        <div class="flex justify-end gap-3">
           <button
             @click="cancel"
             type="button"
-            class="flex justify-center rounded border border-stroke px-6 py-2 font-medium text-black hover:shadow-1 dark:border-strokedark dark:text-white"
+            class="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
           >
             Batal
           </button>
           <button
             type="submit"
             :disabled="loading"
-            class="flex justify-center rounded bg-primary px-6 py-2 font-medium text-gray hover:bg-opacity-90 disabled:opacity-50"
+            class="inline-flex items-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
           >
-            <span v-if="loading" class="mr-2">
-              <svg class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </span>
+            <svg v-if="loading" class="mr-2 h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
             {{ loading ? 'Menyimpan...' : 'Simpan' }}
           </button>
         </div>
