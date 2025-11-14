@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\PeriodeAkreditasiController;
 use App\Http\Controllers\Api\ButirAkreditasiController;
 use App\Http\Controllers\Api\PengisianButirController;
 use App\Http\Controllers\Api\DokumenAkreditasiController;
+use App\Http\Controllers\Api\NotificationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -134,4 +135,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('dokumen-akreditasi/{id}/download', [DokumenAkreditasiController::class, 'download']);
     Route::post('dokumen-akreditasi/{id}/attach-butir', [DokumenAkreditasiController::class, 'attachToButir']);
     Route::apiResource('dokumen-akreditasi', DokumenAkreditasiController::class);
+
+    // Notification Routes
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
+    Route::post('notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
 });
