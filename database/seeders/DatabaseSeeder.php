@@ -12,11 +12,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // \App\Models\User::factory(10)->create();
+        // Seed Master Data first (if needed)
+        // $this->call(MasterDataSeeder::class);
+        // $this->call(RolePermissionSeeder::class);
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        // Seed Akreditasi Data
+        $this->call([
+            ButirAkreditasiSeeder::class,
+            PeriodeAkreditasiSeeder::class,
+        ]);
     }
 }
