@@ -3,70 +3,68 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\ButirAkreditasi;
+use App\Http\Requests\Akreditasi\StoreButirAkreditasiRequest;
+use App\Http\Requests\Akreditasi\UpdateButirAkreditasiRequest;
+use App\Http\Resources\Akreditasi\ButirAkreditasiResource;
+use App\Services\ButirAkreditasiService;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class ButirAkreditasiController extends Controller
 {
+    protected ButirAkreditasiService $butirAkreditasiService;
+
+    public function __construct(ButirAkreditasiService $butirAkreditasiService)
+    {
+        $this->butirAkreditasiService = $butirAkreditasiService;
+    }
+
     /**
      * Display a listing of butir akreditasi.
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         try {
-            $query = ButirAkreditasi::with(['parent', 'children']);
-
-            // Filter by instrumen
-            if ($request->has('instrumen')) {
-                $query->where('instrumen', $request->instrumen);
-            }
-
-            // Filter by kategori
-            if ($request->has('kategori')) {
-                $query->where('kategori', $request->kategori);
-            }
-
-            // Filter parent only
-            if ($request->has('parent_only') && $request->parent_only == 'true') {
-                $query->whereNull('parent_id');
-            }
-
-            // Filter children only
-            if ($request->has('parent_id')) {
-                $query->where('parent_id', $request->parent_id);
-            }
-
-            // Filter mandatory
-            if ($request->has('is_mandatory')) {
-                $query->where('is_mandatory', $request->is_mandatory === 'true');
-            }
-
-            // Search
-            if ($request->has('search')) {
-                $query->where(function ($q) use ($request) {
-                    $q->where('kode', 'like', '%' . $request->search . '%')
-                      ->orWhere('nama', 'like', '%' . $request->search . '%')
-                      ->orWhere('deskripsi', 'like', '%' . $request->search . '%');
-                });
-            }
-
-            // Sorting
+            $filters = $request->only([
+                'instrumen',
+                'kategori',
+                'parent_id',
+                'parent_only',
+                'is_mandatory',
+                'search'
+            ]);
+            $perPage = $request->get('per_page', 15);
             $sortBy = $request->get('sort_by', 'urutan');
             $sortOrder = $request->get('sort_order', 'asc');
-            $query->orderBy($sortBy, $sortOrder);
 
-            // Pagination or all
-            if ($request->has('per_page') && $request->per_page !== 'all') {
-                $perPage = $request->get('per_page', 15);
-                $butirs = $query->paginate($perPage);
-            } else {
-                $butirs = $query->get();
+            $butirs = $this->butirAkreditasiService->getAllButirAkreditasi(
+                $filters,
+                $perPage,
+                $sortBy,
+                $sortOrder
+            );
+
+            // Handle pagination or all
+            if ($perPage !== 'all' && method_exists($butirs, 'currentPage')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data butir akreditasi berhasil diambil',
+                    'data' => ButirAkreditasiResource::collection($butirs)->response()->getData(true)['data'],
+                    'meta' => [
+                        'current_page' => $butirs->currentPage(),
+                        'from' => $butirs->firstItem(),
+                        'last_page' => $butirs->lastPage(),
+                        'per_page' => $butirs->perPage(),
+                        'to' => $butirs->lastItem(),
+                        'total' => $butirs->total(),
+                    ],
+                ]);
             }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Data butir akreditasi berhasil diambil',
-                'data' => $butirs,
+                'data' => ButirAkreditasiResource::collection($butirs),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -78,60 +76,46 @@ class ButirAkreditasiController extends Controller
     }
 
     /**
-     * Get butir akreditasi grouped by kategori.
+     * Store a newly created butir akreditasi.
      */
-    public function byKategori(Request $request)
+    public function store(StoreButirAkreditasiRequest $request): JsonResponse
     {
         try {
-            $instrumen = $request->get('instrumen', '4.0');
-
-            $butirs = ButirAkreditasi::with(['children'])
-                ->where('instrumen', $instrumen)
-                ->whereNull('parent_id')
-                ->orderBy('kategori')
-                ->orderBy('urutan')
-                ->get()
-                ->groupBy('kategori');
-
-            $formatted = [];
-            foreach ($butirs as $kategori => $items) {
-                $formatted[] = [
-                    'kategori' => $kategori,
-                    'total_butir' => $items->sum(function ($item) {
-                        return 1 + $item->children->count();
-                    }),
-                    'total_bobot' => $items->sum('bobot'),
-                    'butir' => $items->values(),
-                ];
-            }
+            $butir = $this->butirAkreditasiService->createButirAkreditasi($request->validated());
 
             return response()->json([
                 'success' => true,
-                'message' => 'Data butir akreditasi per kategori berhasil diambil',
-                'data' => $formatted,
-            ]);
+                'message' => 'Butir akreditasi berhasil dibuat',
+                'data' => new ButirAkreditasiResource($butir),
+            ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal mengambil data',
+                'message' => 'Gagal membuat butir akreditasi',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], 422);
         }
     }
 
     /**
      * Display the specified butir akreditasi.
      */
-    public function show($id)
+    public function show(string $id): JsonResponse
     {
         try {
-            $butir = ButirAkreditasi::with(['parent', 'children', 'dokumenAkreditasis'])
-                ->findOrFail($id);
+            $butir = $this->butirAkreditasiService->getButirAkreditasiById($id);
+
+            if (!$butir) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Butir akreditasi tidak ditemukan',
+                ], 404);
+            }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Detail butir akreditasi berhasil diambil',
-                'data' => $butir,
+                'data' => new ButirAkreditasiResource($butir),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -143,25 +127,89 @@ class ButirAkreditasiController extends Controller
     }
 
     /**
-     * Get list of instrumen available.
+     * Update the specified butir akreditasi.
      */
-    public function instrumen()
+    public function update(UpdateButirAkreditasiRequest $request, string $id): JsonResponse
     {
         try {
-            $instrumens = ButirAkreditasi::select('instrumen')
-                ->distinct()
-                ->orderBy('instrumen')
-                ->pluck('instrumen');
+            $butir = $this->butirAkreditasiService->updateButirAkreditasi($id, $request->validated());
 
             return response()->json([
                 'success' => true,
-                'message' => 'Daftar instrumen berhasil diambil',
-                'data' => $instrumens,
+                'message' => 'Butir akreditasi berhasil diupdate',
+                'data' => new ButirAkreditasiResource($butir),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal mengambil daftar instrumen',
+                'message' => 'Gagal mengupdate butir akreditasi',
+                'error' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Remove the specified butir akreditasi.
+     */
+    public function destroy(string $id): JsonResponse
+    {
+        try {
+            $this->butirAkreditasiService->deleteButirAkreditasi($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Butir akreditasi berhasil dihapus',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus butir akreditasi',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get butir akreditasi grouped by kategori.
+     */
+    public function byKategori(Request $request): JsonResponse
+    {
+        try {
+            $instrumen = $request->get('instrumen', '4.0');
+            $data = $this->butirAkreditasiService->getButirByKategori($instrumen);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data butir akreditasi per kategori berhasil diambil',
+                'data' => $data,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get butir akreditasi by instrumen.
+     */
+    public function byInstrumen(Request $request): JsonResponse
+    {
+        try {
+            $instrumen = $request->get('instrumen', '4.0');
+            $butirs = $this->butirAkreditasiService->getButirByInstrumen($instrumen);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data butir akreditasi berhasil diambil',
+                'data' => ButirAkreditasiResource::collection($butirs),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data',
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -170,17 +218,11 @@ class ButirAkreditasiController extends Controller
     /**
      * Get list of kategori for specific instrumen.
      */
-    public function kategori(Request $request)
+    public function kategori(Request $request): JsonResponse
     {
         try {
             $instrumen = $request->get('instrumen', '4.0');
-
-            $kategoris = ButirAkreditasi::where('instrumen', $instrumen)
-                ->select('kategori')
-                ->distinct()
-                ->whereNotNull('kategori')
-                ->orderBy('kategori')
-                ->pluck('kategori');
+            $kategoris = $this->butirAkreditasiService->getKategoriList($instrumen);
 
             return response()->json([
                 'success' => true,
@@ -197,38 +239,24 @@ class ButirAkreditasiController extends Controller
     }
 
     /**
-     * Store (optional, for admin to add custom butir)
+     * Get list of instrumen available.
      */
-    public function store(Request $request)
+    public function instrumen(): JsonResponse
     {
-        // Implementation untuk admin add custom butir (optional)
-        return response()->json([
-            'success' => false,
-            'message' => 'Feature not implemented yet',
-        ], 501);
-    }
+        try {
+            $instrumens = $this->butirAkreditasiService->getInstrumenList();
 
-    /**
-     * Update (optional, for admin to edit butir)
-     */
-    public function update(Request $request, $id)
-    {
-        // Implementation untuk admin edit butir (optional)
-        return response()->json([
-            'success' => false,
-            'message' => 'Feature not implemented yet',
-        ], 501);
-    }
-
-    /**
-     * Delete (optional, for admin)
-     */
-    public function destroy($id)
-    {
-        // Implementation untuk admin delete butir (optional)
-        return response()->json([
-            'success' => false,
-            'message' => 'Feature not implemented yet',
-        ], 501);
+            return response()->json([
+                'success' => true,
+                'message' => 'Daftar instrumen berhasil diambil',
+                'data' => $instrumens,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil daftar instrumen',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

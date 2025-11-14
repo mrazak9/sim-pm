@@ -3,60 +3,57 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\PengisianButir;
+use App\Http\Requests\Akreditasi\StorePengisianButirRequest;
+use App\Http\Requests\Akreditasi\UpdatePengisianButirRequest;
+use App\Http\Resources\Akreditasi\PengisianButirResource;
+use App\Services\PengisianButirService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\JsonResponse;
 
 class PengisianButirController extends Controller
 {
+    protected PengisianButirService $pengisianButirService;
+
+    public function __construct(PengisianButirService $pengisianButirService)
+    {
+        $this->pengisianButirService = $pengisianButirService;
+    }
+
     /**
      * Display a listing of pengisian butir.
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         try {
-            $query = PengisianButir::with([
-                'periodeAkreditasi',
-                'butirAkreditasi',
-                'picUser',
-                'reviewer',
+            $filters = $request->only([
+                'periode_akreditasi_id',
+                'status',
+                'pic_user_id',
+                'is_complete'
             ]);
-
-            // Filter by periode
-            if ($request->has('periode_akreditasi_id')) {
-                $query->where('periode_akreditasi_id', $request->periode_akreditasi_id);
-            }
-
-            // Filter by status
-            if ($request->has('status')) {
-                $query->where('status', $request->status);
-            }
-
-            // Filter by PIC
-            if ($request->has('pic_user_id')) {
-                $query->where('pic_user_id', $request->pic_user_id);
-            }
-
-            // Filter by completion
-            if ($request->has('is_complete')) {
-                $query->where('is_complete', $request->is_complete === 'true');
-            }
-
-            // Sorting
+            $perPage = $request->get('per_page', 15);
             $sortBy = $request->get('sort_by', 'created_at');
             $sortOrder = $request->get('sort_order', 'desc');
-            $query->orderBy($sortBy, $sortOrder);
 
-            // Pagination
-            $perPage = $request->get('per_page', 15);
-            $pengisians = $query->paginate($perPage);
+            $pengisians = $this->pengisianButirService->getAllPengisianButir(
+                $filters,
+                $perPage,
+                $sortBy,
+                $sortOrder
+            );
 
             return response()->json([
                 'success' => true,
                 'message' => 'Data pengisian butir berhasil diambil',
-                'data' => $pengisians,
+                'data' => PengisianButirResource::collection($pengisians)->response()->getData(true)['data'],
+                'meta' => [
+                    'current_page' => $pengisians->currentPage(),
+                    'from' => $pengisians->firstItem(),
+                    'last_page' => $pengisians->lastPage(),
+                    'per_page' => $pengisians->perPage(),
+                    'to' => $pengisians->lastItem(),
+                    'total' => $pengisians->total(),
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -70,77 +67,44 @@ class PengisianButirController extends Controller
     /**
      * Store or update pengisian butir (upsert).
      */
-    public function store(Request $request)
+    public function store(StorePengisianButirRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'periode_akreditasi_id' => 'required|exists:periode_akreditasis,id',
-            'butir_akreditasi_id' => 'required|exists:butir_akreditasis,id',
-            'konten' => 'nullable|string',
-            'files' => 'nullable|array',
-            'notes' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
         try {
-            DB::beginTransaction();
-
-            // Upsert based on periode & butir
-            $pengisian = PengisianButir::updateOrCreate(
-                [
-                    'periode_akreditasi_id' => $request->periode_akreditasi_id,
-                    'butir_akreditasi_id' => $request->butir_akreditasi_id,
-                ],
-                [
-                    'pic_user_id' => Auth::id(),
-                    'konten' => $request->konten,
-                    'konten_plain' => strip_tags($request->konten ?? ''),
-                    'files' => $request->files,
-                    'notes' => $request->notes,
-                    'status' => 'draft',
-                ]
-            );
-
-            DB::commit();
+            $pengisian = $this->pengisianButirService->createPengisianButir($request->validated());
 
             return response()->json([
                 'success' => true,
                 'message' => 'Pengisian butir berhasil disimpan',
-                'data' => $pengisian->load(['butirAkreditasi', 'picUser']),
-            ]);
+                'data' => new PengisianButirResource($pengisian),
+            ], 201);
         } catch (\Exception $e) {
-            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menyimpan pengisian butir',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], 422);
         }
     }
 
     /**
      * Display the specified pengisian butir.
      */
-    public function show($id)
+    public function show(string $id): JsonResponse
     {
         try {
-            $pengisian = PengisianButir::with([
-                'periodeAkreditasi',
-                'butirAkreditasi',
-                'picUser',
-                'reviewer',
-            ])->findOrFail($id);
+            $pengisian = $this->pengisianButirService->getPengisianButirById($id);
+
+            if (!$pengisian) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pengisian butir tidak ditemukan',
+                ], 404);
+            }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Detail pengisian butir berhasil diambil',
-                'data' => $pengisian,
+                'data' => new PengisianButirResource($pengisian),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -154,172 +118,32 @@ class PengisianButirController extends Controller
     /**
      * Update the specified pengisian butir.
      */
-    public function update(Request $request, $id)
+    public function update(UpdatePengisianButirRequest $request, string $id): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'konten' => 'nullable|string',
-            'files' => 'nullable|array',
-            'notes' => 'nullable|string',
-            'is_complete' => 'nullable|boolean',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
         try {
-            $pengisian = PengisianButir::findOrFail($id);
-
-            $pengisian->update([
-                'konten' => $request->konten ?? $pengisian->konten,
-                'konten_plain' => strip_tags($request->konten ?? $pengisian->konten ?? ''),
-                'files' => $request->files ?? $pengisian->files,
-                'notes' => $request->notes ?? $pengisian->notes,
-                'is_complete' => $request->is_complete ?? $pengisian->is_complete,
-            ]);
+            $pengisian = $this->pengisianButirService->updatePengisianButir($id, $request->validated());
 
             return response()->json([
                 'success' => true,
                 'message' => 'Pengisian butir berhasil diupdate',
-                'data' => $pengisian->load(['butirAkreditasi', 'picUser']),
+                'data' => new PengisianButirResource($pengisian),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengupdate pengisian butir',
                 'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Submit pengisian butir for review.
-     */
-    public function submit($id)
-    {
-        try {
-            $pengisian = PengisianButir::findOrFail($id);
-
-            if ($pengisian->status !== 'draft') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Hanya pengisian dengan status draft yang bisa disubmit',
-                ], 400);
-            }
-
-            $pengisian->update([
-                'status' => 'submitted',
-                'is_complete' => true,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Pengisian butir berhasil disubmit untuk review',
-                'data' => $pengisian,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal submit pengisian butir',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Approve pengisian butir.
-     */
-    public function approve(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'review_notes' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors(),
             ], 422);
         }
-
-        try {
-            $pengisian = PengisianButir::findOrFail($id);
-
-            $pengisian->update([
-                'status' => 'approved',
-                'reviewed_by' => Auth::id(),
-                'reviewed_at' => now(),
-                'review_notes' => $request->review_notes,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Pengisian butir berhasil diapprove',
-                'data' => $pengisian->load(['reviewer']),
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal approve pengisian butir',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
     }
 
     /**
-     * Request revision for pengisian butir.
+     * Remove the specified pengisian butir.
      */
-    public function revision(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'review_notes' => 'required|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        try {
-            $pengisian = PengisianButir::findOrFail($id);
-
-            $pengisian->update([
-                'status' => 'revision',
-                'reviewed_by' => Auth::id(),
-                'reviewed_at' => now(),
-                'review_notes' => $request->review_notes,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Request revisi berhasil dikirim',
-                'data' => $pengisian->load(['reviewer']),
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal request revisi',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Delete pengisian butir.
-     */
-    public function destroy($id)
+    public function destroy(string $id): JsonResponse
     {
         try {
-            $pengisian = PengisianButir::findOrFail($id);
-            $pengisian->delete();
+            $this->pengisianButirService->deletePengisianButir($id);
 
             return response()->json([
                 'success' => true,
@@ -335,22 +159,90 @@ class PengisianButirController extends Controller
     }
 
     /**
-     * Get summary untuk periode tertentu.
+     * Submit pengisian butir for review.
      */
-    public function summary($periodeId)
+    public function submit(string $id): JsonResponse
     {
         try {
-            $pengisians = PengisianButir::where('periode_akreditasi_id', $periodeId)->get();
+            $pengisian = $this->pengisianButirService->submitPengisianButir($id);
 
-            $summary = [
-                'total' => $pengisians->count(),
-                'completed' => $pengisians->where('is_complete', true)->count(),
-                'draft' => $pengisians->where('status', 'draft')->count(),
-                'submitted' => $pengisians->where('status', 'submitted')->count(),
-                'review' => $pengisians->where('status', 'review')->count(),
-                'revision' => $pengisians->where('status', 'revision')->count(),
-                'approved' => $pengisians->where('status', 'approved')->count(),
-            ];
+            return response()->json([
+                'success' => true,
+                'message' => 'Pengisian butir berhasil disubmit untuk review',
+                'data' => new PengisianButirResource($pengisian),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal submit pengisian butir',
+                'error' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Approve pengisian butir.
+     */
+    public function approve(Request $request, string $id): JsonResponse
+    {
+        try {
+            $pengisian = $this->pengisianButirService->approvePengisianButir(
+                $id,
+                $request->get('review_notes')
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pengisian butir berhasil diapprove',
+                'data' => new PengisianButirResource($pengisian),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal approve pengisian butir',
+                'error' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Request revision for pengisian butir.
+     */
+    public function revision(Request $request, string $id): JsonResponse
+    {
+        try {
+            $reviewNotes = $request->get('review_notes');
+
+            if (!$reviewNotes) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Review notes wajib diisi untuk request revisi',
+                ], 400);
+            }
+
+            $pengisian = $this->pengisianButirService->requestRevisionPengisianButir($id, $reviewNotes);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Request revisi berhasil dikirim',
+                'data' => new PengisianButirResource($pengisian),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal request revisi',
+                'error' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Get summary untuk periode tertentu.
+     */
+    public function summary(string $periodeId): JsonResponse
+    {
+        try {
+            $summary = $this->pengisianButirService->getSummaryByPeriode($periodeId);
 
             return response()->json([
                 'success' => true,
