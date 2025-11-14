@@ -3,138 +3,256 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\TahunAkademik;
+use App\Http\Requests\MasterData\StoreTahunAkademikRequest;
+use App\Http\Requests\MasterData\UpdateTahunAkademikRequest;
+use App\Http\Resources\MasterData\TahunAkademikResource;
+use App\Services\TahunAkademikService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\JsonResponse;
 
 class TahunAkademikController extends Controller
 {
-    public function index(Request $request)
+    protected TahunAkademikService $tahunAkademikService;
+
+    public function __construct(TahunAkademikService $tahunAkademikService)
     {
-        $query = TahunAkademik::query();
-
-        if ($request->has('is_active')) {
-            $query->where('is_active', $request->is_active);
-        }
-
-        if ($request->has('semester')) {
-            $query->where('semester', $request->semester);
-        }
-
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('nama_tahun', 'LIKE', "%{$search}%")
-                  ->orWhere('kode_tahun', 'LIKE', "%{$search}%");
-            });
-        }
-
-        $tahunAkademiks = $query->orderByDesc('tanggal_mulai')->paginate($request->get('per_page', 15));
-
-        return response()->json([
-            'success' => true,
-            'data' => $tahunAkademiks,
-        ]);
+        $this->tahunAkademikService = $tahunAkademikService;
     }
 
-    public function store(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'kode_tahun' => 'required|string|max:20|unique:tahun_akademiks',
-            'nama_tahun' => 'required|string|max:255',
-            'semester' => 'required|in:ganjil,genap',
-            'tanggal_mulai' => 'required|date',
-            'tanggal_selesai' => 'required|date|after:tanggal_mulai',
-            'is_active' => 'boolean',
-        ]);
+        try {
+            $filters = $request->only(['is_active', 'semester', 'search']);
+            $perPage = $request->get('per_page', 15);
 
-        if ($validator->fails()) {
+            $tahunAkademiks = $this->tahunAkademikService->getAllTahunAkademik($filters, $perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => TahunAkademikResource::collection($tahunAkademiks)->response()->getData(true)['data'],
+                'meta' => [
+                    'current_page' => $tahunAkademiks->currentPage(),
+                    'from' => $tahunAkademiks->firstItem(),
+                    'last_page' => $tahunAkademiks->lastPage(),
+                    'per_page' => $tahunAkademiks->perPage(),
+                    'to' => $tahunAkademiks->lastItem(),
+                    'total' => $tahunAkademiks->total(),
+                ],
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors(),
+                'message' => 'Failed to fetch Tahun Akademik',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function store(StoreTahunAkademikRequest $request): JsonResponse
+    {
+        try {
+            $tahunAkademik = $this->tahunAkademikService->createTahunAkademik($request->validated());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tahun Akademik created successfully',
+                'data' => new TahunAkademikResource($tahunAkademik),
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        $tahunAkademik = TahunAkademik::create($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Tahun Akademik created successfully',
-            'data' => $tahunAkademik,
-        ], 201);
     }
 
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
-        $tahunAkademik = TahunAkademik::find($id);
+        try {
+            $tahunAkademik = $this->tahunAkademikService->getTahunAkademikById($id);
 
-        if (!$tahunAkademik) {
+            if (!$tahunAkademik) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tahun Akademik not found',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => new TahunAkademikResource($tahunAkademik),
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tahun Akademik not found',
-            ], 404);
+                'message' => 'Failed to fetch Tahun Akademik',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'data' => $tahunAkademik,
-        ]);
     }
 
-    public function update(Request $request, string $id)
+    public function update(UpdateTahunAkademikRequest $request, string $id): JsonResponse
     {
-        $tahunAkademik = TahunAkademik::find($id);
+        try {
+            $tahunAkademik = $this->tahunAkademikService->updateTahunAkademik($id, $request->validated());
 
-        if (!$tahunAkademik) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Tahun Akademik updated successfully',
+                'data' => new TahunAkademikResource($tahunAkademik),
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tahun Akademik not found',
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'kode_tahun' => 'required|string|max:20|unique:tahun_akademiks,kode_tahun,' . $id,
-            'nama_tahun' => 'required|string|max:255',
-            'semester' => 'required|in:ganjil,genap',
-            'tanggal_mulai' => 'required|date',
-            'tanggal_selesai' => 'required|date|after:tanggal_mulai',
-            'is_active' => 'boolean',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors(),
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        $tahunAkademik->update($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Tahun Akademik updated successfully',
-            'data' => $tahunAkademik,
-        ]);
     }
 
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
-        $tahunAkademik = TahunAkademik::find($id);
+        try {
+            $this->tahunAkademikService->deleteTahunAkademik($id);
 
-        if (!$tahunAkademik) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Tahun Akademik deleted successfully',
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tahun Akademik not found',
-            ], 404);
+                'message' => $e->getMessage(),
+            ], 422);
         }
+    }
 
-        $tahunAkademik->delete();
+    public function active(): JsonResponse
+    {
+        try {
+            $tahunAkademiks = $this->tahunAkademikService->getActiveTahunAkademik();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Tahun Akademik deleted successfully',
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => TahunAkademikResource::collection($tahunAkademiks),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch active Tahun Akademik',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function current(): JsonResponse
+    {
+        try {
+            $tahunAkademik = $this->tahunAkademikService->getCurrentTahunAkademik();
+
+            if (!$tahunAkademik) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No current Tahun Akademik found',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => new TahunAkademikResource($tahunAkademik),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch current Tahun Akademik',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function upcoming(): JsonResponse
+    {
+        try {
+            $tahunAkademik = $this->tahunAkademikService->getUpcomingTahunAkademik();
+
+            if (!$tahunAkademik) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No upcoming Tahun Akademik found',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => new TahunAkademikResource($tahunAkademik),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch upcoming Tahun Akademik',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function bySemester(Request $request): JsonResponse
+    {
+        try {
+            $semester = $request->get('semester');
+
+            if (!$semester) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Semester parameter is required',
+                ], 400);
+            }
+
+            $tahunAkademiks = $this->tahunAkademikService->getTahunAkademikBySemester($semester);
+
+            return response()->json([
+                'success' => true,
+                'data' => TahunAkademikResource::collection($tahunAkademiks),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function statistics(): JsonResponse
+    {
+        try {
+            $statistics = $this->tahunAkademikService->getStatistics();
+
+            return response()->json([
+                'success' => true,
+                'data' => $statistics,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch statistics',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function toggleActive(string $id): JsonResponse
+    {
+        try {
+            $tahunAkademik = $this->tahunAkademikService->toggleActiveStatus($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tahun Akademik status updated successfully',
+                'data' => new TahunAkademikResource($tahunAkademik),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 }

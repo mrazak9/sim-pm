@@ -3,156 +3,275 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\UnitKerja;
+use App\Http\Requests\MasterData\StoreUnitKerjaRequest;
+use App\Http\Requests\MasterData\UpdateUnitKerjaRequest;
+use App\Http\Resources\MasterData\UnitKerjaResource;
+use App\Services\UnitKerjaService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\JsonResponse;
 
 class UnitKerjaController extends Controller
 {
+    protected UnitKerjaService $unitKerjaService;
+
+    public function __construct(UnitKerjaService $unitKerjaService)
+    {
+        $this->unitKerjaService = $unitKerjaService;
+    }
+
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $query = UnitKerja::with(['parent', 'children']);
+        try {
+            $filters = $request->only(['is_active', 'jenis_unit', 'parent_id', 'search']);
+            $perPage = $request->get('per_page', 15);
 
-        // Filter by active status
-        if ($request->has('is_active')) {
-            $query->where('is_active', $request->is_active);
+            $unitKerjas = $this->unitKerjaService->getAllUnitKerja($filters, $perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => UnitKerjaResource::collection($unitKerjas)->response()->getData(true)['data'],
+                'meta' => [
+                    'current_page' => $unitKerjas->currentPage(),
+                    'from' => $unitKerjas->firstItem(),
+                    'last_page' => $unitKerjas->lastPage(),
+                    'per_page' => $unitKerjas->perPage(),
+                    'to' => $unitKerjas->lastItem(),
+                    'total' => $unitKerjas->total(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch Unit Kerja',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        // Filter by jenis unit
-        if ($request->has('jenis_unit')) {
-            $query->where('jenis_unit', $request->jenis_unit);
-        }
-
-        // Search
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('nama_unit', 'LIKE', "%{$search}%")
-                  ->orWhere('kode_unit', 'LIKE', "%{$search}%");
-            });
-        }
-
-        $unitKerjas = $query->orderBy('nama_unit')->paginate($request->get('per_page', 15));
-
-        return response()->json([
-            'success' => true,
-            'data' => $unitKerjas,
-        ]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreUnitKerjaRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'kode_unit' => 'required|string|max:20|unique:unit_kerjas',
-            'nama_unit' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'jenis_unit' => 'required|in:fakultas,program_studi,lembaga,unit_pendukung',
-            'parent_id' => 'nullable|exists:unit_kerjas,id',
-            'is_active' => 'boolean',
-        ]);
+        try {
+            $unitKerja = $this->unitKerjaService->createUnitKerja($request->validated());
 
-        if ($validator->fails()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Unit Kerja created successfully',
+                'data' => new UnitKerjaResource($unitKerja),
+            ], 201);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors(),
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        $unitKerja = UnitKerja::create($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Unit Kerja created successfully',
-            'data' => $unitKerja->load(['parent', 'children']),
-        ], 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
-        $unitKerja = UnitKerja::with(['parent', 'children', 'programStudis'])->find($id);
+        try {
+            $unitKerja = $this->unitKerjaService->getUnitKerjaById($id);
 
-        if (!$unitKerja) {
+            if (!$unitKerja) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unit Kerja not found',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => new UnitKerjaResource($unitKerja),
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unit Kerja not found',
-            ], 404);
+                'message' => 'Failed to fetch Unit Kerja',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'data' => $unitKerja,
-        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateUnitKerjaRequest $request, string $id): JsonResponse
     {
-        $unitKerja = UnitKerja::find($id);
+        try {
+            $unitKerja = $this->unitKerjaService->updateUnitKerja($id, $request->validated());
 
-        if (!$unitKerja) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Unit Kerja updated successfully',
+                'data' => new UnitKerjaResource($unitKerja),
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unit Kerja not found',
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'kode_unit' => 'required|string|max:20|unique:unit_kerjas,kode_unit,' . $id,
-            'nama_unit' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'jenis_unit' => 'required|in:fakultas,program_studi,lembaga,unit_pendukung',
-            'parent_id' => 'nullable|exists:unit_kerjas,id',
-            'is_active' => 'boolean',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors(),
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        $unitKerja->update($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Unit Kerja updated successfully',
-            'data' => $unitKerja->load(['parent', 'children']),
-        ]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
-        $unitKerja = UnitKerja::find($id);
+        try {
+            $this->unitKerjaService->deleteUnitKerja($id);
 
-        if (!$unitKerja) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Unit Kerja deleted successfully',
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unit Kerja not found',
-            ], 404);
+                'message' => $e->getMessage(),
+            ], 422);
         }
+    }
 
-        $unitKerja->delete();
+    /**
+     * Get active unit kerja
+     */
+    public function active(): JsonResponse
+    {
+        try {
+            $unitKerjas = $this->unitKerjaService->getActiveUnitKerja();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Unit Kerja deleted successfully',
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => UnitKerjaResource::collection($unitKerjas),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch active Unit Kerja',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get unit kerja by jenis
+     */
+    public function byJenis(Request $request): JsonResponse
+    {
+        try {
+            $jenis = $request->get('jenis');
+
+            if (!$jenis) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Jenis parameter is required',
+                ], 400);
+            }
+
+            $unitKerjas = $this->unitKerjaService->getUnitKerjaByJenis($jenis);
+
+            return response()->json([
+                'success' => true,
+                'data' => UnitKerjaResource::collection($unitKerjas),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Get root units (no parent)
+     */
+    public function roots(): JsonResponse
+    {
+        try {
+            $unitKerjas = $this->unitKerjaService->getRootUnits();
+
+            return response()->json([
+                'success' => true,
+                'data' => UnitKerjaResource::collection($unitKerjas),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch root units',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get children of a unit
+     */
+    public function children(string $parentId): JsonResponse
+    {
+        try {
+            $unitKerjas = $this->unitKerjaService->getChildren($parentId);
+
+            return response()->json([
+                'success' => true,
+                'data' => UnitKerjaResource::collection($unitKerjas),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch children units',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get statistics
+     */
+    public function statistics(): JsonResponse
+    {
+        try {
+            $statistics = $this->unitKerjaService->getStatistics();
+
+            return response()->json([
+                'success' => true,
+                'data' => $statistics,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch statistics',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Toggle active status
+     */
+    public function toggleActive(string $id): JsonResponse
+    {
+        try {
+            $unitKerja = $this->unitKerjaService->toggleActiveStatus($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Unit Kerja status updated successfully',
+                'data' => new UnitKerjaResource($unitKerja),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 }
