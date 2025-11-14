@@ -14,6 +14,12 @@ class ButirAkreditasiLAMSeeder extends Seeder
     {
         $this->command->info('🔄 Seeding Template Butir Akreditasi LAM...');
 
+        // Hapus template butir LAM yang sudah ada (untuk menghindari duplicate)
+        $this->command->info('   🗑️  Menghapus template LAM yang sudah ada...');
+        ButirAkreditasi::whereIn('instrumen', ['LAMEMBA', 'LAMINFOKOM'])
+            ->whereNull('periode_akreditasi_id')
+            ->delete();
+
         // Template Butir Akreditasi LAMEMBA (LAM Ekonomi, Manajemen, Bisnis, dan Akuntansi)
         $this->seedLAMEMBA();
 

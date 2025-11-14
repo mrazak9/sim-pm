@@ -35,11 +35,75 @@ class ButirAkreditasiService
     }
 
     /**
+     * Get all butir akreditasi with filters, sorting, and optional pagination
+     * This is an alias for paginate with additional sorting support
+     */
+    public function getAllButirAkreditasi(
+        array $filters = [],
+        $perPage = 15,
+        string $sortBy = 'urutan',
+        string $sortOrder = 'asc'
+    ) {
+        // Add sorting to filters
+        $filters['sort_by'] = $sortBy;
+        $filters['sort_order'] = $sortOrder;
+
+        // Handle 'all' case for per_page - return Collection instead of pagination
+        if ($perPage === 'all') {
+            $query = ButirAkreditasi::with(['parent', 'children']);
+
+            // Apply same filters as paginate
+            if (isset($filters['instrumen'])) {
+                $query->where('instrumen', $filters['instrumen']);
+            }
+            if (isset($filters['kategori'])) {
+                $query->where('kategori', $filters['kategori']);
+            }
+            if (isset($filters['is_mandatory'])) {
+                $query->where('is_mandatory', $filters['is_mandatory']);
+            }
+            if (isset($filters['periode_akreditasi_id'])) {
+                $query->where('periode_akreditasi_id', $filters['periode_akreditasi_id']);
+            }
+            if (isset($filters['template_only']) && $filters['template_only']) {
+                $query->whereNull('periode_akreditasi_id');
+            }
+            if (isset($filters['parent_id'])) {
+                if ($filters['parent_id'] === 'null') {
+                    $query->whereNull('parent_id');
+                } else {
+                    $query->where('parent_id', $filters['parent_id']);
+                }
+            }
+            if (isset($filters['search'])) {
+                $search = $filters['search'];
+                $query->where(function($q) use ($search) {
+                    $q->where('nama', 'LIKE', "%{$search}%")
+                      ->orWhere('kode', 'LIKE', "%{$search}%")
+                      ->orWhere('deskripsi', 'LIKE', "%{$search}%");
+                });
+            }
+
+            return $query->orderBy($sortBy, $sortOrder)->get();
+        }
+
+        return $this->repository->paginate($filters, $perPage);
+    }
+
+    /**
      * Get butir akreditasi by ID
      */
     public function findById(int $id): ?ButirAkreditasi
     {
         return $this->repository->findById($id);
+    }
+
+    /**
+     * Alias for findById - used by controller
+     */
+    public function getButirAkreditasiById(int $id): ?ButirAkreditasi
+    {
+        return $this->findById($id);
     }
 
     /**
@@ -543,5 +607,82 @@ class ButirAkreditasiService
     public function countByPeriode(int $periodeId): int
     {
         return ButirAkreditasi::byPeriode($periodeId)->count();
+    }
+
+    // ==================== Controller Alias Methods ====================
+
+    /**
+     * Alias for create - used by controller
+     */
+    public function createButirAkreditasi(array $data): ButirAkreditasi
+    {
+        return $this->create($data);
+    }
+
+    /**
+     * Alias for update - used by controller
+     */
+    public function updateButirAkreditasi(int $id, array $data): ButirAkreditasi
+    {
+        return $this->update($id, $data);
+    }
+
+    /**
+     * Alias for delete - used by controller
+     */
+    public function deleteButirAkreditasi(int $id): bool
+    {
+        return $this->delete($id);
+    }
+
+    /**
+     * Get butir by kategori - used by controller
+     * Returns grouped data by kategori
+     */
+    public function getButirByKategori(string $instrumen): array
+    {
+        $butirs = $this->repository->getByInstrumen($instrumen);
+
+        // Group by kategori
+        $grouped = $butirs->groupBy('kategori');
+
+        $result = [];
+        foreach ($grouped as $kategori => $items) {
+            $result[] = [
+                'kategori' => $kategori,
+                'butirs' => $items->values()->all(),
+                'count' => $items->count()
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Alias for getByInstrumen - used by controller
+     */
+    public function getButirByInstrumen(string $instrumen): Collection
+    {
+        return $this->getByInstrumen($instrumen);
+    }
+
+    /**
+     * Get list of kategori for specific instrumen
+     */
+    public function getKategoriList(string $instrumen): Collection
+    {
+        return ButirAkreditasi::where('instrumen', $instrumen)
+            ->whereNotNull('kategori')
+            ->distinct()
+            ->orderBy('kategori')
+            ->pluck('kategori');
+    }
+
+    /**
+     * Get list of available instrumen
+     */
+    public function getInstrumenList(): Collection
+    {
+        return $this->repository->getInstruments();
     }
 }

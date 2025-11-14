@@ -29,7 +29,9 @@
       "Bash(dir:*)",
       "Bash(nul)",
       "Bash(findstr:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(php:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
