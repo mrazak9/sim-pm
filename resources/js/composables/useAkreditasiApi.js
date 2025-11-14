@@ -143,6 +143,62 @@ export function useAkreditasiApi() {
         }
     }
 
+    const getButirDetail = async (id) => {
+        loading.value = true
+        error.value = null
+        try {
+            const response = await axios.get(`/api/butir-akreditasi/${id}`)
+            return response.data
+        } catch (err) {
+            error.value = err.response?.data?.message || err.message
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
+    const createButir = async (data) => {
+        loading.value = true
+        error.value = null
+        try {
+            const response = await axios.post('/api/butir-akreditasi', data)
+            return response.data
+        } catch (err) {
+            error.value = err.response?.data?.message || err.message
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
+    const updateButir = async (id, data) => {
+        loading.value = true
+        error.value = null
+        try {
+            const response = await axios.put(`/api/butir-akreditasi/${id}`, data)
+            return response.data
+        } catch (err) {
+            error.value = err.response?.data?.message || err.message
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
+    const deleteButir = async (id) => {
+        loading.value = true
+        error.value = null
+        try {
+            const response = await axios.delete(`/api/butir-akreditasi/${id}`)
+            return response.data
+        } catch (err) {
+            error.value = err.response?.data?.message || err.message
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
     // Pengisian Butir API
     const getPengisianList = async (filters = {}) => {
         loading.value = true
@@ -334,6 +390,10 @@ export function useAkreditasiApi() {
         getButirByKategori,
         getInstrumenList,
         getKategoriList,
+        getButirDetail,
+        createButir,
+        updateButir,
+        deleteButir,
         // Pengisian Butir
         getPengisianList,
         savePengisian,

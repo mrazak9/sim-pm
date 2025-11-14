@@ -153,6 +153,51 @@ const routes = [
     component: () => import('@/views/akreditasi/PeriodeAkreditasiDetail.vue'),
     meta: { requiresAuth: true },
   },
+  // Butir Akreditasi Routes
+  {
+    path: '/akreditasi/butir',
+    name: 'butir-akreditasi-list',
+    component: () => import('@/views/akreditasi/ButirAkreditasiList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/akreditasi/butir/create',
+    name: 'butir-akreditasi-create',
+    component: () => import('@/views/akreditasi/ButirAkreditasiForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/akreditasi/butir/:id/edit',
+    name: 'butir-akreditasi-edit',
+    component: () => import('@/views/akreditasi/ButirAkreditasiForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // Pengisian Butir Routes
+  {
+    path: '/akreditasi/pengisian',
+    name: 'pengisian-butir-list',
+    component: () => import('@/views/akreditasi/PengisianButirForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/akreditasi/pengisian/create',
+    name: 'pengisian-butir-create',
+    component: () => import('@/views/akreditasi/PengisianButirForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/akreditasi/pengisian/:id/edit',
+    name: 'pengisian-butir-edit',
+    component: () => import('@/views/akreditasi/PengisianButirForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // Dokumen Akreditasi Routes
+  {
+    path: '/akreditasi/dokumen',
+    name: 'dokumen-akreditasi-list',
+    component: () => import('@/views/akreditasi/DokumenAkreditasiList.vue'),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
