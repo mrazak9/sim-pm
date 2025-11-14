@@ -18,7 +18,8 @@ class DatabaseSeeder extends Seeder
 
         // Seed Akreditasi Data
         $this->call([
-            ButirAkreditasiSeeder::class,
+            ButirAkreditasiSeeder::class,  // Template BANPT 4.0
+            ButirAkreditasiLAMSeeder::class, // Template LAMEMBA & LAMINFOKOM
             PeriodeAkreditasiSeeder::class,
         ]);
     }
