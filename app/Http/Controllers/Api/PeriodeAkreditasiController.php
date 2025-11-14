@@ -96,7 +96,17 @@ class PeriodeAkreditasiController extends Controller
         }
 
         try {
-            $periode = PeriodeAkreditasi::create($request->all());
+            // Clean up empty date fields
+            $data = $request->all();
+            $dateFields = ['tanggal_mulai', 'deadline_pengumpulan', 'jadwal_visitasi', 'tanggal_berakhir'];
+
+            foreach ($dateFields as $field) {
+                if (isset($data[$field]) && empty($data[$field])) {
+                    $data[$field] = null;
+                }
+            }
+
+            $periode = PeriodeAkreditasi::create($data);
 
             return response()->json([
                 'success' => true,
@@ -104,10 +114,16 @@ class PeriodeAkreditasiController extends Controller
                 'data' => $periode->load(['unitKerja', 'programStudi']),
             ], 201);
         } catch (\Exception $e) {
+            \Log::error('Error creating periode akreditasi: ' . $e->getMessage(), [
+                'request' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal membuat periode akreditasi',
                 'error' => $e->getMessage(),
+                'details' => config('app.debug') ? $e->getTraceAsString() : null,
             ], 500);
         }
     }
@@ -176,7 +192,18 @@ class PeriodeAkreditasiController extends Controller
 
         try {
             $periode = PeriodeAkreditasi::findOrFail($id);
-            $periode->update($request->all());
+
+            // Clean up empty date fields
+            $data = $request->all();
+            $dateFields = ['tanggal_mulai', 'deadline_pengumpulan', 'jadwal_visitasi', 'tanggal_berakhir'];
+
+            foreach ($dateFields as $field) {
+                if (isset($data[$field]) && empty($data[$field])) {
+                    $data[$field] = null;
+                }
+            }
+
+            $periode->update($data);
 
             return response()->json([
                 'success' => true,
@@ -184,6 +211,12 @@ class PeriodeAkreditasiController extends Controller
                 'data' => $periode->load(['unitKerja', 'programStudi']),
             ]);
         } catch (\Exception $e) {
+            \Log::error('Error updating periode akreditasi: ' . $e->getMessage(), [
+                'id' => $id,
+                'request' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengupdate periode akreditasi',

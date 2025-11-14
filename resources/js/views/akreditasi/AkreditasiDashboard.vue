@@ -175,7 +175,7 @@
 </template>
 
 <script setup>
-import MainLayout from '@/components/layout/MainLayout.vue'
+import MainLayout from '@/layouts/MainLayout.vue'
 import { ref, onMounted } from 'vue'
 import { useAkreditasiApi } from '@/composables/useAkreditasiApi'
 

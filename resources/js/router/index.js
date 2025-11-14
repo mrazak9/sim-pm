@@ -73,7 +73,7 @@ const routes = [
   {
     path: '/akreditasi/periode/:id',
     name: 'periode-akreditasi-detail',
-    component: () => import('@/views/akreditasi/PeriodeAkreditasiList.vue'),
+    component: () => import('@/views/akreditasi/PeriodeAkreditasiDetail.vue'),
     meta: { requiresAuth: true },
   },
 ];
