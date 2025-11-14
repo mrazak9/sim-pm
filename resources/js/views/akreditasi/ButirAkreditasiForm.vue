@@ -12,6 +12,89 @@
 
       <div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
         <form @submit.prevent="handleSubmit" class="space-y-6">
+          <!-- Tipe Butir -->
+          <div class="rounded-lg border-2 border-purple-200 bg-purple-50 p-4 dark:border-purple-800 dark:bg-purple-900/20">
+            <label class="mb-3 block text-sm font-medium text-gray-900 dark:text-white">
+              Tipe Butir <span class="text-red-500">*</span>
+            </label>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <label
+                :class="[
+                  'flex cursor-pointer items-center rounded-lg border-2 p-4 transition-all',
+                  butirType === 'template'
+                    ? 'border-purple-600 bg-purple-100 dark:border-purple-500 dark:bg-purple-900/40'
+                    : 'border-gray-300 hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500'
+                ]"
+              >
+                <input
+                  type="radio"
+                  v-model="butirType"
+                  value="template"
+                  class="h-4 w-4 border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+                <div class="ml-3">
+                  <div class="flex items-center gap-2">
+                    <svg class="h-5 w-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span class="font-medium text-gray-900 dark:text-white">Template</span>
+                  </div>
+                  <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                    Master butir yang bisa di-copy ke berbagai periode
+                  </p>
+                </div>
+              </label>
+
+              <label
+                :class="[
+                  'flex cursor-pointer items-center rounded-lg border-2 p-4 transition-all',
+                  butirType === 'periode'
+                    ? 'border-blue-600 bg-blue-100 dark:border-blue-500 dark:bg-blue-900/40'
+                    : 'border-gray-300 hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500'
+                ]"
+              >
+                <input
+                  type="radio"
+                  v-model="butirType"
+                  value="periode"
+                  class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <div class="ml-3">
+                  <div class="flex items-center gap-2">
+                    <svg class="h-5 w-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <span class="font-medium text-gray-900 dark:text-white">Per-Periode</span>
+                  </div>
+                  <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                    Butir untuk periode akreditasi spesifik
+                  </p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Periode Selection (only for per-periode type) -->
+          <div v-if="butirType === 'periode'" class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+            <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+              Periode Akreditasi <span class="text-red-500">*</span>
+            </label>
+            <select
+              v-model="form.periode_akreditasi_id"
+              required
+              class="block w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              @change="handlePeriodeChange"
+            >
+              <option :value="null">Pilih Periode</option>
+              <option v-for="periode in periodeList" :key="periode.id" :value="periode.id">
+                {{ periode.nama }} ({{ periode.instrumen }})
+              </option>
+            </select>
+            <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">
+              Pilih periode untuk butir ini
+            </p>
+          </div>
+
           <!-- Kode & Nama -->
           <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div>
@@ -79,12 +162,16 @@
               <select
                 v-model="form.instrumen"
                 required
+                :disabled="butirType === 'periode'"
                 @change="handleInstrumenChange"
-                class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               >
                 <option value="">Pilih Instrumen</option>
                 <option v-for="ins in instrumenList" :key="ins" :value="ins">{{ ins }}</option>
               </select>
+              <p v-if="butirType === 'periode'" class="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                Instrumen diambil dari periode yang dipilih
+              </p>
             </div>
 
             <div>
@@ -269,13 +356,16 @@ import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
-const { loading, getButirList, getInstrumenList, getKategoriList } = useAkreditasiApi()
+const { loading, getButirList, getInstrumenList, getKategoriList, getPeriodeList } = useAkreditasiApi()
 
 const isEdit = computed(() => !!route.params.id)
 const localError = ref(null)
 const successMessage = ref(null)
 const loadingParents = ref(false)
 const metadataError = ref(null)
+
+const butirType = ref('template') // 'template' or 'periode'
+const periodeList = ref([])
 
 const form = ref({
   kode: '',
@@ -288,6 +378,7 @@ const form = ref({
   urutan: 0,
   is_mandatory: false,
   metadata: {},
+  periode_akreditasi_id: null,
 })
 
 const metadataString = ref('{}')
@@ -319,8 +410,28 @@ const availableParents = computed(() => {
     if (isEdit.value && butir.id === currentButirId.value) {
       return false
     }
-    return true
+
+    // Filter by type
+    if (butirType.value === 'template') {
+      // For template: only show other templates with same instrumen
+      return !butir.periode_akreditasi_id && butir.instrumen === form.value.instrumen
+    } else {
+      // For per-periode: only show butirs from same periode
+      return butir.periode_akreditasi_id === form.value.periode_akreditasi_id
+    }
   })
+})
+
+// Watch butirType changes
+watch(butirType, (newType) => {
+  // Clear periode when switching to template
+  if (newType === 'template') {
+    form.value.periode_akreditasi_id = null
+  }
+  // Clear parent when switching types
+  form.value.parent_id = null
+  // Refresh parent list
+  fetchParents()
 })
 
 // Check if selecting this parent would create a circular reference
@@ -376,12 +487,31 @@ const fetchKategori = async (instrumen = null) => {
   }
 }
 
+const fetchPeriodes = async () => {
+  try {
+    const response = await getPeriodeList({ per_page: 100 })
+    periodeList.value = response.data || []
+  } catch (error) {
+    console.error('Failed to fetch periodes:', error)
+  }
+}
+
 const fetchParents = async () => {
   loadingParents.value = true
   try {
     const params = { per_page: 'all' }
-    if (form.value.instrumen) {
-      params.instrumen = form.value.instrumen
+
+    // Filter based on type
+    if (butirType.value === 'template') {
+      params.template_only = true
+      if (form.value.instrumen) {
+        params.instrumen = form.value.instrumen
+      }
+    } else {
+      // For per-periode, only get butirs from the selected periode
+      if (form.value.periode_akreditasi_id) {
+        params.periode_akreditasi_id = form.value.periode_akreditasi_id
+      }
     }
 
     const response = await getButirList(params)
@@ -395,6 +525,18 @@ const fetchParents = async () => {
 
 const handleInstrumenChange = () => {
   fetchKategori(form.value.instrumen)
+  fetchParents()
+}
+
+const handlePeriodeChange = () => {
+  // Get instrumen from selected periode
+  const selectedPeriode = periodeList.value.find(p => p.id === form.value.periode_akreditasi_id)
+  if (selectedPeriode) {
+    form.value.instrumen = selectedPeriode.instrumen
+    fetchKategori(selectedPeriode.instrumen)
+  }
+  // Clear parent and refresh list
+  form.value.parent_id = null
   fetchParents()
 }
 
@@ -447,6 +589,17 @@ const handleSubmit = async () => {
 
     // Prepare data
     const data = { ...form.value, metadata }
+
+    // Set periode_akreditasi_id based on type
+    if (butirType.value === 'template') {
+      data.periode_akreditasi_id = null
+    } else {
+      // Validate periode is selected for per-periode type
+      if (!data.periode_akreditasi_id) {
+        localError.value = 'Periode akreditasi harus dipilih untuk butir per-periode'
+        return
+      }
+    }
 
     // Clean up null/empty values
     if (data.deskripsi === '') data.deskripsi = null
@@ -507,21 +660,20 @@ const handleSubmit = async () => {
 onMounted(async () => {
   await fetchInstrumen()
   await fetchKategori()
-
-  // Set parent_id from query param if creating new sub-butir
-  if (!isEdit.value && route.query.parent_id) {
-    form.value.parent_id = parseInt(route.query.parent_id)
-  }
-
-  await fetchParents()
+  await fetchPeriodes()
 
   if (isEdit.value) {
+    // Edit mode: load existing data
     localError.value = null
     try {
       const response = await axios.get(`/api/butir-akreditasi/${route.params.id}`)
       const data = response.data.data
 
       currentButirId.value = data.id
+
+      // Determine type based on periode_akreditasi_id
+      butirType.value = data.periode_akreditasi_id ? 'periode' : 'template'
+
       Object.assign(form.value, {
         kode: data.kode,
         nama: data.nama,
@@ -532,6 +684,7 @@ onMounted(async () => {
         parent_id: data.parent_id,
         urutan: data.urutan,
         is_mandatory: data.is_mandatory,
+        periode_akreditasi_id: data.periode_akreditasi_id,
       })
 
       metadataString.value = JSON.stringify(data.metadata || {}, null, 2)
@@ -540,11 +693,34 @@ onMounted(async () => {
       if (data.instrumen) {
         await fetchKategori(data.instrumen)
       }
+
+      // Fetch parents after determining type
+      await fetchParents()
     } catch (err) {
       console.error('Error loading butir:', err)
       localError.value = 'Gagal memuat data butir akreditasi'
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
+  } else {
+    // Create mode
+    // Set parent_id from query param if creating new sub-butir
+    if (route.query.parent_id) {
+      form.value.parent_id = parseInt(route.query.parent_id)
+    }
+
+    // Set periode from query param if provided
+    if (route.query.periode_id) {
+      butirType.value = 'periode'
+      form.value.periode_akreditasi_id = parseInt(route.query.periode_id)
+      // Auto-select instrumen from periode
+      const selectedPeriode = periodeList.value.find(p => p.id === form.value.periode_akreditasi_id)
+      if (selectedPeriode) {
+        form.value.instrumen = selectedPeriode.instrumen
+        await fetchKategori(selectedPeriode.instrumen)
+      }
+    }
+
+    await fetchParents()
   }
 })
 </script>
