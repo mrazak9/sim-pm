@@ -251,16 +251,17 @@ Testing & Quality           ░░░░░░░░░░░░░░░░░�
 - [ ] Timeline & deadline reminders
 - [ ] Collaboration features (multi-user editing)
 - [ ] Auto-lock after deadline
-- [ ] Progress tracking dashboard
+- [ ] Progress tracking dashboard (enhanced)
 - [ ] Email notifications for approvals
-- [ ] PDF report generation (per butir/kategori)
-- [ ] Export to Excel (template BAN-PT)
+- [x] PDF report generation (comprehensive report with statistics)
+- [x] Export to Excel (multi-sheet BAN-PT template format)
 - [ ] Version control for submissions
 
-**Completed By:** -
-**Date:** -
-**Status:** ❌ NOT STARTED
+**Completed By:** Claude AI Assistant (Partial)
+**Date:** 2025-11-14
+**Status:** ⚠️ IN PROGRESS (2/10 features completed)
 **Priority:** High
+**Notes:** ✅ PDF & Excel export fully implemented with statistics, kategori breakdown, and professional formatting. ~900+ lines of export code added.
 
 ---
 
