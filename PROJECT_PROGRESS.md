@@ -280,6 +280,9 @@ Testing & Quality           ░░░░░░░░░░░░░░░░░�
   - Real-time notification bell with unread count badge
   - Email notification integration (with logging)
   - Artisan command: `php artisan akreditasi:check-deadlines`
+  - **Automated scheduler configured** (runs daily at 08:00 AM)
+  - Cron job setup with complete documentation (SCHEDULER_SETUP.md)
+  - Weekly notification cleanup (Sundays at 02:00 AM)
   - ~1000+ lines of notification system code added
 
 ---
