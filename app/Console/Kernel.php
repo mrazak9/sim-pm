@@ -12,7 +12,24 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Check for approaching deadlines every day at 8:00 AM
+        $schedule->command('akreditasi:check-deadlines')
+            ->dailyAt('08:00')
+            ->withoutOverlapping()
+            ->runInBackground()
+            ->emailOutputOnFailure(config('mail.admin_email'));
+
+        // Optional: Run more frequently during critical periods
+        // Uncomment to check deadlines every 6 hours
+        // $schedule->command('akreditasi:check-deadlines')
+        //     ->everySixHours()
+        //     ->withoutOverlapping()
+        //     ->runInBackground();
+
+        // Clean up old read notifications every week
+        $schedule->call(function () {
+            app(\App\Services\NotificationService::class)->deleteOldNotifications(30);
+        })->weekly()->sundays()->at('02:00');
     }
 
     /**
