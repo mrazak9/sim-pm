@@ -9,6 +9,10 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\IKUController;
 use App\Http\Controllers\Api\IKUTargetController;
 use App\Http\Controllers\Api\IKUProgressController;
+use App\Http\Controllers\Api\PeriodeAkreditasiController;
+use App\Http\Controllers\Api\ButirAkreditasiController;
+use App\Http\Controllers\Api\PengisianButirController;
+use App\Http\Controllers\Api\DokumenAkreditasiController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -58,4 +62,28 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('iku-progress/{id}/download', [IKUProgressController::class, 'downloadDocument']);
     Route::get('iku-progress/target/{targetId}/summary', [IKUProgressController::class, 'summaryByTarget']);
     Route::apiResource('iku-progress', IKUProgressController::class);
+
+    // Akreditasi Module Routes
+
+    // Periode Akreditasi Routes
+    Route::get('periode-akreditasi/{id}/statistics', [PeriodeAkreditasiController::class, 'statistics']);
+    Route::apiResource('periode-akreditasi', PeriodeAkreditasiController::class);
+
+    // Butir Akreditasi Routes
+    Route::get('butir-akreditasi/by-kategori', [ButirAkreditasiController::class, 'byKategori']);
+    Route::get('butir-akreditasi/instrumen', [ButirAkreditasiController::class, 'instrumen']);
+    Route::get('butir-akreditasi/kategori', [ButirAkreditasiController::class, 'kategori']);
+    Route::apiResource('butir-akreditasi', ButirAkreditasiController::class);
+
+    // Pengisian Butir Routes
+    Route::post('pengisian-butir/{id}/submit', [PengisianButirController::class, 'submit']);
+    Route::post('pengisian-butir/{id}/approve', [PengisianButirController::class, 'approve']);
+    Route::post('pengisian-butir/{id}/revision', [PengisianButirController::class, 'revision']);
+    Route::get('pengisian-butir/periode/{periodeId}/summary', [PengisianButirController::class, 'summary']);
+    Route::apiResource('pengisian-butir', PengisianButirController::class);
+
+    // Dokumen Akreditasi Routes
+    Route::get('dokumen-akreditasi/{id}/download', [DokumenAkreditasiController::class, 'download']);
+    Route::post('dokumen-akreditasi/{id}/attach-butir', [DokumenAkreditasiController::class, 'attachToButir']);
+    Route::apiResource('dokumen-akreditasi', DokumenAkreditasiController::class);
 });
