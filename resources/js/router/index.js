@@ -14,6 +14,37 @@ const routes = [
     component: () => import('@/views/auth/Login.vue'),
     meta: { guest: true },
   },
+  // IKU Routes
+  {
+    path: '/iku',
+    name: 'iku-dashboard',
+    component: () => import('@/views/iku/IKUDashboard.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/iku/list',
+    name: 'iku-list',
+    component: () => import('@/views/iku/IKUList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/iku/create',
+    name: 'iku-create',
+    component: () => import('@/views/iku/IKUForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/iku/edit/:id',
+    name: 'iku-edit',
+    component: () => import('@/views/iku/IKUForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/iku/detail/:id',
+    name: 'iku-detail',
+    component: () => import('@/views/iku/IKUList.vue'),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
