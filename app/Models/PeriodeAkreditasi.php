@@ -59,6 +59,21 @@ class PeriodeAkreditasi extends Model
     }
 
     /**
+     * Get butir akreditasi through pengisian butir (many-to-many through)
+     */
+    public function butirAkreditasis()
+    {
+        return $this->hasManyThrough(
+            ButirAkreditasi::class,
+            PengisianButir::class,
+            'periode_akreditasi_id', // Foreign key on pengisian_butirs table
+            'id',                     // Foreign key on butir_akreditasis table
+            'id',                     // Local key on periode_akreditasis table
+            'butir_akreditasi_id'     // Local key on pengisian_butirs table
+        );
+    }
+
+    /**
      * Scopes
      */
     public function scopeAktif($query)

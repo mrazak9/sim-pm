@@ -105,9 +105,13 @@ const periodes = ref([])
 const fetchPeriodes = async () => {
   try {
     const response = await getPeriodeList()
-    periodes.value = response.data.data || []
+    console.log('API Response:', response)
+    // response is already response.data from composable, so we access response.data directly
+    periodes.value = response.data || []
+    console.log('Periodes loaded:', periodes.value.length, 'items')
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error fetching periodes:', error)
+    console.error('Error response:', error.response?.data)
   }
 }
 

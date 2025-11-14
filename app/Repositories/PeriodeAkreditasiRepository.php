@@ -73,7 +73,24 @@ class PeriodeAkreditasiRepository
             });
         }
 
-        return $query->orderBy('tanggal_mulai', 'desc')->paginate($perPage);
+        // Apply sorting
+        $sortBy = $filters['sort_by'] ?? 'tanggal_mulai';
+        $sortOrder = $filters['sort_order'] ?? 'desc';
+
+        // Validate sort column to prevent SQL injection
+        $allowedSortColumns = [
+            'id', 'nama', 'jenis_akreditasi', 'lembaga', 'instrumen',
+            'status', 'tanggal_mulai', 'tanggal_selesai', 'deadline_pengumpulan',
+            'created_at', 'updated_at'
+        ];
+
+        if (in_array($sortBy, $allowedSortColumns)) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            $query->orderBy('tanggal_mulai', 'desc');
+        }
+
+        return $query->paginate($perPage);
     }
 
     /**
