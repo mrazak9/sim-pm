@@ -51,16 +51,25 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('users/{id}/assign-permissions', [UserController::class, 'assignPermissions']);
 
     // IKU Management Routes
+    Route::get('iku/statistics', [IKUController::class, 'statistics']);
     Route::get('iku/categories', [IKUController::class, 'categories']);
+    Route::post('iku/{id}/toggle-active', [IKUController::class, 'toggleActive']);
     Route::apiResource('iku', IKUController::class);
 
     // IKU Target Routes
+    Route::get('iku-targets/dashboard-statistics', [IKUTargetController::class, 'dashboardStatistics']);
+    Route::get('iku-targets/need-attention', [IKUTargetController::class, 'needAttention']);
+    Route::get('iku-targets/by-status', [IKUTargetController::class, 'byStatus']);
     Route::get('iku-targets/{id}/statistics', [IKUTargetController::class, 'statistics']);
+    Route::get('iku-targets/{id}/check-risk', [IKUTargetController::class, 'checkRisk']);
     Route::apiResource('iku-targets', IKUTargetController::class);
 
     // IKU Progress Routes
+    Route::get('iku-progress/statistics', [IKUProgressController::class, 'statistics']);
+    Route::get('iku-progress/recent', [IKUProgressController::class, 'recent']);
     Route::get('iku-progress/{id}/download', [IKUProgressController::class, 'downloadDocument']);
     Route::get('iku-progress/target/{targetId}/summary', [IKUProgressController::class, 'summaryByTarget']);
+    Route::get('iku-progress/target/{targetId}/trend', [IKUProgressController::class, 'trend']);
     Route::apiResource('iku-progress', IKUProgressController::class);
 
     // Akreditasi Module Routes

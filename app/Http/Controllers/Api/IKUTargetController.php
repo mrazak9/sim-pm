@@ -3,215 +3,259 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\IKUTarget;
+use App\Http\Requests\IKU\StoreIKUTargetRequest;
+use App\Http\Requests\IKU\UpdateIKUTargetRequest;
+use App\Http\Resources\IKUTargetResource;
+use App\Services\IKUTargetService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\JsonResponse;
 
 class IKUTargetController extends Controller
 {
+    protected IKUTargetService $targetService;
+
+    public function __construct(IKUTargetService $targetService)
+    {
+        $this->targetService = $targetService;
+    }
+
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $query = IKUTarget::with(['iku', 'tahunAkademik', 'unitKerja', 'programStudi', 'latestProgress']);
+        try {
+            $filters = $request->only([
+                'iku_id',
+                'tahun_akademik_id',
+                'unit_kerja_id',
+                'program_studi_id',
+                'periode',
+                'search'
+            ]);
+            $perPage = $request->get('per_page', 15);
 
-        // Filter by IKU
-        if ($request->has('iku_id')) {
-            $query->where('iku_id', $request->iku_id);
+            $targets = $this->targetService->getAllTargets($filters, $perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => IKUTargetResource::collection($targets)->response()->getData(true)['data'],
+                'meta' => [
+                    'current_page' => $targets->currentPage(),
+                    'from' => $targets->firstItem(),
+                    'last_page' => $targets->lastPage(),
+                    'per_page' => $targets->perPage(),
+                    'to' => $targets->lastItem(),
+                    'total' => $targets->total(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch IKU Targets',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        // Filter by tahun akademik
-        if ($request->has('tahun_akademik_id')) {
-            $query->where('tahun_akademik_id', $request->tahun_akademik_id);
-        }
-
-        // Filter by unit kerja
-        if ($request->has('unit_kerja_id')) {
-            $query->where('unit_kerja_id', $request->unit_kerja_id);
-        }
-
-        // Filter by program studi
-        if ($request->has('program_studi_id')) {
-            $query->where('program_studi_id', $request->program_studi_id);
-        }
-
-        // Filter by periode
-        if ($request->has('periode')) {
-            $query->where('periode', $request->periode);
-        }
-
-        // Search
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->whereHas('iku', function($q) use ($search) {
-                $q->where('nama_iku', 'LIKE', "%{$search}%")
-                  ->orWhere('kode_iku', 'LIKE', "%{$search}%");
-            });
-        }
-
-        $targets = $query->orderBy('tahun_akademik_id', 'desc')
-                        ->orderBy('created_at', 'desc')
-                        ->paginate($request->get('per_page', 15));
-
-        return response()->json([
-            'success' => true,
-            'data' => $targets,
-        ]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreIKUTargetRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'iku_id' => 'required|exists:ikus,id',
-            'tahun_akademik_id' => 'required|exists:tahun_akademiks,id',
-            'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
-            'program_studi_id' => 'nullable|exists:program_studis,id',
-            'target_value' => 'required|numeric|min:0',
-            'periode' => 'required|in:tahunan,semester_1,semester_2,triwulan_1,triwulan_2,triwulan_3,triwulan_4',
-            'keterangan' => 'nullable|string',
-        ]);
+        try {
+            $target = $this->targetService->createTarget($request->validated());
 
-        if ($validator->fails()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'IKU Target created successfully',
+                'data' => new IKUTargetResource($target),
+            ], 201);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors(),
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        $target = IKUTarget::create($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'IKU Target created successfully',
-            'data' => $target->load(['iku', 'tahunAkademik', 'unitKerja', 'programStudi']),
-        ], 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
-        $target = IKUTarget::with([
-            'iku',
-            'tahunAkademik',
-            'unitKerja',
-            'programStudi',
-            'progress.creator'
-        ])->find($id);
+        try {
+            $target = $this->targetService->getTargetById($id);
 
-        if (!$target) {
+            if (!$target) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'IKU Target not found',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => new IKUTargetResource($target),
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'IKU Target not found',
-            ], 404);
+                'message' => 'Failed to fetch IKU Target',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        // Add calculated attributes
-        $targetData = $target->toArray();
-        $targetData['total_capaian'] = $target->total_capaian;
-        $targetData['persentase_capaian'] = $target->persentase_capaian;
-
-        return response()->json([
-            'success' => true,
-            'data' => $targetData,
-        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateIKUTargetRequest $request, string $id): JsonResponse
     {
-        $target = IKUTarget::find($id);
+        try {
+            $target = $this->targetService->updateTarget($id, $request->validated());
 
-        if (!$target) {
+            return response()->json([
+                'success' => true,
+                'message' => 'IKU Target updated successfully',
+                'data' => new IKUTargetResource($target),
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'IKU Target not found',
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'iku_id' => 'required|exists:ikus,id',
-            'tahun_akademik_id' => 'required|exists:tahun_akademiks,id',
-            'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
-            'program_studi_id' => 'nullable|exists:program_studis,id',
-            'target_value' => 'required|numeric|min:0',
-            'periode' => 'required|in:tahunan,semester_1,semester_2,triwulan_1,triwulan_2,triwulan_3,triwulan_4',
-            'keterangan' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors(),
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        $target->update($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'IKU Target updated successfully',
-            'data' => $target->load(['iku', 'tahunAkademik', 'unitKerja', 'programStudi']),
-        ]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
-        $target = IKUTarget::find($id);
+        try {
+            $this->targetService->deleteTarget($id);
 
-        if (!$target) {
+            return response()->json([
+                'success' => true,
+                'message' => 'IKU Target deleted successfully',
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'IKU Target not found',
-            ], 404);
+                'message' => $e->getMessage(),
+            ], 422);
         }
-
-        $target->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'IKU Target deleted successfully',
-        ]);
     }
 
     /**
      * Get dashboard statistics for a specific target
      */
-    public function statistics(string $id)
+    public function statistics(string $id): JsonResponse
     {
-        $target = IKUTarget::with(['iku', 'progress'])->find($id);
+        try {
+            $statistics = $this->targetService->getTargetStatistics($id);
 
-        if (!$target) {
+            return response()->json([
+                'success' => true,
+                'data' => $statistics,
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'IKU Target not found',
+                'message' => $e->getMessage(),
             ], 404);
         }
+    }
 
-        $statistics = [
-            'target_value' => $target->target_value,
-            'total_capaian' => $target->total_capaian,
-            'persentase_capaian' => $target->persentase_capaian,
-            'jumlah_progress' => $target->progress()->count(),
-            'progress_terakhir' => $target->latestProgress,
-            'iku' => $target->iku,
-        ];
+    /**
+     * Get all targets dashboard statistics
+     */
+    public function dashboardStatistics(): JsonResponse
+    {
+        try {
+            $statistics = $this->targetService->getDashboardStatistics();
 
-        return response()->json([
-            'success' => true,
-            'data' => $statistics,
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $statistics,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch dashboard statistics',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get targets that need attention
+     */
+    public function needAttention(): JsonResponse
+    {
+        try {
+            $targets = $this->targetService->getTargetsNeedAttention();
+
+            return response()->json([
+                'success' => true,
+                'data' => IKUTargetResource::collection($targets),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch targets',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get targets by status
+     */
+    public function byStatus(Request $request): JsonResponse
+    {
+        try {
+            $status = $request->get('status');
+
+            if (!$status) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Status parameter is required',
+                ], 400);
+            }
+
+            $targets = $this->targetService->getTargetsByStatus($status);
+
+            return response()->json([
+                'success' => true,
+                'data' => IKUTargetResource::collection($targets),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Check if target is at risk
+     */
+    public function checkRisk(string $id): JsonResponse
+    {
+        try {
+            $riskData = $this->targetService->isTargetAtRisk($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $riskData,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 404);
+        }
     }
 }

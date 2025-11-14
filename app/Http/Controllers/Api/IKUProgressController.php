@@ -3,204 +3,151 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\IKUProgress;
+use App\Http\Requests\IKU\StoreIKUProgressRequest;
+use App\Http\Requests\IKU\UpdateIKUProgressRequest;
+use App\Http\Resources\IKUProgressResource;
+use App\Services\IKUProgressService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 
 class IKUProgressController extends Controller
 {
+    protected IKUProgressService $progressService;
+
+    public function __construct(IKUProgressService $progressService)
+    {
+        $this->progressService = $progressService;
+    }
+
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $query = IKUProgress::with(['target.iku', 'target.tahunAkademik', 'target.unitKerja', 'target.programStudi', 'creator']);
+        try {
+            $filters = $request->only([
+                'iku_target_id',
+                'start_date',
+                'end_date',
+                'recent_days',
+                'search'
+            ]);
+            $perPage = $request->get('per_page', 15);
 
-        // Filter by IKU Target
-        if ($request->has('iku_target_id')) {
-            $query->where('iku_target_id', $request->iku_target_id);
+            $progress = $this->progressService->getAllProgress($filters, $perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => IKUProgressResource::collection($progress)->response()->getData(true)['data'],
+                'meta' => [
+                    'current_page' => $progress->currentPage(),
+                    'from' => $progress->firstItem(),
+                    'last_page' => $progress->lastPage(),
+                    'per_page' => $progress->perPage(),
+                    'to' => $progress->lastItem(),
+                    'total' => $progress->total(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch IKU Progress',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        // Filter by date range
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $query->byDateRange($request->start_date, $request->end_date);
-        }
-
-        // Filter by recent days
-        if ($request->has('recent_days')) {
-            $query->recent($request->recent_days);
-        }
-
-        // Search
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('keterangan', 'LIKE', "%{$search}%")
-                  ->orWhereHas('target.iku', function($subQ) use ($search) {
-                      $subQ->where('nama_iku', 'LIKE', "%{$search}%")
-                           ->orWhere('kode_iku', 'LIKE', "%{$search}%");
-                  });
-            });
-        }
-
-        $progress = $query->orderBy('tanggal_capaian', 'desc')
-                         ->paginate($request->get('per_page', 15));
-
-        return response()->json([
-            'success' => true,
-            'data' => $progress,
-        ]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreIKUProgressRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'iku_target_id' => 'required|exists:iku_targets,id',
-            'tanggal_capaian' => 'required|date',
-            'nilai_capaian' => 'required|numeric|min:0',
-            'persentase_capaian' => 'nullable|numeric|min:0|max:100',
-            'keterangan' => 'nullable|string',
-            'bukti_dokumen' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:5120',
-        ]);
+        try {
+            $file = $request->hasFile('bukti_dokumen') ? $request->file('bukti_dokumen') : null;
+            $progress = $this->progressService->createProgress($request->validated(), $file);
 
-        if ($validator->fails()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'IKU Progress created successfully',
+                'data' => new IKUProgressResource($progress),
+            ], 201);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors(),
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        $data = $request->except('bukti_dokumen');
-        $data['created_by'] = auth()->id() ?? 1; // Default to user ID 1 if not authenticated
-
-        // Handle file upload
-        if ($request->hasFile('bukti_dokumen')) {
-            $file = $request->file('bukti_dokumen');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('iku_progress_documents', $filename, 'public');
-            $data['bukti_dokumen'] = $path;
-        }
-
-        $progress = IKUProgress::create($data);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'IKU Progress created successfully',
-            'data' => $progress->load(['target.iku', 'creator']),
-        ], 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
-        $progress = IKUProgress::with([
-            'target.iku',
-            'target.tahunAkademik',
-            'target.unitKerja',
-            'target.programStudi',
-            'creator'
-        ])->find($id);
+        try {
+            $progress = $this->progressService->getProgressById($id);
 
-        if (!$progress) {
+            if (!$progress) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'IKU Progress not found',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => new IKUProgressResource($progress),
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'IKU Progress not found',
-            ], 404);
+                'message' => 'Failed to fetch IKU Progress',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'data' => $progress,
-        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateIKUProgressRequest $request, string $id): JsonResponse
     {
-        $progress = IKUProgress::find($id);
+        try {
+            $file = $request->hasFile('bukti_dokumen') ? $request->file('bukti_dokumen') : null;
+            $progress = $this->progressService->updateProgress($id, $request->validated(), $file);
 
-        if (!$progress) {
+            return response()->json([
+                'success' => true,
+                'message' => 'IKU Progress updated successfully',
+                'data' => new IKUProgressResource($progress),
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'IKU Progress not found',
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'iku_target_id' => 'required|exists:iku_targets,id',
-            'tanggal_capaian' => 'required|date',
-            'nilai_capaian' => 'required|numeric|min:0',
-            'persentase_capaian' => 'nullable|numeric|min:0|max:100',
-            'keterangan' => 'nullable|string',
-            'bukti_dokumen' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:5120',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors(),
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        $data = $request->except('bukti_dokumen');
-
-        // Handle file upload
-        if ($request->hasFile('bukti_dokumen')) {
-            // Delete old file if exists
-            if ($progress->bukti_dokumen && Storage::disk('public')->exists($progress->bukti_dokumen)) {
-                Storage::disk('public')->delete($progress->bukti_dokumen);
-            }
-
-            $file = $request->file('bukti_dokumen');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('iku_progress_documents', $filename, 'public');
-            $data['bukti_dokumen'] = $path;
-        }
-
-        $progress->update($data);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'IKU Progress updated successfully',
-            'data' => $progress->load(['target.iku', 'creator']),
-        ]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
-        $progress = IKUProgress::find($id);
+        try {
+            $this->progressService->deleteProgress($id);
 
-        if (!$progress) {
+            return response()->json([
+                'success' => true,
+                'message' => 'IKU Progress deleted successfully',
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'IKU Progress not found',
-            ], 404);
+                'message' => $e->getMessage(),
+            ], 422);
         }
-
-        // Delete associated file if exists
-        if ($progress->bukti_dokumen && Storage::disk('public')->exists($progress->bukti_dokumen)) {
-            Storage::disk('public')->delete($progress->bukti_dokumen);
-        }
-
-        $progress->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'IKU Progress deleted successfully',
-        ]);
     }
 
     /**
@@ -208,53 +155,102 @@ class IKUProgressController extends Controller
      */
     public function downloadDocument(string $id)
     {
-        $progress = IKUProgress::find($id);
+        try {
+            $document = $this->progressService->downloadDocument($id);
 
-        if (!$progress) {
+            return Storage::disk('public')->download($document['path'], $document['name']);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'IKU Progress not found',
+                'message' => $e->getMessage(),
             ], 404);
         }
-
-        if (!$progress->bukti_dokumen) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No document available',
-            ], 404);
-        }
-
-        if (!Storage::disk('public')->exists($progress->bukti_dokumen)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Document file not found',
-            ], 404);
-        }
-
-        return Storage::disk('public')->download($progress->bukti_dokumen);
     }
 
     /**
      * Get progress summary by target
      */
-    public function summaryByTarget(string $targetId)
+    public function summaryByTarget(string $targetId): JsonResponse
     {
-        $progress = IKUProgress::where('iku_target_id', $targetId)
-            ->with(['creator'])
-            ->orderBy('tanggal_capaian', 'desc')
-            ->get();
+        try {
+            $summary = $this->progressService->getProgressSummaryByTarget($targetId);
 
-        $summary = [
-            'total_entries' => $progress->count(),
-            'total_nilai_capaian' => $progress->sum('nilai_capaian'),
-            'avg_persentase_capaian' => $progress->avg('persentase_capaian'),
-            'latest_progress' => $progress->first(),
-            'progress_list' => $progress,
-        ];
+            return response()->json([
+                'success' => true,
+                'data' => $summary,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch progress summary',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
-        return response()->json([
-            'success' => true,
-            'data' => $summary,
-        ]);
+    /**
+     * Get recent progress entries
+     */
+    public function recent(Request $request): JsonResponse
+    {
+        try {
+            $days = $request->get('days', 30);
+            $limit = $request->get('limit', 10);
+
+            $progress = $this->progressService->getRecentProgress($days, $limit);
+
+            return response()->json([
+                'success' => true,
+                'data' => IKUProgressResource::collection($progress),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch recent progress',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get progress statistics for dashboard
+     */
+    public function statistics(): JsonResponse
+    {
+        try {
+            $statistics = $this->progressService->getStatistics();
+
+            return response()->json([
+                'success' => true,
+                'data' => $statistics,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch statistics',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get progress trend for charts
+     */
+    public function trend(string $targetId): JsonResponse
+    {
+        try {
+            $trend = $this->progressService->getProgressTrend($targetId);
+
+            return response()->json([
+                'success' => true,
+                'data' => $trend,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch progress trend',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
