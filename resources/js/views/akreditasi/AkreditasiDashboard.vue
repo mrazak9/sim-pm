@@ -1,4 +1,5 @@
 <template>
+  <MainLayout>
   <div class="akreditasi-dashboard">
     <!-- Page Header -->
     <div class="mb-6 flex items-center justify-between">
@@ -170,9 +171,11 @@
       </div>
     </div>
   </div>
+  </MainLayout>
 </template>
 
 <script setup>
+import MainLayout from '@/components/layout/MainLayout.vue'
 import { ref, onMounted } from 'vue'
 import { useAkreditasiApi } from '@/composables/useAkreditasiApi'
 
