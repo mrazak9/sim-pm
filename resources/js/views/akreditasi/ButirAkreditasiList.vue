@@ -102,7 +102,7 @@
             <select
               v-model="filters.instrumen"
               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
-              @change="fetchButirs"
+              @change="handleInstrumenChange"
             >
               <option value="">Semua Instrumen</option>
               <option v-for="ins in instrumenList" :key="ins" :value="ins">{{ ins }}</option>
@@ -382,47 +382,80 @@ const fetchButirs = async () => {
     })
 
     const response = await getButirList(params)
+    console.log('API Response:', response)
+    // response is already response.data from composable
     butirs.value = response.data || []
+    console.log('Butirs loaded:', butirs.value.length, 'items')
   } catch (error) {
     console.error('Failed to fetch butir akreditasi:', error)
+    console.error('Error response:', error.response?.data)
   }
 }
 
 const fetchInstrumen = async () => {
   try {
     const response = await getInstrumenList()
+    // response is already response.data from composable
     instrumenList.value = response.data || []
+    console.log('Instrumen loaded:', instrumenList.value)
   } catch (error) {
     console.error('Failed to fetch instrumen:', error)
   }
 }
 
-const fetchKategori = async () => {
+const fetchKategori = async (instrumen = null) => {
   try {
-    const instrumen = filters.value.instrumen || '4.0'
-    const response = await getKategoriList(instrumen)
-    kategoriList.value = response.data || []
+    // Use specified instrumen or from filters, fallback to empty string for all
+    const targetInstrumen = instrumen !== null ? instrumen : (filters.value.instrumen || '')
+
+    if (!targetInstrumen) {
+      // If no instrumen selected, get all kategori from all butir
+      const response = await getButirList({ per_page: 'all', template_only: butirMode.value === 'template' })
+      const butirs = response.data || []
+      const uniqueKategori = [...new Set(butirs.map(b => b.kategori).filter(k => k))]
+      kategoriList.value = uniqueKategori.sort()
+      console.log('Kategori loaded (all):', kategoriList.value)
+    } else {
+      const response = await getKategoriList(targetInstrumen)
+      // response is already response.data from composable
+      kategoriList.value = response.data || []
+      console.log('Kategori loaded for', targetInstrumen + ':', kategoriList.value)
+    }
   } catch (error) {
     console.error('Failed to fetch kategori:', error)
   }
 }
 
+const handleInstrumenChange = async () => {
+  // Reset kategori filter when instrumen changes
+  filters.value.kategori = ''
+  // Reload kategori based on selected instrumen
+  await fetchKategori(filters.value.instrumen)
+  // Reload butir list
+  await fetchButirs()
+}
+
 const fetchPeriodes = async () => {
   try {
     const response = await getPeriodeList({ per_page: 100 })
+    // response is already response.data from composable
     periodeList.value = response.data || []
+    console.log('Periodes loaded:', periodeList.value.length, 'items')
   } catch (error) {
     console.error('Failed to fetch periodes:', error)
   }
 }
 
-const changeButirMode = (mode) => {
+const changeButirMode = async (mode) => {
   butirMode.value = mode
   // Clear periode filter when switching to template mode
   if (mode === 'template') {
     filters.value.periode_akreditasi_id = ''
   }
-  fetchButirs()
+  // Reload kategori based on mode
+  await fetchKategori()
+  // Reload butir list
+  await fetchButirs()
 }
 
 let searchTimeout
