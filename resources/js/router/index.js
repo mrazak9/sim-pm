@@ -45,6 +45,19 @@ const routes = [
     component: () => import('@/views/iku/IKUList.vue'),
     meta: { requiresAuth: true },
   },
+  // Akreditasi Routes
+  {
+    path: '/akreditasi',
+    name: 'akreditasi-dashboard',
+    component: () => import('@/views/akreditasi/AkreditasiDashboard.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/akreditasi/periode',
+    name: 'periode-akreditasi-list',
+    component: () => import('@/views/akreditasi/PeriodeAkreditasiList.vue'),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
