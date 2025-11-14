@@ -182,6 +182,28 @@ class PeriodeAkreditasiController extends Controller
     }
 
     /**
+     * Get comprehensive dashboard data for periode akreditasi.
+     */
+    public function dashboard(string $id): JsonResponse
+    {
+        try {
+            $dashboardData = $this->periodeAkreditasiService->getDashboardData($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data dashboard berhasil diambil',
+                'data' => $dashboardData,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data dashboard',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Export periode akreditasi to PDF.
      */
     public function exportPDF(string $id)

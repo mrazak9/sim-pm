@@ -90,6 +90,20 @@ export function useAkreditasiApi() {
         }
     }
 
+    const getPeriodeDashboard = async (id) => {
+        loading.value = true
+        error.value = null
+        try {
+            const response = await axios.get(`/api/periode-akreditasi/${id}/dashboard`)
+            return response.data
+        } catch (err) {
+            error.value = err.response?.data?.message || err.message
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
     const exportPeriodePDF = async (id) => {
         try {
             const response = await axios.get(`/api/periode-akreditasi/${id}/export/pdf`, {
@@ -409,6 +423,7 @@ export function useAkreditasiApi() {
         updatePeriode,
         deletePeriode,
         getPeriodeStatistics,
+        getPeriodeDashboard,
         exportPeriodePDF,
         exportPeriodeExcel,
         // Butir Akreditasi
