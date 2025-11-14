@@ -40,9 +40,41 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Master Data Routes
+
+    // Unit Kerja Routes
+    Route::get('unit-kerja/active', [UnitKerjaController::class, 'active']);
+    Route::get('unit-kerja/by-jenis', [UnitKerjaController::class, 'byJenis']);
+    Route::get('unit-kerja/roots', [UnitKerjaController::class, 'roots']);
+    Route::get('unit-kerja/children/{parentId}', [UnitKerjaController::class, 'children']);
+    Route::get('unit-kerja/statistics', [UnitKerjaController::class, 'statistics']);
+    Route::post('unit-kerja/{id}/toggle-active', [UnitKerjaController::class, 'toggleActive']);
     Route::apiResource('unit-kerja', UnitKerjaController::class);
+
+    // Program Studi Routes
+    Route::get('program-studi/active', [ProgramStudiController::class, 'active']);
+    Route::get('program-studi/by-jenjang', [ProgramStudiController::class, 'byJenjang']);
+    Route::get('program-studi/by-unit-kerja', [ProgramStudiController::class, 'byUnitKerja']);
+    Route::get('program-studi/by-akreditasi', [ProgramStudiController::class, 'byAkreditasi']);
+    Route::get('program-studi/statistics', [ProgramStudiController::class, 'statistics']);
+    Route::post('program-studi/{id}/toggle-active', [ProgramStudiController::class, 'toggleActive']);
     Route::apiResource('program-studi', ProgramStudiController::class);
+
+    // Jabatan Routes
+    Route::get('jabatan/active', [JabatanController::class, 'active']);
+    Route::get('jabatan/by-kategori', [JabatanController::class, 'byKategori']);
+    Route::get('jabatan/by-level', [JabatanController::class, 'byLevel']);
+    Route::get('jabatan/categories', [JabatanController::class, 'categories']);
+    Route::get('jabatan/statistics', [JabatanController::class, 'statistics']);
+    Route::post('jabatan/{id}/toggle-active', [JabatanController::class, 'toggleActive']);
     Route::apiResource('jabatan', JabatanController::class);
+
+    // Tahun Akademik Routes
+    Route::get('tahun-akademik/active', [TahunAkademikController::class, 'active']);
+    Route::get('tahun-akademik/current', [TahunAkademikController::class, 'current']);
+    Route::get('tahun-akademik/upcoming', [TahunAkademikController::class, 'upcoming']);
+    Route::get('tahun-akademik/by-semester', [TahunAkademikController::class, 'bySemester']);
+    Route::get('tahun-akademik/statistics', [TahunAkademikController::class, 'statistics']);
+    Route::post('tahun-akademik/{id}/toggle-active', [TahunAkademikController::class, 'toggleActive']);
     Route::apiResource('tahun-akademik', TahunAkademikController::class);
 
     // User Management Routes
