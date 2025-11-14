@@ -1,7 +1,8 @@
 <template>
-  <div class="space-y-6">
-    <!-- Page Header with Action Button -->
-    <div class="flex items-center justify-between">
+  <MainLayout>
+    <div class="space-y-6">
+      <!-- Page Header with Action Button -->
+      <div class="flex items-center justify-between">
       <div>
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
           Dashboard IKU
@@ -154,11 +155,13 @@
         </div>
       </div>
     </div>
-  </div>
+    </div>
+  </MainLayout>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import MainLayout from '@/layouts/MainLayout.vue';
 import { useIKUApi } from '@/composables/useIKUApi';
 
 const { loading, getIKUs, getCategories } = useIKUApi();
