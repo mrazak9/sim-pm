@@ -25,7 +25,11 @@
       "Bash(app/Http/Controllers/Api/JabatanController.php.bak)",
       "Bash(cat app/Http/Controllers/Api/TahunAkademikController.php)",
       "Bash(app/Http/Controllers/Api/TahunAkademikController.php.bak)",
-      "Bash(php -l:*)"
+      "Bash(php -l:*)",
+      "Bash(dir:*)",
+      "Bash(nul)",
+      "Bash(findstr:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []
