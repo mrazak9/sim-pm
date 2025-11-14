@@ -47,6 +47,16 @@ class ButirAkreditasiRepository
             $query->where('is_mandatory', $filters['is_mandatory']);
         }
 
+        // Filter by periode_akreditasi_id
+        if (isset($filters['periode_akreditasi_id'])) {
+            $query->where('periode_akreditasi_id', $filters['periode_akreditasi_id']);
+        }
+
+        // Filter template only (butir without periode)
+        if (isset($filters['template_only']) && $filters['template_only']) {
+            $query->whereNull('periode_akreditasi_id');
+        }
+
         // Filter by parent_id (get children of specific parent)
         if (isset($filters['parent_id'])) {
             if ($filters['parent_id'] === 'null') {

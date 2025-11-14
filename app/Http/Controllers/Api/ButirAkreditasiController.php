@@ -31,6 +31,8 @@ class ButirAkreditasiController extends Controller
                 'parent_id',
                 'parent_only',
                 'is_mandatory',
+                'periode_akreditasi_id',
+                'template_only',
                 'search'
             ]);
             $perPage = $request->get('per_page', 15);

@@ -337,4 +337,211 @@ class ButirAkreditasiService
             throw $e;
         }
     }
+
+    /**
+     * Copy butir from template to periode
+     * This will copy all template butir with matching instrumen to a specific periode
+     *
+     * @param int $periodeId Target periode ID
+     * @param string $instrumen Instrumen to filter templates
+     * @return array ['copied_count' => int, 'butirs' => Collection]
+     */
+    public function copyButirFromTemplate(int $periodeId, string $instrumen): array
+    {
+        DB::beginTransaction();
+
+        try {
+            // Get all template butir with matching instrumen
+            $templateButirs = ButirAkreditasi::templatesOnly()
+                ->byInstrumen($instrumen)
+                ->orderBy('parent_id')
+                ->orderBy('urutan')
+                ->get();
+
+            if ($templateButirs->isEmpty()) {
+                throw new \Exception('Tidak ada template butir untuk instrumen ' . $instrumen);
+            }
+
+            // Check if periode already has butir
+            $existingCount = ButirAkreditasi::byPeriode($periodeId)->count();
+            if ($existingCount > 0) {
+                throw new \Exception('Periode ini sudah memiliki butir. Hapus butir existing terlebih dahulu atau gunakan opsi copy dari periode lain.');
+            }
+
+            $copiedButirs = collect();
+            $parentMap = []; // Map old parent_id to new parent_id
+
+            foreach ($templateButirs as $template) {
+                // Prepare data for new butir
+                $newButirData = [
+                    'kode' => $template->kode,
+                    'nama' => $template->nama,
+                    'deskripsi' => $template->deskripsi,
+                    'instrumen' => $template->instrumen,
+                    'periode_akreditasi_id' => $periodeId,
+                    'template_id' => $template->id,
+                    'kategori' => $template->kategori,
+                    'bobot' => $template->bobot,
+                    'urutan' => $template->urutan,
+                    'is_mandatory' => $template->is_mandatory,
+                    'metadata' => $template->metadata,
+                    'parent_id' => null, // Will be set later if needed
+                ];
+
+                // Map parent_id if exists
+                if ($template->parent_id && isset($parentMap[$template->parent_id])) {
+                    $newButirData['parent_id'] = $parentMap[$template->parent_id];
+                }
+
+                // Create new butir (skip kode uniqueness check for copies)
+                $newButir = ButirAkreditasi::create($newButirData);
+                $copiedButirs->push($newButir);
+
+                // Store mapping for children
+                $parentMap[$template->id] = $newButir->id;
+            }
+
+            DB::commit();
+            Log::info('Butir copied from template successfully', [
+                'periode_id' => $periodeId,
+                'instrumen' => $instrumen,
+                'copied_count' => $copiedButirs->count()
+            ]);
+
+            return [
+                'copied_count' => $copiedButirs->count(),
+                'butirs' => $copiedButirs,
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to copy butir from template', [
+                'error' => $e->getMessage(),
+                'periode_id' => $periodeId,
+                'instrumen' => $instrumen
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Copy butir from another periode
+     *
+     * @param int $sourcePeriodeId Source periode ID
+     * @param int $targetPeriodeId Target periode ID
+     * @return array ['copied_count' => int, 'butirs' => Collection]
+     */
+    public function copyButirFromPeriode(int $sourcePeriodeId, int $targetPeriodeId): array
+    {
+        DB::beginTransaction();
+
+        try {
+            // Get all butir from source periode
+            $sourceButirs = ButirAkreditasi::byPeriode($sourcePeriodeId)
+                ->orderBy('parent_id')
+                ->orderBy('urutan')
+                ->get();
+
+            if ($sourceButirs->isEmpty()) {
+                throw new \Exception('Periode sumber tidak memiliki butir');
+            }
+
+            // Check if target periode already has butir
+            $existingCount = ButirAkreditasi::byPeriode($targetPeriodeId)->count();
+            if ($existingCount > 0) {
+                throw new \Exception('Periode target sudah memiliki butir. Hapus butir existing terlebih dahulu.');
+            }
+
+            $copiedButirs = collect();
+            $parentMap = []; // Map old parent_id to new parent_id
+
+            foreach ($sourceButirs as $source) {
+                // Prepare data for new butir
+                $newButirData = [
+                    'kode' => $source->kode,
+                    'nama' => $source->nama,
+                    'deskripsi' => $source->deskripsi,
+                    'instrumen' => $source->instrumen,
+                    'periode_akreditasi_id' => $targetPeriodeId,
+                    'template_id' => $source->template_id, // Keep reference to original template
+                    'kategori' => $source->kategori,
+                    'bobot' => $source->bobot,
+                    'urutan' => $source->urutan,
+                    'is_mandatory' => $source->is_mandatory,
+                    'metadata' => $source->metadata,
+                    'parent_id' => null, // Will be set later if needed
+                ];
+
+                // Map parent_id if exists
+                if ($source->parent_id && isset($parentMap[$source->parent_id])) {
+                    $newButirData['parent_id'] = $parentMap[$source->parent_id];
+                }
+
+                // Create new butir
+                $newButir = ButirAkreditasi::create($newButirData);
+                $copiedButirs->push($newButir);
+
+                // Store mapping for children
+                $parentMap[$source->id] = $newButir->id;
+            }
+
+            DB::commit();
+            Log::info('Butir copied from periode successfully', [
+                'source_periode_id' => $sourcePeriodeId,
+                'target_periode_id' => $targetPeriodeId,
+                'copied_count' => $copiedButirs->count()
+            ]);
+
+            return [
+                'copied_count' => $copiedButirs->count(),
+                'butirs' => $copiedButirs,
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to copy butir from periode', [
+                'error' => $e->getMessage(),
+                'source_periode_id' => $sourcePeriodeId,
+                'target_periode_id' => $targetPeriodeId
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Get template butir by instrumen
+     */
+    public function getTemplatesByInstrumen(string $instrumen): Collection
+    {
+        return ButirAkreditasi::templatesOnly()
+            ->byInstrumen($instrumen)
+            ->orderBy('urutan')
+            ->get();
+    }
+
+    /**
+     * Get butir by periode
+     */
+    public function getByPeriode(int $periodeId): Collection
+    {
+        return ButirAkreditasi::byPeriode($periodeId)
+            ->orderBy('urutan')
+            ->get();
+    }
+
+    /**
+     * Count template butir by instrumen
+     */
+    public function countTemplatesByInstrumen(string $instrumen): int
+    {
+        return ButirAkreditasi::templatesOnly()
+            ->byInstrumen($instrumen)
+            ->count();
+    }
+
+    /**
+     * Count butir by periode
+     */
+    public function countByPeriode(int $periodeId): int
+    {
+        return ButirAkreditasi::byPeriode($periodeId)->count();
+    }
 }

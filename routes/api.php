@@ -117,6 +117,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('periode-akreditasi/{id}/gap-analysis', [PeriodeAkreditasiController::class, 'gapAnalysis']);
     Route::get('periode-akreditasi/{id}/export/pdf', [PeriodeAkreditasiController::class, 'exportPDF']);
     Route::get('periode-akreditasi/{id}/export/excel', [PeriodeAkreditasiController::class, 'exportExcel']);
+    Route::post('periode-akreditasi/{id}/copy-butir-from-template', [PeriodeAkreditasiController::class, 'copyButirFromTemplate']);
+    Route::post('periode-akreditasi/{id}/copy-butir-from-periode', [PeriodeAkreditasiController::class, 'copyButirFromPeriode']);
+    Route::get('periode-akreditasi/{id}/butir-count', [PeriodeAkreditasiController::class, 'getButirCount']);
+    Route::get('periode-akreditasi/template-count', [PeriodeAkreditasiController::class, 'getTemplateCount']);
     Route::apiResource('periode-akreditasi', PeriodeAkreditasiController::class);
 
     // Butir Akreditasi Routes
