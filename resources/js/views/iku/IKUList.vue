@@ -1,14 +1,15 @@
 <template>
-  <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
-    <!-- Header -->
-    <div class="border-b border-stroke px-7 py-4 dark:border-strokedark">
+  <MainLayout>
+    <div class="rounded-lg border border-gray-200 bg-white shadow dark:border-gray-700 dark:bg-gray-800">
+      <!-- Header -->
+      <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
       <div class="flex items-center justify-between">
-        <h3 class="font-medium text-black dark:text-white">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
           Daftar Indikator Kinerja Utama (IKU)
         </h3>
         <button
           @click="openCreateForm"
-          class="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-center font-medium text-white hover:bg-opacity-90"
+          class="inline-flex items-center justify-center rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300"
         >
           <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -19,21 +20,21 @@
     </div>
 
     <!-- Filters -->
-    <div class="border-b border-stroke px-7 py-4 dark:border-strokedark">
+    <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
       <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
         <div>
           <input
             v-model="filters.search"
             type="text"
             placeholder="Cari IKU..."
-            class="w-full rounded border border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary dark:border-strokedark dark:text-white"
+            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
             @input="debouncedSearch"
           />
         </div>
         <div>
           <select
             v-model="filters.is_active"
-            class="w-full rounded border border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary dark:border-strokedark dark:text-white"
+            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
             @change="fetchIKUs"
           >
             <option value="">Semua Status</option>
@@ -44,7 +45,7 @@
         <div>
           <select
             v-model="filters.kategori"
-            class="w-full rounded border border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary dark:border-strokedark dark:text-white"
+            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
             @change="fetchIKUs"
           >
             <option value="">Semua Kategori</option>
@@ -54,7 +55,7 @@
         <div>
           <select
             v-model="filters.target_type"
-            class="w-full rounded border border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary dark:border-strokedark dark:text-white"
+            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
             @change="fetchIKUs"
           >
             <option value="">Semua Tipe Target</option>
@@ -67,24 +68,24 @@
 
     <!-- Table -->
     <div class="overflow-x-auto">
-      <table class="w-full table-auto">
-        <thead>
-          <tr class="bg-gray-2 text-left dark:bg-meta-4">
-            <th class="px-4 py-4 font-medium text-black dark:text-white">Kode IKU</th>
-            <th class="px-4 py-4 font-medium text-black dark:text-white">Nama IKU</th>
-            <th class="px-4 py-4 font-medium text-black dark:text-white">Kategori</th>
-            <th class="px-4 py-4 font-medium text-black dark:text-white">Satuan</th>
-            <th class="px-4 py-4 font-medium text-black dark:text-white">Tipe Target</th>
-            <th class="px-4 py-4 font-medium text-black dark:text-white">Bobot</th>
-            <th class="px-4 py-4 font-medium text-black dark:text-white">Status</th>
-            <th class="px-4 py-4 font-medium text-black dark:text-white">Aksi</th>
+      <table class="w-full text-left text-sm text-gray-500 dark:text-gray-400">
+        <thead class="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400">
+          <tr>
+            <th scope="col" class="px-6 py-3">Kode IKU</th>
+            <th scope="col" class="px-6 py-3">Nama IKU</th>
+            <th scope="col" class="px-6 py-3">Kategori</th>
+            <th scope="col" class="px-6 py-3">Satuan</th>
+            <th scope="col" class="px-6 py-3">Tipe Target</th>
+            <th scope="col" class="px-6 py-3">Bobot</th>
+            <th scope="col" class="px-6 py-3">Status</th>
+            <th scope="col" class="px-6 py-3">Aksi</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="8" class="px-4 py-8 text-center">
+            <td colspan="8" class="px-6 py-8 text-center">
               <div class="flex items-center justify-center">
-                <svg class="h-8 w-8 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+                <svg class="h-8 w-8 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -92,50 +93,54 @@
             </td>
           </tr>
           <tr v-else-if="ikus.length === 0">
-            <td colspan="8" class="px-4 py-8 text-center text-black dark:text-white">
+            <td colspan="8" class="px-6 py-8 text-center text-gray-900 dark:text-white">
               Tidak ada data IKU
             </td>
           </tr>
-          <tr v-else v-for="iku in ikus" :key="iku.id" class="border-b border-stroke dark:border-strokedark">
-            <td class="px-4 py-4">
-              <p class="text-black dark:text-white">{{ iku.kode_iku }}</p>
+          <tr v-else v-for="iku in ikus" :key="iku.id" class="border-b border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+              {{ iku.kode_iku }}
             </td>
-            <td class="px-4 py-4">
-              <p class="text-black dark:text-white">{{ iku.nama_iku }}</p>
-              <p v-if="iku.deskripsi" class="text-sm text-gray-500">{{ truncate(iku.deskripsi, 50) }}</p>
+            <td class="px-6 py-4">
+              <p class="font-medium text-gray-900 dark:text-white">{{ iku.nama_iku }}</p>
+              <p v-if="iku.deskripsi" class="text-xs text-gray-500 dark:text-gray-400">{{ truncate(iku.deskripsi, 50) }}</p>
             </td>
-            <td class="px-4 py-4">
-              <span class="inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium bg-success text-success">
+            <td class="px-6 py-4">
+              <span class="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                 {{ iku.kategori || '-' }}
               </span>
             </td>
-            <td class="px-4 py-4">
-              <p class="text-black dark:text-white">{{ getSatuanLabel(iku.satuan) }}</p>
+            <td class="px-6 py-4 text-gray-900 dark:text-white">
+              {{ getSatuanLabel(iku.satuan) }}
             </td>
-            <td class="px-4 py-4">
+            <td class="px-6 py-4">
               <span :class="[
-                'inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium',
-                iku.target_type === 'increase' ? 'bg-success text-success' : 'bg-warning text-warning'
+                'inline-flex rounded-full px-3 py-1 text-xs font-medium',
+                iku.target_type === 'increase'
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
               ]">
                 {{ iku.target_type === 'increase' ? 'Meningkat' : 'Menurun' }}
               </span>
             </td>
-            <td class="px-4 py-4">
-              <p class="text-black dark:text-white">{{ iku.bobot || '-' }}</p>
+            <td class="px-6 py-4 text-gray-900 dark:text-white">
+              {{ iku.bobot || '-' }}
             </td>
-            <td class="px-4 py-4">
+            <td class="px-6 py-4">
               <span :class="[
-                'inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium',
-                iku.is_active ? 'bg-success text-success' : 'bg-danger text-danger'
+                'inline-flex rounded-full px-3 py-1 text-xs font-medium',
+                iku.is_active
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
               ]">
                 {{ iku.is_active ? 'Aktif' : 'Tidak Aktif' }}
               </span>
             </td>
-            <td class="px-4 py-4">
-              <div class="flex items-center space-x-2">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-2">
                 <button
                   @click="viewIKU(iku)"
-                  class="hover:text-primary"
+                  class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                   title="Lihat Detail"
                 >
                   <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,7 +150,7 @@
                 </button>
                 <button
                   @click="editIKU(iku)"
-                  class="hover:text-primary"
+                  class="text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 dark:hover:text-yellow-300"
                   title="Edit"
                 >
                   <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,7 +159,7 @@
                 </button>
                 <button
                   @click="confirmDelete(iku)"
-                  class="hover:text-danger"
+                  class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                   title="Hapus"
                 >
                   <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,15 +174,17 @@
     </div>
 
     <!-- Pagination -->
-    <div v-if="pagination.total > 0" class="flex items-center justify-between border-t border-stroke px-7 py-4 dark:border-strokedark">
-      <div class="text-sm text-black dark:text-white">
-        Menampilkan {{ pagination.from }} sampai {{ pagination.to }} dari {{ pagination.total }} data
+    <div v-if="pagination.total > 0" class="flex items-center justify-between border-t border-gray-200 px-6 py-4 dark:border-gray-700">
+      <div class="text-sm text-gray-700 dark:text-gray-400">
+        Menampilkan <span class="font-medium text-gray-900 dark:text-white">{{ pagination.from }}</span> sampai
+        <span class="font-medium text-gray-900 dark:text-white">{{ pagination.to }}</span> dari
+        <span class="font-medium text-gray-900 dark:text-white">{{ pagination.total }}</span> data
       </div>
       <div class="flex items-center space-x-2">
         <button
           @click="changePage(pagination.current_page - 1)"
           :disabled="pagination.current_page === 1"
-          class="rounded border border-stroke px-3 py-1 hover:bg-gray dark:border-strokedark disabled:cursor-not-allowed disabled:opacity-50"
+          class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
         >
           Previous
         </button>
@@ -186,10 +193,10 @@
           :key="page"
           @click="changePage(page)"
           :class="[
-            'rounded border px-3 py-1',
+            'rounded-lg border px-3 py-2 text-sm font-medium',
             page === pagination.current_page
-              ? 'bg-primary text-white border-primary'
-              : 'border-stroke hover:bg-gray dark:border-strokedark'
+              ? 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700'
+              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
           ]"
         >
           {{ page }}
@@ -197,18 +204,20 @@
         <button
           @click="changePage(pagination.current_page + 1)"
           :disabled="pagination.current_page === pagination.last_page"
-          class="rounded border border-stroke px-3 py-1 hover:bg-gray dark:border-strokedark disabled:cursor-not-allowed disabled:opacity-50"
+          class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
         >
           Next
         </button>
       </div>
     </div>
-  </div>
+    </div>
+  </MainLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import MainLayout from '@/layouts/MainLayout.vue';
 import { useIKUApi } from '@/composables/useIKUApi';
 
 const router = useRouter();
@@ -318,7 +327,7 @@ const openCreateForm = () => {
 };
 
 const viewIKU = (iku) => {
-  router.push({ name: 'iku-detail', params: { id: iku.id } });
+  router.push({ name: 'iku-edit', params: { id: iku.id } });
 };
 
 const editIKU = (iku) => {
