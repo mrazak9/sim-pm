@@ -285,11 +285,14 @@ const fetchDashboardData = async () => {
       sort_order: 'asc',
     })
 
-    periodes.value = response.data.data || []
+    // response is already response.data from composable
+    periodes.value = response.data || []
+    console.log('Active periodes loaded:', periodes.value.length)
 
     // Calculate stats
     const allPeriodesResponse = await getPeriodeList({ per_page: 100 })
-    allPeriodes.value = allPeriodesResponse.data.data || []
+    allPeriodes.value = allPeriodesResponse.data || []
+    console.log('All periodes loaded:', allPeriodes.value.length)
 
     stats.value = {
       total: allPeriodes.value.length,
@@ -297,6 +300,7 @@ const fetchDashboardData = async () => {
       completed: allPeriodes.value.filter(p => p.status === 'selesai').length,
       institusi: allPeriodes.value.filter(p => p.jenis_akreditasi === 'institusi').length,
     }
+    console.log('Stats calculated:', stats.value)
   } catch (error) {
     console.error('Error fetching dashboard data:', error)
   }

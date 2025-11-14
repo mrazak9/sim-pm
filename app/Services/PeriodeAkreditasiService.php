@@ -36,11 +36,35 @@ class PeriodeAkreditasiService
     }
 
     /**
+     * Get all periode akreditasi with filters, pagination and sorting (alias for paginate)
+     */
+    public function getAllPeriodeAkreditasi(
+        array $filters = [],
+        int $perPage = 15,
+        string $sortBy = 'created_at',
+        string $sortOrder = 'desc'
+    ): LengthAwarePaginator {
+        // Add sorting to filters
+        $filters['sort_by'] = $sortBy;
+        $filters['sort_order'] = $sortOrder;
+
+        return $this->paginate($filters, $perPage);
+    }
+
+    /**
      * Get periode akreditasi by ID
      */
     public function findById(int $id): ?PeriodeAkreditasi
     {
         return $this->repository->findById($id);
+    }
+
+    /**
+     * Get periode akreditasi by ID (alias for findById)
+     */
+    public function getPeriodeAkreditasiById(int $id): ?PeriodeAkreditasi
+    {
+        return $this->findById($id);
     }
 
     /**
@@ -86,6 +110,14 @@ class PeriodeAkreditasiService
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * Create new periode akreditasi (alias for create)
+     */
+    public function createPeriodeAkreditasi(array $data): PeriodeAkreditasi
+    {
+        return $this->create($data);
     }
 
     /**
@@ -137,6 +169,14 @@ class PeriodeAkreditasiService
     }
 
     /**
+     * Update periode akreditasi (alias for update)
+     */
+    public function updatePeriodeAkreditasi(int $id, array $data): PeriodeAkreditasi
+    {
+        return $this->update($id, $data);
+    }
+
+    /**
      * Delete periode akreditasi
      */
     public function delete(int $id): bool
@@ -177,6 +217,14 @@ class PeriodeAkreditasiService
     }
 
     /**
+     * Delete periode akreditasi (alias for delete)
+     */
+    public function deletePeriodeAkreditasi(int $id): bool
+    {
+        return $this->delete($id);
+    }
+
+    /**
      * Get active periode akreditasi
      */
     public function getActive(): Collection
@@ -195,7 +243,8 @@ class PeriodeAkreditasiService
             throw new \Exception('Periode Akreditasi tidak ditemukan');
         }
 
-        $totalButir = $periode->butirAkreditasis()->count();
+        // Get total butir from pengisian butir (unique butir_akreditasi_id)
+        $totalButir = $periode->pengisianButirs()->distinct('butir_akreditasi_id')->count('butir_akreditasi_id');
         $totalPengisian = $periode->pengisianButirs()->count();
 
         // Count by status
@@ -236,7 +285,6 @@ class PeriodeAkreditasiService
 
         // Load relationships
         $periode->load([
-            'butirAkreditasis',
             'pengisianButirs.butirAkreditasi',
             'pengisianButirs.picUser',
             'dokumenAkreditasis'
@@ -251,7 +299,7 @@ class PeriodeAkreditasiService
             ->select(
                 'butir_akreditasis.kategori',
                 DB::raw('COUNT(*) as total'),
-                DB::raw('SUM(CASE WHEN pengisian_butirs.status = "approved" THEN 1 ELSE 0 END) as approved')
+                DB::raw("SUM(CASE WHEN pengisian_butirs.status = 'approved' THEN 1 ELSE 0 END) as approved")
             )
             ->groupBy('butir_akreditasis.kategori')
             ->get()
@@ -290,7 +338,7 @@ class PeriodeAkreditasiService
             ->select(
                 'pic_user_id',
                 DB::raw('COUNT(*) as total_butir'),
-                DB::raw('SUM(CASE WHEN status = "approved" THEN 1 ELSE 0 END) as approved_butir'),
+                DB::raw("SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved_butir"),
                 DB::raw('AVG(completion_percentage) as avg_completion')
             )
             ->whereNotNull('pic_user_id')
@@ -347,7 +395,7 @@ class PeriodeAkreditasiService
                 ->where('updated_at', '<=', $date->endOfDay())
                 ->count();
 
-            $totalButir = $periode->butirAkreditasis()->count();
+            $totalButir = $periode->pengisianButirs()->distinct('butir_akreditasi_id')->count('butir_akreditasi_id');
             $percentage = $totalButir > 0 ? round(($approvedCount / $totalButir) * 100, 2) : 0;
 
             $trendData[] = [
