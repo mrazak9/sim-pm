@@ -15,6 +15,8 @@ class ButirAkreditasi extends Model
         'nama',
         'deskripsi',
         'instrumen',
+        'periode_akreditasi_id',
+        'template_id',
         'kategori',
         'bobot',
         'parent_id',
@@ -43,6 +45,21 @@ class ButirAkreditasi extends Model
         return $this->hasMany(ButirAkreditasi::class, 'parent_id')->orderBy('urutan');
     }
 
+    public function periodeAkreditasi()
+    {
+        return $this->belongsTo(PeriodeAkreditasi::class, 'periode_akreditasi_id');
+    }
+
+    public function template()
+    {
+        return $this->belongsTo(ButirAkreditasi::class, 'template_id');
+    }
+
+    public function copiedButirs()
+    {
+        return $this->hasMany(ButirAkreditasi::class, 'template_id');
+    }
+
     public function pengisianButirs()
     {
         return $this->hasMany(PengisianButir::class);
@@ -62,6 +79,16 @@ class ButirAkreditasi extends Model
     public function scopeByInstrumen($query, $instrumen)
     {
         return $query->where('instrumen', $instrumen);
+    }
+
+    public function scopeTemplatesOnly($query)
+    {
+        return $query->whereNull('periode_akreditasi_id');
+    }
+
+    public function scopeByPeriode($query, $periodeId)
+    {
+        return $query->where('periode_akreditasi_id', $periodeId);
     }
 
     public function scopeParentOnly($query)

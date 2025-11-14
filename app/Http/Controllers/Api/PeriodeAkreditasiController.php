@@ -7,16 +7,21 @@ use App\Http\Requests\Akreditasi\StorePeriodeAkreditasiRequest;
 use App\Http\Requests\Akreditasi\UpdatePeriodeAkreditasiRequest;
 use App\Http\Resources\Akreditasi\PeriodeAkreditasiResource;
 use App\Services\PeriodeAkreditasiService;
+use App\Services\ButirAkreditasiService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class PeriodeAkreditasiController extends Controller
 {
     protected PeriodeAkreditasiService $periodeAkreditasiService;
+    protected ButirAkreditasiService $butirAkreditasiService;
 
-    public function __construct(PeriodeAkreditasiService $periodeAkreditasiService)
-    {
+    public function __construct(
+        PeriodeAkreditasiService $periodeAkreditasiService,
+        ButirAkreditasiService $butirAkreditasiService
+    ) {
         $this->periodeAkreditasiService = $periodeAkreditasiService;
+        $this->butirAkreditasiService = $butirAkreditasiService;
     }
 
     /**
@@ -204,6 +209,28 @@ class PeriodeAkreditasiController extends Controller
     }
 
     /**
+     * Get gap analysis for periode akreditasi.
+     */
+    public function gapAnalysis(string $id): JsonResponse
+    {
+        try {
+            $gapAnalysis = $this->periodeAkreditasiService->getGapAnalysis($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Gap analysis berhasil diambil',
+                'data' => $gapAnalysis,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil gap analysis',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Export periode akreditasi to PDF.
      */
     public function exportPDF(string $id)
@@ -237,6 +264,141 @@ class PeriodeAkreditasiController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal export Excel',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Copy butir from template to periode.
+     */
+    public function copyButirFromTemplate(Request $request, string $id): JsonResponse
+    {
+        try {
+            $periode = $this->periodeAkreditasiService->getPeriodeAkreditasiById($id);
+
+            if (!$periode) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Periode akreditasi tidak ditemukan',
+                ], 404);
+            }
+
+            // Use instrumen from periode
+            $instrumen = $periode->instrumen;
+
+            if (!$instrumen) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Periode belum memiliki instrumen yang ditentukan',
+                ], 422);
+            }
+
+            $result = $this->butirAkreditasiService->copyButirFromTemplate($id, $instrumen);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Butir berhasil di-copy dari template',
+                'data' => [
+                    'copied_count' => $result['copied_count'],
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal copy butir dari template',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Copy butir from another periode.
+     */
+    public function copyButirFromPeriode(Request $request, string $id): JsonResponse
+    {
+        $request->validate([
+            'source_periode_id' => 'required|integer|exists:periode_akreditasis,id',
+        ]);
+
+        try {
+            $sourcePeriodeId = $request->input('source_periode_id');
+
+            // Validate that source and target are different
+            if ($sourcePeriodeId == $id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Periode sumber dan target tidak boleh sama',
+                ], 422);
+            }
+
+            $result = $this->butirAkreditasiService->copyButirFromPeriode($sourcePeriodeId, $id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Butir berhasil di-copy dari periode lain',
+                'data' => [
+                    'copied_count' => $result['copied_count'],
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal copy butir dari periode lain',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get butir count for periode.
+     */
+    public function getButirCount(string $id): JsonResponse
+    {
+        try {
+            $count = $this->butirAkreditasiService->countByPeriode($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Jumlah butir berhasil diambil',
+                'data' => [
+                    'count' => $count,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil jumlah butir',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get template count by instrumen.
+     */
+    public function getTemplateCount(Request $request): JsonResponse
+    {
+        $request->validate([
+            'instrumen' => 'required|string',
+        ]);
+
+        try {
+            $instrumen = $request->input('instrumen');
+            $count = $this->butirAkreditasiService->countTemplatesByInstrumen($instrumen);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Jumlah template butir berhasil diambil',
+                'data' => [
+                    'count' => $count,
+                    'instrumen' => $instrumen,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil jumlah template butir',
                 'error' => $e->getMessage(),
             ], 500);
         }

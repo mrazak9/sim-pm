@@ -104,6 +104,20 @@ export function useAkreditasiApi() {
         }
     }
 
+    const getGapAnalysis = async (id) => {
+        loading.value = true
+        error.value = null
+        try {
+            const response = await axios.get(`/api/periode-akreditasi/${id}/gap-analysis`)
+            return response.data
+        } catch (err) {
+            error.value = err.response?.data?.message || err.message
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
     const exportPeriodePDF = async (id) => {
         try {
             const response = await axios.get(`/api/periode-akreditasi/${id}/export/pdf`, {
@@ -122,6 +136,58 @@ export function useAkreditasiApi() {
                 responseType: 'blob'
             })
             return response
+        } catch (err) {
+            error.value = err.response?.data?.message || err.message
+            throw err
+        }
+    }
+
+    const copyButirFromTemplate = async (id) => {
+        loading.value = true
+        error.value = null
+        try {
+            const response = await axios.post(`/api/periode-akreditasi/${id}/copy-butir-from-template`)
+            return response.data
+        } catch (err) {
+            error.value = err.response?.data?.message || err.message
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
+    const copyButirFromPeriode = async (id, sourcePeriodeId) => {
+        loading.value = true
+        error.value = null
+        try {
+            const response = await axios.post(`/api/periode-akreditasi/${id}/copy-butir-from-periode`, {
+                source_periode_id: sourcePeriodeId
+            })
+            return response.data
+        } catch (err) {
+            error.value = err.response?.data?.message || err.message
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
+    const getButirCount = async (id) => {
+        try {
+            const response = await axios.get(`/api/periode-akreditasi/${id}/butir-count`)
+            return response.data
+        } catch (err) {
+            error.value = err.response?.data?.message || err.message
+            throw err
+        }
+    }
+
+    const getTemplateCount = async (instrumen) => {
+        try {
+            const response = await axios.get('/api/periode-akreditasi/template-count', {
+                params: { instrumen }
+            })
+            return response.data
         } catch (err) {
             error.value = err.response?.data?.message || err.message
             throw err
@@ -424,8 +490,13 @@ export function useAkreditasiApi() {
         deletePeriode,
         getPeriodeStatistics,
         getPeriodeDashboard,
+        getGapAnalysis,
         exportPeriodePDF,
         exportPeriodeExcel,
+        copyButirFromTemplate,
+        copyButirFromPeriode,
+        getButirCount,
+        getTemplateCount,
         // Butir Akreditasi
         getButirList,
         getButirByKategori,

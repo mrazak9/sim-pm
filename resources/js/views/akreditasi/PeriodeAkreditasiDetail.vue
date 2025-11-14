@@ -28,7 +28,16 @@
               Detail periode akreditasi {{ periode.jenis_akreditasi }}
             </p>
           </div>
-          <div class="flex gap-2">
+          <div class="flex flex-wrap gap-2">
+            <button
+              @click="showImportModal = true"
+              class="inline-flex items-center rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+            >
+              <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Import Butir
+            </button>
             <button
               @click="handleExportPDF"
               :disabled="exporting"
@@ -80,6 +89,11 @@
         <!-- Progress Dashboard -->
         <div class="mb-6">
           <AkreditasiProgressDashboard :periode-id="periode.id" ref="dashboardRef" />
+        </div>
+
+        <!-- Gap Analysis Panel -->
+        <div class="mb-6">
+          <GapAnalysisPanel :periode-id="periode.id" ref="gapAnalysisRef" />
         </div>
 
         <!-- Main Content Grid -->
@@ -244,6 +258,14 @@
           </div>
         </div>
       </div>
+
+      <!-- Import Butir Modal -->
+      <ImportButirModal
+        :is-open="showImportModal"
+        :periode="periode"
+        @close="showImportModal = false"
+        @success="handleImportSuccess"
+      />
     </div>
   </MainLayout>
 </template>
@@ -254,12 +276,15 @@ import { useRoute } from 'vue-router'
 import { useAkreditasiApi } from '@/composables/useAkreditasiApi'
 import MainLayout from '@/layouts/MainLayout.vue'
 import AkreditasiProgressDashboard from '@/components/akreditasi/AkreditasiProgressDashboard.vue'
+import GapAnalysisPanel from '@/components/akreditasi/GapAnalysisPanel.vue'
+import ImportButirModal from '@/components/akreditasi/ImportButirModal.vue'
 
 const route = useRoute()
 const { loading, error, getPeriodeDetail, exportPeriodePDF, exportPeriodeExcel } = useAkreditasiApi()
 
 const periode = ref(null)
 const exporting = ref(false)
+const showImportModal = ref(false)
 
 const fetchPeriodeDetail = async () => {
   try {
@@ -314,14 +339,10 @@ const handleExportExcel = async () => {
   }
 }
 
-const handlePrintReport = () => {
-  // Show options modal for print format
-  const choice = confirm('Pilih format laporan:\n\nOK = PDF\nCancel = Excel')
-  if (choice) {
-    handleExportPDF()
-  } else {
-    handleExportExcel()
-  }
+const handleImportSuccess = () => {
+  // Refresh data after successful import
+  fetchPeriodeDetail()
+  // Close modal is handled by the modal component itself after showing success message
 }
 
 const formatDate = (date) => {
