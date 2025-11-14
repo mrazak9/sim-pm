@@ -7,8 +7,11 @@ use App\Http\Requests\IKU\StoreIKURequest;
 use App\Http\Requests\IKU\UpdateIKURequest;
 use App\Http\Resources\IKUResource;
 use App\Services\IKUService;
+use App\Exports\IKUExport;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class IKUController extends Controller
 {
@@ -201,6 +204,44 @@ class IKUController extends Controller
                 'success' => false,
                 'message' => $e->getMessage(),
             ], 422);
+        }
+    }
+
+    /**
+     * Export IKU data to Excel
+     */
+    public function exportExcel()
+    {
+        try {
+            $filename = 'iku_data_' . date('Y-m-d_His') . '.xlsx';
+            return Excel::download(new IKUExport(), $filename);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to export IKU data',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Export IKU data to PDF
+     */
+    public function exportPDF()
+    {
+        try {
+            $ikus = \App\Models\IKU::with('unitKerja')->orderBy('kode_iku')->get();
+
+            $pdf = Pdf::loadView('exports.iku-pdf', compact('ikus'));
+            $filename = 'iku_data_' . date('Y-m-d_His') . '.pdf';
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to export IKU data to PDF',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 }

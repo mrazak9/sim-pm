@@ -3,58 +3,58 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\PeriodeAkreditasi;
+use App\Http\Requests\Akreditasi\StorePeriodeAkreditasiRequest;
+use App\Http\Requests\Akreditasi\UpdatePeriodeAkreditasiRequest;
+use App\Http\Resources\Akreditasi\PeriodeAkreditasiResource;
+use App\Services\PeriodeAkreditasiService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\JsonResponse;
 
 class PeriodeAkreditasiController extends Controller
 {
+    protected PeriodeAkreditasiService $periodeAkreditasiService;
+
+    public function __construct(PeriodeAkreditasiService $periodeAkreditasiService)
+    {
+        $this->periodeAkreditasiService = $periodeAkreditasiService;
+    }
+
     /**
      * Display a listing of periode akreditasi.
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         try {
-            $query = PeriodeAkreditasi::with(['unitKerja', 'programStudi']);
-
-            // Filter by jenis_akreditasi
-            if ($request->has('jenis_akreditasi')) {
-                $query->where('jenis_akreditasi', $request->jenis_akreditasi);
-            }
-
-            // Filter by lembaga
-            if ($request->has('lembaga')) {
-                $query->where('lembaga', $request->lembaga);
-            }
-
-            // Filter by status
-            if ($request->has('status')) {
-                $query->where('status', $request->status);
-            }
-
-            // Filter by program_studi_id
-            if ($request->has('program_studi_id')) {
-                $query->where('program_studi_id', $request->program_studi_id);
-            }
-
-            // Search by nama
-            if ($request->has('search')) {
-                $query->where('nama', 'like', '%' . $request->search . '%');
-            }
-
-            // Sorting
+            $filters = $request->only([
+                'jenis_akreditasi',
+                'lembaga',
+                'status',
+                'program_studi_id',
+                'search'
+            ]);
+            $perPage = $request->get('per_page', 15);
             $sortBy = $request->get('sort_by', 'created_at');
             $sortOrder = $request->get('sort_order', 'desc');
-            $query->orderBy($sortBy, $sortOrder);
 
-            // Pagination
-            $perPage = $request->get('per_page', 15);
-            $periodes = $query->paginate($perPage);
+            $periodes = $this->periodeAkreditasiService->getAllPeriodeAkreditasi(
+                $filters,
+                $perPage,
+                $sortBy,
+                $sortOrder
+            );
 
             return response()->json([
                 'success' => true,
                 'message' => 'Data periode akreditasi berhasil diambil',
-                'data' => $periodes,
+                'data' => PeriodeAkreditasiResource::collection($periodes)->response()->getData(true)['data'],
+                'meta' => [
+                    'current_page' => $periodes->currentPage(),
+                    'from' => $periodes->firstItem(),
+                    'last_page' => $periodes->lastPage(),
+                    'per_page' => $periodes->perPage(),
+                    'to' => $periodes->lastItem(),
+                    'total' => $periodes->total(),
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -68,88 +68,44 @@ class PeriodeAkreditasiController extends Controller
     /**
      * Store a newly created periode akreditasi.
      */
-    public function store(Request $request)
+    public function store(StorePeriodeAkreditasiRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'nama' => 'required|string|max:255',
-            'jenis_akreditasi' => 'required|in:institusi,program_studi',
-            'lembaga' => 'required|in:BAN-PT,LAM,Internasional',
-            'instrumen' => 'nullable|string|max:50',
-            'jenjang' => 'nullable|string|max:10',
-            'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
-            'program_studi_id' => 'nullable|exists:program_studis,id',
-            'tanggal_mulai' => 'nullable|date',
-            'deadline_pengumpulan' => 'nullable|date|after:tanggal_mulai',
-            'jadwal_visitasi' => 'nullable|date|after:deadline_pengumpulan',
-            'tanggal_berakhir' => 'nullable|date|after:jadwal_visitasi',
-            'status' => 'nullable|in:persiapan,pengisian,review,submit,visitasi,selesai',
-            'keterangan' => 'nullable|string',
-            'metadata' => 'nullable|array',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
         try {
-            // Clean up empty date fields
-            $data = $request->all();
-            $dateFields = ['tanggal_mulai', 'deadline_pengumpulan', 'jadwal_visitasi', 'tanggal_berakhir'];
-
-            foreach ($dateFields as $field) {
-                if (isset($data[$field]) && empty($data[$field])) {
-                    $data[$field] = null;
-                }
-            }
-
-            $periode = PeriodeAkreditasi::create($data);
+            $periode = $this->periodeAkreditasiService->createPeriodeAkreditasi($request->validated());
 
             return response()->json([
                 'success' => true,
                 'message' => 'Periode akreditasi berhasil dibuat',
-                'data' => $periode->load(['unitKerja', 'programStudi']),
+                'data' => new PeriodeAkreditasiResource($periode),
             ], 201);
         } catch (\Exception $e) {
-            \Log::error('Error creating periode akreditasi: ' . $e->getMessage(), [
-                'request' => $request->all(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal membuat periode akreditasi',
                 'error' => $e->getMessage(),
-                'details' => config('app.debug') ? $e->getTraceAsString() : null,
-            ], 500);
+            ], 422);
         }
     }
 
     /**
      * Display the specified periode akreditasi.
      */
-    public function show($id)
+    public function show(string $id): JsonResponse
     {
         try {
-            $periode = PeriodeAkreditasi::with([
-                'unitKerja',
-                'programStudi',
-                'pengisianButirs.butirAkreditasi',
-                'dokumenAkreditasis',
-            ])->findOrFail($id);
+            $periode = $this->periodeAkreditasiService->getPeriodeAkreditasiById($id);
 
-            // Add computed attributes
-            $periode->progress_persentase = $periode->progress_persentase;
-            $periode->is_expired = $periode->is_expired;
-            $periode->sisa_hari = $periode->sisa_hari;
+            if (!$periode) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Periode akreditasi tidak ditemukan',
+                ], 404);
+            }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Detail periode akreditasi berhasil diambil',
-                'data' => $periode,
+                'data' => new PeriodeAkreditasiResource($periode),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -163,76 +119,32 @@ class PeriodeAkreditasiController extends Controller
     /**
      * Update the specified periode akreditasi.
      */
-    public function update(Request $request, $id)
+    public function update(UpdatePeriodeAkreditasiRequest $request, string $id): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'nama' => 'sometimes|required|string|max:255',
-            'jenis_akreditasi' => 'sometimes|required|in:institusi,program_studi',
-            'lembaga' => 'sometimes|required|in:BAN-PT,LAM,Internasional',
-            'instrumen' => 'nullable|string|max:50',
-            'jenjang' => 'nullable|string|max:10',
-            'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
-            'program_studi_id' => 'nullable|exists:program_studis,id',
-            'tanggal_mulai' => 'nullable|date',
-            'deadline_pengumpulan' => 'nullable|date',
-            'jadwal_visitasi' => 'nullable|date',
-            'tanggal_berakhir' => 'nullable|date',
-            'status' => 'nullable|in:persiapan,pengisian,review,submit,visitasi,selesai',
-            'keterangan' => 'nullable|string',
-            'metadata' => 'nullable|array',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
         try {
-            $periode = PeriodeAkreditasi::findOrFail($id);
-
-            // Clean up empty date fields
-            $data = $request->all();
-            $dateFields = ['tanggal_mulai', 'deadline_pengumpulan', 'jadwal_visitasi', 'tanggal_berakhir'];
-
-            foreach ($dateFields as $field) {
-                if (isset($data[$field]) && empty($data[$field])) {
-                    $data[$field] = null;
-                }
-            }
-
-            $periode->update($data);
+            $periode = $this->periodeAkreditasiService->updatePeriodeAkreditasi($id, $request->validated());
 
             return response()->json([
                 'success' => true,
                 'message' => 'Periode akreditasi berhasil diupdate',
-                'data' => $periode->load(['unitKerja', 'programStudi']),
+                'data' => new PeriodeAkreditasiResource($periode),
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error updating periode akreditasi: ' . $e->getMessage(), [
-                'id' => $id,
-                'request' => $request->all(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengupdate periode akreditasi',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], 422);
         }
     }
 
     /**
      * Remove the specified periode akreditasi.
      */
-    public function destroy($id)
+    public function destroy(string $id): JsonResponse
     {
         try {
-            $periode = PeriodeAkreditasi::findOrFail($id);
-            $periode->delete();
+            $this->periodeAkreditasiService->deletePeriodeAkreditasi($id);
 
             return response()->json([
                 'success' => true,
@@ -250,33 +162,10 @@ class PeriodeAkreditasiController extends Controller
     /**
      * Get statistics for periode akreditasi.
      */
-    public function statistics($id)
+    public function statistics(string $id): JsonResponse
     {
         try {
-            $periode = PeriodeAkreditasi::with(['pengisianButirs'])->findOrFail($id);
-
-            $totalButir = $periode->pengisianButirs->count();
-            $butirSelesai = $periode->pengisianButirs->where('is_complete', true)->count();
-            $butirDraft = $periode->pengisianButirs->where('status', 'draft')->count();
-            $butirReview = $periode->pengisianButirs->where('status', 'review')->count();
-            $butirApproved = $periode->pengisianButirs->where('status', 'approved')->count();
-
-            $statistics = [
-                'total_butir' => $totalButir,
-                'butir_selesai' => $butirSelesai,
-                'butir_belum_selesai' => $totalButir - $butirSelesai,
-                'progress_persentase' => $totalButir > 0 ? round(($butirSelesai / $totalButir) * 100, 2) : 0,
-                'status_breakdown' => [
-                    'draft' => $butirDraft,
-                    'submitted' => $periode->pengisianButirs->where('status', 'submitted')->count(),
-                    'review' => $butirReview,
-                    'revision' => $periode->pengisianButirs->where('status', 'revision')->count(),
-                    'approved' => $butirApproved,
-                ],
-                'dokumen_count' => $periode->dokumenAkreditasis()->count(),
-                'sisa_hari' => $periode->sisa_hari,
-                'is_expired' => $periode->is_expired,
-            ];
+            $statistics = $this->periodeAkreditasiService->getStatistics($id);
 
             return response()->json([
                 'success' => true,
@@ -287,6 +176,67 @@ class PeriodeAkreditasiController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengambil statistik',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get comprehensive dashboard data for periode akreditasi.
+     */
+    public function dashboard(string $id): JsonResponse
+    {
+        try {
+            $dashboardData = $this->periodeAkreditasiService->getDashboardData($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data dashboard berhasil diambil',
+                'data' => $dashboardData,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data dashboard',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Export periode akreditasi to PDF.
+     */
+    public function exportPDF(string $id)
+    {
+        try {
+            $exporter = new \App\Exports\PeriodeAkreditasiPDF($id);
+            return $exporter->download();
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal export PDF',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Export periode akreditasi to Excel.
+     */
+    public function exportExcel(string $id)
+    {
+        try {
+            $periode = $this->periodeAkreditasiService->getPeriodeAkreditasiById($id);
+            $filename = 'Laporan_Akreditasi_' . str_replace(' ', '_', $periode->nama) . '_' . date('Y-m-d') . '.xlsx';
+
+            return \Excel::download(
+                new \App\Exports\PeriodeAkreditasiExcel($id),
+                $filename
+            );
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal export Excel',
                 'error' => $e->getMessage(),
             ], 500);
         }

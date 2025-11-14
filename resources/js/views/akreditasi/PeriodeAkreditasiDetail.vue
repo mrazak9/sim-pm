@@ -29,6 +29,26 @@
             </p>
           </div>
           <div class="flex gap-2">
+            <button
+              @click="handleExportPDF"
+              :disabled="exporting"
+              class="inline-flex items-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            >
+              <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              {{ exporting ? 'Exporting...' : 'Export PDF' }}
+            </button>
+            <button
+              @click="handleExportExcel"
+              :disabled="exporting"
+              class="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              {{ exporting ? 'Exporting...' : 'Export Excel' }}
+            </button>
             <router-link
               :to="`/akreditasi/periode/${periode.id}/edit`"
               class="inline-flex items-center rounded-lg bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700"
@@ -55,6 +75,11 @@
           >
             {{ getStatusLabel(periode.status) }}
           </span>
+        </div>
+
+        <!-- Progress Dashboard -->
+        <div class="mb-6">
+          <AkreditasiProgressDashboard :periode-id="periode.id" ref="dashboardRef" />
         </div>
 
         <!-- Main Content Grid -->
@@ -218,11 +243,13 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAkreditasiApi } from '@/composables/useAkreditasiApi'
 import MainLayout from '@/layouts/MainLayout.vue'
+import AkreditasiProgressDashboard from '@/components/akreditasi/AkreditasiProgressDashboard.vue'
 
 const route = useRoute()
-const { loading, error, getPeriodeDetail } = useAkreditasiApi()
+const { loading, error, getPeriodeDetail, exportPeriodePDF, exportPeriodeExcel } = useAkreditasiApi()
 
 const periode = ref(null)
+const exporting = ref(false)
 
 const fetchPeriodeDetail = async () => {
   try {
@@ -230,6 +257,48 @@ const fetchPeriodeDetail = async () => {
     periode.value = response.data
   } catch (err) {
     console.error('Error fetching periode detail:', err)
+  }
+}
+
+const handleExportPDF = async () => {
+  exporting.value = true
+  try {
+    const response = await exportPeriodePDF(route.params.id)
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    const filename = `Laporan_Akreditasi_${periode.value.nama.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+    link.setAttribute('download', filename)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Export PDF failed:', error)
+    alert('Gagal export PDF. Silakan coba lagi.')
+  } finally {
+    exporting.value = false
+  }
+}
+
+const handleExportExcel = async () => {
+  exporting.value = true
+  try {
+    const response = await exportPeriodeExcel(route.params.id)
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    const filename = `Laporan_Akreditasi_${periode.value.nama.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`
+    link.setAttribute('download', filename)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Export Excel failed:', error)
+    alert('Gagal export Excel. Silakan coba lagi.')
+  } finally {
+    exporting.value = false
   }
 }
 

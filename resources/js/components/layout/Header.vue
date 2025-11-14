@@ -36,63 +36,8 @@
           </svg>
         </button>
 
-        <!-- Notifications Dropdown -->
-        <div class="relative" v-click-outside="closeNotifications">
-          <button
-            @click="notificationsOpen = !notificationsOpen"
-            class="relative flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            <!-- Badge -->
-            <span class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500">
-              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-            </span>
-          </button>
-
-          <!-- Dropdown -->
-          <transition
-            enter-active-class="transition ease-out duration-100"
-            enter-from-class="transform opacity-0 scale-95"
-            enter-to-class="transform opacity-100 scale-100"
-            leave-active-class="transition ease-in duration-75"
-            leave-from-class="transform opacity-100 scale-100"
-            leave-to-class="transform opacity-0 scale-95"
-          >
-            <div
-              v-if="notificationsOpen"
-              class="absolute right-0 mt-2 w-80 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-lg"
-            >
-              <!-- Header -->
-              <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-4 py-3">
-                <h5 class="text-sm font-semibold text-gray-800 dark:text-white">Notifications</h5>
-                <span class="rounded bg-blue-100 dark:bg-blue-900 px-2 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400">
-                  3 New
-                </span>
-              </div>
-
-              <!-- Notification items -->
-              <div class="max-h-96 overflow-y-auto">
-                <a
-                  href="#"
-                  class="flex gap-3 border-b border-gray-200 dark:border-gray-800 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800"
-                >
-                  <div class="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                    </svg>
-                  </div>
-                  <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-800 dark:text-white">Edit your information</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Lorem ipsum dolor sit amet</p>
-                    <p class="text-xs text-gray-400 mt-1">12 May, 2025</p>
-                  </div>
-                </a>
-              </div>
-            </div>
-          </transition>
-        </div>
+        <!-- Notifications Bell -->
+        <NotificationBell />
 
         <!-- User Dropdown -->
         <div class="relative" v-click-outside="closeUserMenu">
@@ -181,6 +126,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useSidebar } from '@/composables/useSidebar';
 import { useDarkMode } from '@/composables/useDarkMode';
 import { useAuthStore } from '@/stores/auth';
+import NotificationBell from '@/components/layout/NotificationBell.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -188,7 +134,6 @@ const authStore = useAuthStore();
 const { toggleMobileSidebar } = useSidebar();
 const { darkMode, toggleDarkMode } = useDarkMode();
 
-const notificationsOpen = ref(false);
 const userMenuOpen = ref(false);
 
 const userName = computed(() => authStore.user?.name || 'User');
@@ -212,10 +157,6 @@ const pageTitle = computed(() => {
   };
   return titles[route.path] || 'Dashboard';
 });
-
-const closeNotifications = () => {
-  notificationsOpen.value = false;
-};
 
 const closeUserMenu = () => {
   userMenuOpen.value = false;

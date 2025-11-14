@@ -314,6 +314,63 @@
               <span v-if="sidebarExpanded || sidebarMobileOpen">Periode Akreditasi</span>
             </router-link>
           </li>
+
+          <!-- Butir Akreditasi -->
+          <li>
+            <router-link
+              to="/akreditasi/butir"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.startsWith('/akreditasi/butir')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Butir Akreditasi</span>
+            </router-link>
+          </li>
+
+          <!-- Pengisian Butir -->
+          <li>
+            <router-link
+              to="/akreditasi/pengisian"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.startsWith('/akreditasi/pengisian')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Pengisian Butir</span>
+            </router-link>
+          </li>
+
+          <!-- Dokumen Akreditasi -->
+          <li>
+            <router-link
+              to="/akreditasi/dokumen"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.startsWith('/akreditasi/dokumen')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Dokumen</span>
+            </router-link>
+          </li>
         </ul>
       </div>
     </nav>

@@ -93,6 +93,45 @@
         </div>
       </div>
 
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <!-- Traffic Light Distribution Chart -->
+        <div class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
+          <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+            Distribusi Status Target IKU
+          </h3>
+          <DoughnutChart
+            :labels="['Tercapai', 'Sesuai Target', 'Perlu Perhatian', 'Kritis']"
+            :data="[
+              targetStats.achieved || 0,
+              targetStats.on_track || 0,
+              targetStats.warning || 0,
+              targetStats.critical || 0
+            ]"
+            :backgroundColor="[
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(16, 185, 129, 0.8)',
+              'rgba(251, 191, 36, 0.8)',
+              'rgba(239, 68, 68, 0.8)'
+            ]"
+            :height="300"
+          />
+        </div>
+
+        <!-- Achievement Trends Chart -->
+        <div class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
+          <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+            Tren Capaian IKU
+          </h3>
+          <LineChart
+            :labels="trendData.labels"
+            :datasets="trendData.datasets"
+            :height="300"
+            :fill="true"
+          />
+        </div>
+      </div>
+
       <!-- Traffic Light Indicators -->
       <div class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
         <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
@@ -258,8 +297,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import MainLayout from '@/layouts/MainLayout.vue';
+import LineChart from '@/components/charts/LineChart.vue';
+import DoughnutChart from '@/components/charts/DoughnutChart.vue';
 import axios from 'axios';
 
 const loading = ref(false);
@@ -281,6 +322,37 @@ const targetStats = ref({
 
 const recentIKUs = ref([]);
 const targetsNeedAttention = ref([]);
+const achievementTrends = ref([]);
+
+// Computed property for trend chart data
+const trendData = computed(() => {
+  if (achievementTrends.value.length === 0) {
+    // Default data for demo
+    return {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
+      datasets: [
+        {
+          label: 'Rata-rata Capaian (%)',
+          data: [65, 68, 72, 75, 78, targetStats.value.avg_achievement || 80],
+          borderColor: 'rgba(59, 130, 246, 1)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        },
+      ],
+    };
+  }
+
+  return {
+    labels: achievementTrends.value.map(t => t.period),
+    datasets: [
+      {
+        label: 'Rata-rata Capaian (%)',
+        data: achievementTrends.value.map(t => t.avg_achievement),
+        borderColor: 'rgba(59, 130, 246, 1)',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      },
+    ],
+  };
+});
 
 const fetchDashboardData = async () => {
   loading.value = true;

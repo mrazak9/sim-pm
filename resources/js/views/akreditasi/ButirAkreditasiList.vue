@@ -1,0 +1,375 @@
+<template>
+  <MainLayout>
+    <div class="rounded-lg border border-gray-200 bg-white shadow dark:border-gray-700 dark:bg-gray-800">
+      <!-- Header -->
+      <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            Daftar Butir Akreditasi
+          </h3>
+          <button
+            @click="openCreateForm"
+            class="inline-flex items-center justify-center rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300"
+          >
+            <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Tambah Butir
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Instrumen</label>
+            <select
+              v-model="filters.instrumen"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
+              @change="fetchButirs"
+            >
+              <option value="">Semua Instrumen</option>
+              <option v-for="ins in instrumenList" :key="ins" :value="ins">{{ ins }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Kategori</label>
+            <select
+              v-model="filters.kategori"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
+              @change="fetchButirs"
+            >
+              <option value="">Semua Kategori</option>
+              <option v-for="kat in kategoriList" :key="kat" :value="kat">{{ kat }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Wajib</label>
+            <select
+              v-model="filters.is_mandatory"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
+              @change="fetchButirs"
+            >
+              <option value="">Semua</option>
+              <option value="1">Wajib</option>
+              <option value="0">Opsional</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Cari</label>
+            <input
+              v-model="filters.search"
+              type="text"
+              placeholder="Cari butir..."
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+              @input="debouncedSearch"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- View Toggle -->
+      <div class="border-b border-gray-200 px-6 py-3 dark:border-gray-700">
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Tampilan:</span>
+          <button
+            @click="viewMode = 'tree'"
+            :class="[
+              'rounded px-3 py-1 text-sm font-medium',
+              viewMode === 'tree'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+            ]"
+          >
+            Hierarki
+          </button>
+          <button
+            @click="viewMode = 'flat'"
+            :class="[
+              'rounded px-3 py-1 text-sm font-medium',
+              viewMode === 'flat'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+            ]"
+          >
+            Datar
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="loading" class="flex justify-center py-12">
+        <div class="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+      </div>
+
+      <!-- Hierarchical Tree View -->
+      <div v-else-if="viewMode === 'tree'" class="p-6">
+        <div v-if="treeData.length === 0" class="py-12 text-center text-gray-500 dark:text-gray-400">
+          Tidak ada data butir akreditasi
+        </div>
+        <div v-else class="space-y-2">
+          <TreeNode
+            v-for="node in treeData"
+            :key="node.id"
+            :node="node"
+            :level="0"
+            @edit="editButir"
+            @delete="confirmDelete"
+            @add-child="addChild"
+          />
+        </div>
+      </div>
+
+      <!-- Flat Table View -->
+      <div v-else class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-gray-500 dark:text-gray-400">
+          <thead class="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400">
+            <tr>
+              <th scope="col" class="px-6 py-3">Kode</th>
+              <th scope="col" class="px-6 py-3">Nama Butir</th>
+              <th scope="col" class="px-6 py-3">Kategori</th>
+              <th scope="col" class="px-6 py-3">Instrumen</th>
+              <th scope="col" class="px-6 py-3">Bobot</th>
+              <th scope="col" class="px-6 py-3">Wajib</th>
+              <th scope="col" class="px-6 py-3">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="butirs.length === 0">
+              <td colspan="7" class="px-6 py-8 text-center text-gray-900 dark:text-white">
+                Tidak ada data butir akreditasi
+              </td>
+            </tr>
+            <tr
+              v-else
+              v-for="butir in butirs"
+              :key="butir.id"
+              class="border-b border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+            >
+              <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                {{ butir.kode }}
+              </td>
+              <td class="px-6 py-4">
+                <p class="font-medium text-gray-900 dark:text-white">{{ butir.nama }}</p>
+                <p v-if="butir.deskripsi" class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ truncate(butir.deskripsi, 60) }}
+                </p>
+              </td>
+              <td class="px-6 py-4">
+                <span class="inline-flex rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+                  {{ butir.kategori || '-' }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-gray-900 dark:text-white">
+                {{ butir.instrumen }}
+              </td>
+              <td class="px-6 py-4 text-gray-900 dark:text-white">
+                {{ butir.bobot || '-' }}
+              </td>
+              <td class="px-6 py-4">
+                <span
+                  :class="[
+                    'inline-flex rounded-full px-3 py-1 text-xs font-medium',
+                    butir.is_mandatory
+                      ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                      : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                  ]"
+                >
+                  {{ butir.is_mandatory ? 'Wajib' : 'Opsional' }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-2">
+                  <button
+                    @click="editButir(butir)"
+                    class="text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 dark:hover:text-yellow-300"
+                    title="Edit"
+                  >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button
+                    @click="confirmDelete(butir)"
+                    class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                    title="Hapus"
+                  >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div
+      v-if="showDeleteModal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      @click.self="showDeleteModal = false"
+    >
+      <div class="rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800" style="max-width: 400px">
+        <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Konfirmasi Hapus</h3>
+        <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
+          Apakah Anda yakin ingin menghapus butir "{{ butirToDelete?.nama }}"?
+          <span v-if="butirToDelete?.has_children" class="mt-2 block text-red-600 dark:text-red-400">
+            Perhatian: Butir ini memiliki sub-butir yang akan ikut terhapus.
+          </span>
+        </p>
+        <div class="flex justify-end gap-3">
+          <button
+            @click="showDeleteModal = false"
+            class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+          >
+            Batal
+          </button>
+          <button
+            @click="deleteButir"
+            class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+          >
+            Hapus
+          </button>
+        </div>
+      </div>
+    </div>
+  </MainLayout>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import MainLayout from '@/layouts/MainLayout.vue'
+import TreeNode from '@/components/TreeNode.vue'
+import { useAkreditasiApi } from '@/composables/useAkreditasiApi'
+
+const router = useRouter()
+const { loading, getButirList, getInstrumenList, getKategoriList, deleteButir: deleteButirApi } = useAkreditasiApi()
+
+const butirs = ref([])
+const instrumenList = ref([])
+const kategoriList = ref([])
+const viewMode = ref('tree')
+const showDeleteModal = ref(false)
+const butirToDelete = ref(null)
+
+const filters = ref({
+  instrumen: '',
+  kategori: '',
+  is_mandatory: '',
+  search: '',
+})
+
+// Build tree structure from flat data
+const treeData = computed(() => {
+  const filteredButirs = butirs.value
+  const map = new Map()
+  const roots = []
+
+  // Create a map of all butirs
+  filteredButirs.forEach(butir => {
+    map.set(butir.id, { ...butir, children: [] })
+  })
+
+  // Build the tree
+  filteredButirs.forEach(butir => {
+    const node = map.get(butir.id)
+    if (butir.parent_id && map.has(butir.parent_id)) {
+      map.get(butir.parent_id).children.push(node)
+    } else {
+      roots.push(node)
+    }
+  })
+
+  return roots
+})
+
+const fetchButirs = async () => {
+  try {
+    const params = { ...filters.value, per_page: 'all' }
+
+    // Remove empty filters
+    Object.keys(params).forEach(key => {
+      if (params[key] === '') delete params[key]
+    })
+
+    const response = await getButirList(params)
+    butirs.value = response.data || []
+  } catch (error) {
+    console.error('Failed to fetch butir akreditasi:', error)
+  }
+}
+
+const fetchInstrumen = async () => {
+  try {
+    const response = await getInstrumenList()
+    instrumenList.value = response.data || []
+  } catch (error) {
+    console.error('Failed to fetch instrumen:', error)
+  }
+}
+
+const fetchKategori = async () => {
+  try {
+    const instrumen = filters.value.instrumen || '4.0'
+    const response = await getKategoriList(instrumen)
+    kategoriList.value = response.data || []
+  } catch (error) {
+    console.error('Failed to fetch kategori:', error)
+  }
+}
+
+let searchTimeout
+const debouncedSearch = () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    fetchButirs()
+  }, 300)
+}
+
+const truncate = (text, length) => {
+  if (!text) return ''
+  return text.length > length ? text.substring(0, length) + '...' : text
+}
+
+const openCreateForm = () => {
+  router.push({ name: 'butir-akreditasi-create' })
+}
+
+const addChild = (parentButir) => {
+  router.push({
+    name: 'butir-akreditasi-create',
+    query: { parent_id: parentButir.id }
+  })
+}
+
+const editButir = (butir) => {
+  router.push({ name: 'butir-akreditasi-edit', params: { id: butir.id } })
+}
+
+const confirmDelete = (butir) => {
+  butirToDelete.value = butir
+  showDeleteModal.value = true
+}
+
+const deleteButir = async () => {
+  try {
+    await deleteButirApi(butirToDelete.value.id)
+    showDeleteModal.value = false
+    await fetchButirs()
+  } catch (error) {
+    console.error('Failed to delete butir:', error)
+    alert('Gagal menghapus butir akreditasi')
+  }
+}
+
+onMounted(async () => {
+  await fetchInstrumen()
+  await fetchKategori()
+  await fetchButirs()
+})
+</script>

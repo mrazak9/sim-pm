@@ -7,8 +7,11 @@ use App\Http\Requests\IKU\StoreIKUTargetRequest;
 use App\Http\Requests\IKU\UpdateIKUTargetRequest;
 use App\Http\Resources\IKUTargetResource;
 use App\Services\IKUTargetService;
+use App\Exports\IKUTargetExport;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class IKUTargetController extends Controller
 {
@@ -256,6 +259,64 @@ class IKUTargetController extends Controller
                 'success' => false,
                 'message' => $e->getMessage(),
             ], 404);
+        }
+    }
+
+    /**
+     * Export IKU Targets to Excel
+     */
+    public function exportExcel(Request $request)
+    {
+        try {
+            $filters = $request->only(['iku_id', 'tahun_akademik_id', 'unit_kerja_id', 'status']);
+            $filename = 'iku_targets_' . date('Y-m-d_His') . '.xlsx';
+
+            return Excel::download(new IKUTargetExport($filters), $filename);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to export IKU targets',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Export IKU Targets to PDF
+     */
+    public function exportPDF(Request $request)
+    {
+        try {
+            $filters = $request->only(['iku_id', 'tahun_akademik_id', 'unit_kerja_id', 'status']);
+
+            $query = \App\Models\IKUTarget::with(['iku', 'tahunAkademik', 'unitKerja']);
+
+            // Apply filters
+            if (!empty($filters['iku_id'])) {
+                $query->where('iku_id', $filters['iku_id']);
+            }
+            if (!empty($filters['tahun_akademik_id'])) {
+                $query->where('tahun_akademik_id', $filters['tahun_akademik_id']);
+            }
+            if (!empty($filters['unit_kerja_id'])) {
+                $query->where('unit_kerja_id', $filters['unit_kerja_id']);
+            }
+            if (isset($filters['status'])) {
+                $query->where('status', $filters['status']);
+            }
+
+            $targets = $query->orderBy('periode')->get();
+
+            $pdf = Pdf::loadView('exports.iku-target-pdf', compact('targets'));
+            $filename = 'iku_targets_' . date('Y-m-d_His') . '.pdf';
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to export IKU targets to PDF',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 }

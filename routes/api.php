@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\PeriodeAkreditasiController;
 use App\Http\Controllers\Api\ButirAkreditasiController;
 use App\Http\Controllers\Api\PengisianButirController;
 use App\Http\Controllers\Api\DokumenAkreditasiController;
+use App\Http\Controllers\Api\NotificationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -85,6 +86,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // IKU Management Routes
     Route::get('iku/statistics', [IKUController::class, 'statistics']);
     Route::get('iku/categories', [IKUController::class, 'categories']);
+    Route::get('iku/export/excel', [IKUController::class, 'exportExcel']);
+    Route::get('iku/export/pdf', [IKUController::class, 'exportPDF']);
     Route::post('iku/{id}/toggle-active', [IKUController::class, 'toggleActive']);
     Route::apiResource('iku', IKUController::class);
 
@@ -92,6 +95,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('iku-targets/dashboard-statistics', [IKUTargetController::class, 'dashboardStatistics']);
     Route::get('iku-targets/need-attention', [IKUTargetController::class, 'needAttention']);
     Route::get('iku-targets/by-status', [IKUTargetController::class, 'byStatus']);
+    Route::get('iku-targets/export/excel', [IKUTargetController::class, 'exportExcel']);
+    Route::get('iku-targets/export/pdf', [IKUTargetController::class, 'exportPDF']);
     Route::get('iku-targets/{id}/statistics', [IKUTargetController::class, 'statistics']);
     Route::get('iku-targets/{id}/check-risk', [IKUTargetController::class, 'checkRisk']);
     Route::apiResource('iku-targets', IKUTargetController::class);
@@ -107,7 +112,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Akreditasi Module Routes
 
     // Periode Akreditasi Routes
+    Route::get('periode-akreditasi/{id}/dashboard', [PeriodeAkreditasiController::class, 'dashboard']);
     Route::get('periode-akreditasi/{id}/statistics', [PeriodeAkreditasiController::class, 'statistics']);
+    Route::get('periode-akreditasi/{id}/export/pdf', [PeriodeAkreditasiController::class, 'exportPDF']);
+    Route::get('periode-akreditasi/{id}/export/excel', [PeriodeAkreditasiController::class, 'exportExcel']);
     Route::apiResource('periode-akreditasi', PeriodeAkreditasiController::class);
 
     // Butir Akreditasi Routes
@@ -127,4 +135,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('dokumen-akreditasi/{id}/download', [DokumenAkreditasiController::class, 'download']);
     Route::post('dokumen-akreditasi/{id}/attach-butir', [DokumenAkreditasiController::class, 'attachToButir']);
     Route::apiResource('dokumen-akreditasi', DokumenAkreditasiController::class);
+
+    // Notification Routes
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
+    Route::post('notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
 });
