@@ -45,6 +45,83 @@ const routes = [
     component: () => import('@/views/iku/IKUList.vue'),
     meta: { requiresAuth: true },
   },
+  // Master Data Routes
+  // Unit Kerja
+  {
+    path: '/master-data/unit-kerja',
+    name: 'unit-kerja-list',
+    component: () => import('@/views/master-data/UnitKerjaList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/master-data/unit-kerja/create',
+    name: 'unit-kerja-create',
+    component: () => import('@/views/master-data/UnitKerjaForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/master-data/unit-kerja/:id/edit',
+    name: 'unit-kerja-edit',
+    component: () => import('@/views/master-data/UnitKerjaForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // Program Studi
+  {
+    path: '/master-data/program-studi',
+    name: 'program-studi-list',
+    component: () => import('@/views/master-data/ProgramStudiList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/master-data/program-studi/create',
+    name: 'program-studi-create',
+    component: () => import('@/views/master-data/ProgramStudiForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/master-data/program-studi/:id/edit',
+    name: 'program-studi-edit',
+    component: () => import('@/views/master-data/ProgramStudiForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // Jabatan
+  {
+    path: '/master-data/jabatan',
+    name: 'jabatan-list',
+    component: () => import('@/views/master-data/JabatanList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/master-data/jabatan/create',
+    name: 'jabatan-create',
+    component: () => import('@/views/master-data/JabatanForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/master-data/jabatan/:id/edit',
+    name: 'jabatan-edit',
+    component: () => import('@/views/master-data/JabatanForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // Tahun Akademik
+  {
+    path: '/master-data/tahun-akademik',
+    name: 'tahun-akademik-list',
+    component: () => import('@/views/master-data/TahunAkademikList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/master-data/tahun-akademik/create',
+    name: 'tahun-akademik-create',
+    component: () => import('@/views/master-data/TahunAkademikForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/master-data/tahun-akademik/:id/edit',
+    name: 'tahun-akademik-edit',
+    component: () => import('@/views/master-data/TahunAkademikForm.vue'),
+    meta: { requiresAuth: true },
+  },
   // Akreditasi Routes
   {
     path: '/akreditasi',
