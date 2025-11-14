@@ -58,6 +58,24 @@ const routes = [
     component: () => import('@/views/akreditasi/PeriodeAkreditasiList.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/akreditasi/periode/create',
+    name: 'periode-akreditasi-create',
+    component: () => import('@/views/akreditasi/PeriodeAkreditasiForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/akreditasi/periode/:id/edit',
+    name: 'periode-akreditasi-edit',
+    component: () => import('@/views/akreditasi/PeriodeAkreditasiForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/akreditasi/periode/:id',
+    name: 'periode-akreditasi-detail',
+    component: () => import('@/views/akreditasi/PeriodeAkreditasiList.vue'),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
