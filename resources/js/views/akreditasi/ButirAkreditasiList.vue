@@ -4,9 +4,25 @@
       <!-- Header -->
       <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Daftar Butir Akreditasi
-          </h3>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+              Daftar Butir Akreditasi
+            </h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              <span v-if="butirMode === 'template'" class="inline-flex items-center">
+                <svg class="mr-1 h-4 w-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+                </svg>
+                Mode Template - Master butir untuk semua periode
+              </span>
+              <span v-else class="inline-flex items-center">
+                <svg class="mr-1 h-4 w-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd" />
+                </svg>
+                Mode Per-Periode - Butir untuk periode spesifik
+              </span>
+            </p>
+          </div>
           <button
             @click="openCreateForm"
             class="inline-flex items-center justify-center rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300"
@@ -19,9 +35,68 @@
         </div>
       </div>
 
+      <!-- Mode Toggle -->
+      <div class="border-b border-gray-200 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-900/50">
+        <div class="flex items-center gap-4">
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Mode:</span>
+          <div class="flex rounded-lg bg-white dark:bg-gray-800 p-1 shadow-sm">
+            <button
+              @click="changeButirMode('template')"
+              :class="[
+                'flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+                butirMode === 'template'
+                  ? 'bg-purple-600 text-white shadow'
+                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              ]"
+            >
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Template
+            </button>
+            <button
+              @click="changeButirMode('periode')"
+              :class="[
+                'flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+                butirMode === 'periode'
+                  ? 'bg-blue-600 text-white shadow'
+                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              ]"
+            >
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              Per-Periode
+            </button>
+          </div>
+          <div v-if="butirMode === 'template'" class="ml-auto">
+            <span class="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800 dark:bg-purple-900/50 dark:text-purple-200">
+              <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              </svg>
+              Template butir dapat di-copy ke berbagai periode
+            </span>
+          </div>
+        </div>
+      </div>
+
       <!-- Filters -->
       <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div class="grid grid-cols-1 gap-4" :class="butirMode === 'periode' ? 'md:grid-cols-5' : 'md:grid-cols-4'">
+          <!-- Periode Filter (only in per-periode mode) -->
+          <div v-if="butirMode === 'periode'">
+            <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Periode</label>
+            <select
+              v-model="filters.periode_akreditasi_id"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
+              @change="fetchButirs"
+            >
+              <option value="">Semua Periode</option>
+              <option v-for="periode in periodeList" :key="periode.id" :value="periode.id">
+                {{ periode.nama }}
+              </option>
+            </select>
+          </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Instrumen</label>
             <select
@@ -248,12 +323,14 @@ import TreeNode from '@/components/TreeNode.vue'
 import { useAkreditasiApi } from '@/composables/useAkreditasiApi'
 
 const router = useRouter()
-const { loading, getButirList, getInstrumenList, getKategoriList, deleteButir: deleteButirApi } = useAkreditasiApi()
+const { loading, getButirList, getInstrumenList, getKategoriList, getPeriodeList, deleteButir: deleteButirApi } = useAkreditasiApi()
 
 const butirs = ref([])
 const instrumenList = ref([])
 const kategoriList = ref([])
+const periodeList = ref([])
 const viewMode = ref('tree')
+const butirMode = ref('template') // 'template' or 'periode'
 const showDeleteModal = ref(false)
 const butirToDelete = ref(null)
 
@@ -261,6 +338,7 @@ const filters = ref({
   instrumen: '',
   kategori: '',
   is_mandatory: '',
+  periode_akreditasi_id: '',
   search: '',
 })
 
@@ -292,6 +370,12 @@ const fetchButirs = async () => {
   try {
     const params = { ...filters.value, per_page: 'all' }
 
+    // Apply template_only filter in template mode
+    if (butirMode.value === 'template') {
+      params.template_only = true
+      delete params.periode_akreditasi_id
+    }
+
     // Remove empty filters
     Object.keys(params).forEach(key => {
       if (params[key] === '') delete params[key]
@@ -321,6 +405,24 @@ const fetchKategori = async () => {
   } catch (error) {
     console.error('Failed to fetch kategori:', error)
   }
+}
+
+const fetchPeriodes = async () => {
+  try {
+    const response = await getPeriodeList({ per_page: 100 })
+    periodeList.value = response.data || []
+  } catch (error) {
+    console.error('Failed to fetch periodes:', error)
+  }
+}
+
+const changeButirMode = (mode) => {
+  butirMode.value = mode
+  // Clear periode filter when switching to template mode
+  if (mode === 'template') {
+    filters.value.periode_akreditasi_id = ''
+  }
+  fetchButirs()
 }
 
 let searchTimeout
@@ -370,6 +472,7 @@ const deleteButir = async () => {
 onMounted(async () => {
   await fetchInstrumen()
   await fetchKategori()
+  await fetchPeriodes()
   await fetchButirs()
 })
 </script>
