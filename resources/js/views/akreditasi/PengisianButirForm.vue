@@ -234,12 +234,27 @@
         </form>
       </div>
 
+      <!-- Edit Lock Indicator (only in edit mode) -->
+      <div v-if="isEdit && route.params.id" class="mt-6">
+        <EditLockIndicator
+          :pengisian-butir-id="parseInt(route.params.id)"
+          :auto-refresh="true"
+        />
+      </div>
+
       <!-- Version History Timeline (only in edit mode) -->
       <div v-if="isEdit && route.params.id" class="mt-6">
         <VersionHistoryTimeline
           :pengisian-butir-id="parseInt(route.params.id)"
           :can-restore="form.status === 'draft' && !isLocked"
           @version-restored="handleVersionRestored"
+        />
+      </div>
+
+      <!-- Comment/Discussion Panel (only in edit mode) -->
+      <div v-if="isEdit && route.params.id" class="mt-6">
+        <ButirCommentPanel
+          :pengisian-butir-id="parseInt(route.params.id)"
         />
       </div>
     </div>
@@ -254,6 +269,8 @@ import MainLayout from '@/layouts/MainLayout.vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import LockStatusIndicator from '@/components/akreditasi/LockStatusIndicator.vue'
 import VersionHistoryTimeline from '@/components/akreditasi/VersionHistoryTimeline.vue'
+import EditLockIndicator from '@/components/akreditasi/EditLockIndicator.vue'
+import ButirCommentPanel from '@/components/akreditasi/ButirCommentPanel.vue'
 import axios from 'axios'
 
 const route = useRoute()
