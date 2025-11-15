@@ -237,6 +237,83 @@ const routes = [
     component: () => import('@/views/UserActivityDashboard.vue'),
     meta: { requiresAuth: true },
   },
+  // Audit Module Routes
+  // Audit Plans
+  {
+    path: '/audit/plans',
+    name: 'audit-plan-list',
+    component: () => import('@/views/audit/AuditPlanList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/plans/create',
+    name: 'audit-plan-create',
+    component: () => import('@/views/audit/AuditPlanForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/plans/:id/edit',
+    name: 'audit-plan-edit',
+    component: () => import('@/views/audit/AuditPlanForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // Audit Schedules
+  {
+    path: '/audit/schedules',
+    name: 'audit-schedule-list',
+    component: () => import('@/views/audit/AuditScheduleList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/schedules/create',
+    name: 'audit-schedule-create',
+    component: () => import('@/views/audit/AuditScheduleForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/schedules/:id/edit',
+    name: 'audit-schedule-edit',
+    component: () => import('@/views/audit/AuditScheduleForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // Audit Findings
+  {
+    path: '/audit/findings',
+    name: 'audit-finding-list',
+    component: () => import('@/views/audit/AuditFindingList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/findings/create',
+    name: 'audit-finding-create',
+    component: () => import('@/views/audit/AuditFindingForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/findings/:id/edit',
+    name: 'audit-finding-edit',
+    component: () => import('@/views/audit/AuditFindingForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // RTL (Rencana Tindak Lanjut)
+  {
+    path: '/audit/rtl',
+    name: 'rtl-list',
+    component: () => import('@/views/audit/RTLList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/rtl/create',
+    name: 'rtl-create',
+    component: () => import('@/views/audit/RTLForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/rtl/:id/edit',
+    name: 'rtl-edit',
+    component: () => import('@/views/audit/RTLForm.vue'),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({

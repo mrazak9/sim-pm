@@ -216,19 +216,97 @@
 
       <!-- Menu Group: Audit -->
       <div class="mb-6">
-        <h3 class="mb-4 text-xs uppercase text-gray-400 font-semibold">
+        <button
+          @click="toggleAudit"
+          class="mb-2 flex w-full items-center justify-between rounded-lg px-2 py-2 text-xs font-semibold uppercase text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
           <span v-if="sidebarExpanded || sidebarMobileOpen">AUDIT</span>
-          <span v-else class="flex justify-center">•••</span>
-        </h3>
+          <span v-else class="flex w-full justify-center">•••</span>
+          <svg
+            v-if="sidebarExpanded || sidebarMobileOpen"
+            :class="['h-4 w-4 transition-transform', auditOpen ? 'rotate-180' : '']"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-        <ul class="space-y-2">
+        <transition
+          enter-active-class="transition-all duration-200 ease-out"
+          enter-from-class="max-h-0 opacity-0"
+          enter-to-class="max-h-96 opacity-100"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="max-h-96 opacity-100"
+          leave-to-class="max-h-0 opacity-0"
+        >
+          <ul v-show="auditOpen" class="space-y-2 overflow-hidden">
+          <!-- Rencana Audit -->
           <li>
             <router-link
-              to="/audit"
+              to="/audit/plans"
               @click="closeMobileSidebar"
               :class="[
                 'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
-                $route.path.startsWith('/audit')
+                $route.path.startsWith('/audit/plans')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Rencana Audit</span>
+            </router-link>
+          </li>
+
+          <!-- Jadwal Audit -->
+          <li>
+            <router-link
+              to="/audit/schedules"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.startsWith('/audit/schedules')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Jadwal Audit</span>
+            </router-link>
+          </li>
+
+          <!-- Temuan Audit -->
+          <li>
+            <router-link
+              to="/audit/findings"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.startsWith('/audit/findings')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Temuan Audit</span>
+            </router-link>
+          </li>
+
+          <!-- RTL -->
+          <li>
+            <router-link
+              to="/audit/rtl"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.startsWith('/audit/rtl')
                   ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
               ]"
@@ -236,10 +314,11 @@
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
-              <span v-if="sidebarExpanded || sidebarMobileOpen">Audit Internal</span>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Tindak Lanjut (RTL)</span>
             </router-link>
           </li>
-        </ul>
+          </ul>
+        </transition>
       </div>
 
       <!-- Menu Group: IKU -->
@@ -489,6 +568,7 @@ const userInitials = computed(() => {
 
 // Collapsible menu states
 const masterDataOpen = ref(true);
+const auditOpen = ref(true);
 const ikuOpen = ref(true);
 const akreditasiOpen = ref(true);
 
@@ -496,6 +576,11 @@ const akreditasiOpen = ref(true);
 const toggleMasterData = () => {
   masterDataOpen.value = !masterDataOpen.value;
   localStorage.setItem('sidebar_masterData', masterDataOpen.value);
+};
+
+const toggleAudit = () => {
+  auditOpen.value = !auditOpen.value;
+  localStorage.setItem('sidebar_audit', auditOpen.value);
 };
 
 const toggleIKU = () => {
@@ -511,10 +596,12 @@ const toggleAkreditasi = () => {
 // Load saved states from localStorage
 onMounted(() => {
   const savedMasterData = localStorage.getItem('sidebar_masterData');
+  const savedAudit = localStorage.getItem('sidebar_audit');
   const savedIKU = localStorage.getItem('sidebar_iku');
   const savedAkreditasi = localStorage.getItem('sidebar_akreditasi');
 
   if (savedMasterData !== null) masterDataOpen.value = savedMasterData === 'true';
+  if (savedAudit !== null) auditOpen.value = savedAudit === 'true';
   if (savedIKU !== null) ikuOpen.value = savedIKU === 'true';
   if (savedAkreditasi !== null) akreditasiOpen.value = savedAkreditasi === 'true';
 });
