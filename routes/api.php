@@ -17,6 +17,10 @@ use App\Http\Controllers\Api\DokumenAkreditasiController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\DocumentCategoryController;
+use App\Http\Controllers\Api\AuditPlanController;
+use App\Http\Controllers\Api\AuditScheduleController;
+use App\Http\Controllers\Api\AuditFindingController;
+use App\Http\Controllers\Api\RTLController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -180,4 +184,47 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('document-shares/{shareId}', [DocumentController::class, 'revokeShare']);
     Route::delete('documents/{id}/force', [DocumentController::class, 'forceDestroy']);
     Route::apiResource('documents', DocumentController::class);
+
+    // Audit Module Routes
+
+    // Audit Plan Routes
+    Route::get('audit-plans/active', [AuditPlanController::class, 'active']);
+    Route::get('audit-plans/statistics', [AuditPlanController::class, 'statistics']);
+    Route::post('audit-plans/{id}/approve', [AuditPlanController::class, 'approve']);
+    Route::post('audit-plans/{id}/start', [AuditPlanController::class, 'start']);
+    Route::post('audit-plans/{id}/complete', [AuditPlanController::class, 'complete']);
+    Route::apiResource('audit-plans', AuditPlanController::class);
+
+    // Audit Schedule Routes
+    Route::get('audit-schedules/upcoming', [AuditScheduleController::class, 'upcoming']);
+    Route::get('audit-schedules/calendar', [AuditScheduleController::class, 'calendar']);
+    Route::get('audit-schedules/statistics', [AuditScheduleController::class, 'statistics']);
+    Route::post('audit-schedules/{id}/start', [AuditScheduleController::class, 'start']);
+    Route::post('audit-schedules/{id}/complete', [AuditScheduleController::class, 'complete']);
+    Route::post('audit-schedules/{id}/reschedule', [AuditScheduleController::class, 'reschedule']);
+    Route::apiResource('audit-schedules', AuditScheduleController::class);
+
+    // Audit Finding Routes
+    Route::get('audit-findings/overdue', [AuditFindingController::class, 'overdue']);
+    Route::get('audit-findings/needing-attention', [AuditFindingController::class, 'needingAttention']);
+    Route::get('audit-findings/statistics', [AuditFindingController::class, 'statistics']);
+    Route::get('audit-findings/statistics-by-category', [AuditFindingController::class, 'statisticsByCategory']);
+    Route::post('audit-findings/{id}/resolve', [AuditFindingController::class, 'resolve']);
+    Route::post('audit-findings/{id}/verify', [AuditFindingController::class, 'verify']);
+    Route::post('audit-findings/{id}/close', [AuditFindingController::class, 'close']);
+    Route::post('audit-findings/{id}/reopen', [AuditFindingController::class, 'reopen']);
+    Route::apiResource('audit-findings', AuditFindingController::class);
+
+    // RTL Routes
+    Route::get('rtls/overdue', [RTLController::class, 'overdue']);
+    Route::get('rtls/due-soon', [RTLController::class, 'dueSoon']);
+    Route::get('rtls/pending-verification', [RTLController::class, 'pendingVerification']);
+    Route::get('rtls/statistics', [RTLController::class, 'statistics']);
+    Route::get('rtls/dashboard-statistics', [RTLController::class, 'dashboardStatistics']);
+    Route::get('rtls/statistics-by-unit-kerja', [RTLController::class, 'statisticsByUnitKerja']);
+    Route::post('rtls/{id}/start', [RTLController::class, 'start']);
+    Route::post('rtls/{id}/complete', [RTLController::class, 'complete']);
+    Route::post('rtls/{id}/progress', [RTLController::class, 'addProgress']);
+    Route::post('rtls/{id}/verify', [RTLController::class, 'verify']);
+    Route::apiResource('rtls', RTLController::class);
 });
