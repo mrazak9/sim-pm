@@ -20,6 +20,17 @@
         </div>
       </div>
 
+      <!-- Lock Status Indicator (only in edit mode) -->
+      <LockStatusIndicator
+        v-if="isEdit && route.params.id"
+        :pengisian-butir-id="parseInt(route.params.id)"
+        :show-active-status="true"
+        :auto-refresh="true"
+        :refresh-interval="60000"
+        @lock-status-changed="handleLockStatusChanged"
+        @contact-admin="handleContactAdmin"
+      />
+
       <div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
         <form @submit.prevent="handleSubmit" class="space-y-6">
           <!-- Periode & Butir Selection (only for create) -->
@@ -222,6 +233,30 @@
           </div>
         </form>
       </div>
+
+      <!-- Edit Lock Indicator (only in edit mode) -->
+      <div v-if="isEdit && route.params.id" class="mt-6">
+        <EditLockIndicator
+          :pengisian-butir-id="parseInt(route.params.id)"
+          :auto-refresh="true"
+        />
+      </div>
+
+      <!-- Version History Timeline (only in edit mode) -->
+      <div v-if="isEdit && route.params.id" class="mt-6">
+        <VersionHistoryTimeline
+          :pengisian-butir-id="parseInt(route.params.id)"
+          :can-restore="form.status === 'draft' && !isLocked"
+          @version-restored="handleVersionRestored"
+        />
+      </div>
+
+      <!-- Comment/Discussion Panel (only in edit mode) -->
+      <div v-if="isEdit && route.params.id" class="mt-6">
+        <ButirCommentPanel
+          :pengisian-butir-id="parseInt(route.params.id)"
+        />
+      </div>
     </div>
   </MainLayout>
 </template>
@@ -232,6 +267,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAkreditasiApi } from '@/composables/useAkreditasiApi'
 import MainLayout from '@/layouts/MainLayout.vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
+import LockStatusIndicator from '@/components/akreditasi/LockStatusIndicator.vue'
+import VersionHistoryTimeline from '@/components/akreditasi/VersionHistoryTimeline.vue'
+import EditLockIndicator from '@/components/akreditasi/EditLockIndicator.vue'
+import ButirCommentPanel from '@/components/akreditasi/ButirCommentPanel.vue'
 import axios from 'axios'
 
 const route = useRoute()
@@ -242,6 +281,7 @@ const isEdit = computed(() => !!route.params.id)
 const localError = ref(null)
 const successMessage = ref(null)
 const loadingButirs = ref(false)
+const isLocked = ref(false)
 
 const form = ref({
   periode_akreditasi_id: '',
@@ -435,6 +475,47 @@ const handleError = (err) => {
     localError.value = 'Terjadi kesalahan yang tidak diketahui'
   }
   window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// Lock Status Handler
+const handleLockStatusChanged = (lockStatusData) => {
+  isLocked.value = lockStatusData.is_locked
+
+  // If locked, disable form inputs
+  if (lockStatusData.is_locked) {
+    localError.value = `Pengisian terkunci: ${lockStatusData.reason}`
+  }
+}
+
+// Contact Admin Handler
+const handleContactAdmin = () => {
+  // You can implement email or notification logic here
+  alert('Silakan hubungi administrator untuk meminta perpanjangan deadline atau unlock pengisian.')
+}
+
+// Version Restored Handler
+const handleVersionRestored = async (restoredData) => {
+  successMessage.value = 'Versi berhasil dipulihkan!'
+
+  // Reload the form data
+  try {
+    const response = await axios.get(`/api/pengisian-butir/${route.params.id}`)
+    const data = response.data.data
+
+    Object.assign(form.value, {
+      konten: data.konten || '',
+      notes: data.notes || '',
+      completion_percentage: data.completion_percentage || 0,
+      is_complete: data.is_complete || false,
+      status: data.status || 'draft',
+      review_notes: data.review_notes || '',
+    })
+
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  } catch (err) {
+    console.error('Error reloading after restore:', err)
+    localError.value = 'Gagal memuat data setelah restore'
+  }
 }
 
 onMounted(async () => {

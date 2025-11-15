@@ -257,4 +257,125 @@ class PengisianButirController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Check lock status of pengisian butir.
+     */
+    public function checkLockStatus(string $id): JsonResponse
+    {
+        try {
+            $lockStatus = $this->pengisianButirService->checkLockStatus($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lock status berhasil diambil',
+                'data' => $lockStatus,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil lock status',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Acquire edit lock for pengisian butir
+     *
+     * @param string $id
+     * @return JsonResponse
+     */
+    public function acquireLock(string $id): JsonResponse
+    {
+        try {
+            $lock = $this->pengisianButirService->acquireLock((int) $id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Edit lock berhasil diambil',
+                'data' => $lock,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil edit lock',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Release edit lock
+     *
+     * @param string $id
+     * @return JsonResponse
+     */
+    public function releaseLock(string $id): JsonResponse
+    {
+        try {
+            $this->pengisianButirService->releaseLock((int) $id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Edit lock berhasil dilepas',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal melepas edit lock',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Extend edit lock duration
+     *
+     * @param string $id
+     * @return JsonResponse
+     */
+    public function extendLock(string $id): JsonResponse
+    {
+        try {
+            $lock = $this->pengisianButirService->extendLock((int) $id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Edit lock berhasil diperpanjang',
+                'data' => $lock,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperpanjang edit lock',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Check edit lock status
+     *
+     * @param string $id
+     * @return JsonResponse
+     */
+    public function checkEditLock(string $id): JsonResponse
+    {
+        try {
+            $lockStatus = $this->pengisianButirService->checkEditLock((int) $id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Edit lock status berhasil diambil',
+                'data' => $lockStatus,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil edit lock status',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

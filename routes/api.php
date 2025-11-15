@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\IKUProgressController;
 use App\Http\Controllers\Api\PeriodeAkreditasiController;
 use App\Http\Controllers\Api\ButirAkreditasiController;
 use App\Http\Controllers\Api\PengisianButirController;
+use App\Http\Controllers\Api\ButirCommentController;
 use App\Http\Controllers\Api\DokumenAkreditasiController;
 use App\Http\Controllers\Api\NotificationController;
 use Illuminate\Http\Request;
@@ -115,6 +116,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('periode-akreditasi/{id}/dashboard', [PeriodeAkreditasiController::class, 'dashboard']);
     Route::get('periode-akreditasi/{id}/statistics', [PeriodeAkreditasiController::class, 'statistics']);
     Route::get('periode-akreditasi/{id}/gap-analysis', [PeriodeAkreditasiController::class, 'gapAnalysis']);
+    Route::get('periode-akreditasi/{id}/scoring-simulation', [PeriodeAkreditasiController::class, 'scoringSimulation']);
     Route::get('periode-akreditasi/{id}/export/pdf', [PeriodeAkreditasiController::class, 'exportPDF']);
     Route::get('periode-akreditasi/{id}/export/excel', [PeriodeAkreditasiController::class, 'exportExcel']);
     Route::post('periode-akreditasi/{id}/copy-butir-from-template', [PeriodeAkreditasiController::class, 'copyButirFromTemplate']);
@@ -133,8 +135,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('pengisian-butir/{id}/submit', [PengisianButirController::class, 'submit']);
     Route::post('pengisian-butir/{id}/approve', [PengisianButirController::class, 'approve']);
     Route::post('pengisian-butir/{id}/revision', [PengisianButirController::class, 'revision']);
+    Route::get('pengisian-butir/{id}/check-lock-status', [PengisianButirController::class, 'checkLockStatus']);
+    Route::post('pengisian-butir/{id}/acquire-lock', [PengisianButirController::class, 'acquireLock']);
+    Route::post('pengisian-butir/{id}/release-lock', [PengisianButirController::class, 'releaseLock']);
+    Route::post('pengisian-butir/{id}/extend-lock', [PengisianButirController::class, 'extendLock']);
+    Route::get('pengisian-butir/{id}/check-edit-lock', [PengisianButirController::class, 'checkEditLock']);
     Route::get('pengisian-butir/periode/{periodeId}/summary', [PengisianButirController::class, 'summary']);
     Route::apiResource('pengisian-butir', PengisianButirController::class);
+
+    // Butir Comments Routes (Collaboration Feature)
+    Route::get('pengisian-butir/{pengisianButirId}/comments', [ButirCommentController::class, 'index']);
+    Route::post('pengisian-butir/{pengisianButirId}/comments', [ButirCommentController::class, 'store']);
+    Route::put('butir-comments/{id}', [ButirCommentController::class, 'update']);
+    Route::delete('butir-comments/{id}', [ButirCommentController::class, 'destroy']);
+    Route::post('butir-comments/{id}/resolve', [ButirCommentController::class, 'resolve']);
+    Route::post('butir-comments/{id}/unresolve', [ButirCommentController::class, 'unresolve']);
 
     // Dokumen Akreditasi Routes
     Route::get('dokumen-akreditasi/{id}/download', [DokumenAkreditasiController::class, 'download']);

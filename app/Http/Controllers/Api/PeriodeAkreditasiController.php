@@ -231,6 +231,28 @@ class PeriodeAkreditasiController extends Controller
     }
 
     /**
+     * Get scoring simulation for periode akreditasi.
+     */
+    public function scoringSimulation(string $id): JsonResponse
+    {
+        try {
+            $scoringData = $this->periodeAkreditasiService->calculatePredictedScore($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Scoring simulation berhasil diambil',
+                'data' => $scoringData,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil scoring simulation',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Export periode akreditasi to PDF.
      */
     public function exportPDF(string $id)

@@ -655,6 +655,231 @@ class PeriodeAkreditasiService
     }
 
     /**
+     * Calculate predicted score for periode akreditasi
+     * Score is calculated based on: (sum of weighted completion) / (total weight) * 100
+     *
+     * @param int $id Periode ID
+     * @return array Detailed scoring simulation
+     */
+    public function calculatePredictedScore(int $id): array
+    {
+        $periode = $this->findById($id);
+
+        if (!$periode) {
+            throw new \Exception('Periode Akreditasi tidak ditemukan');
+        }
+
+        // Load relationships
+        $periode->load(['pengisianButirs.butirAkreditasi']);
+
+        // Get all butir for this periode (from template or periode-specific)
+        $allButir = \App\Models\ButirAkreditasi::where(function($query) use ($id) {
+            $query->where('periode_akreditasi_id', $id)
+                  ->orWhereNull('periode_akreditasi_id'); // Include templates if no periode-specific butir
+        })->get();
+
+        $totalWeight = 0;
+        $weightedCompletion = 0;
+        $kategoriScores = [];
+        $butirDetails = [];
+
+        foreach ($allButir as $butir) {
+            $bobot = $butir->bobot ?? 0;
+            $totalWeight += $bobot;
+
+            // Find pengisian for this butir
+            $pengisian = $periode->pengisianButirs->firstWhere('butir_akreditasi_id', $butir->id);
+            $completionPercentage = $pengisian ? ($pengisian->completion_percentage ?? 0) : 0;
+            $status = $pengisian ? $pengisian->status : 'not_started';
+
+            // Calculate weighted completion
+            $weightedScore = ($bobot * $completionPercentage) / 100;
+            $weightedCompletion += $weightedScore;
+
+            // Group by kategori
+            $kategori = $butir->kategori ?? 'Tanpa Kategori';
+            if (!isset($kategoriScores[$kategori])) {
+                $kategoriScores[$kategori] = [
+                    'kategori' => $kategori,
+                    'total_weight' => 0,
+                    'weighted_completion' => 0,
+                    'butir_count' => 0,
+                    'completed_butir' => 0,
+                ];
+            }
+
+            $kategoriScores[$kategori]['total_weight'] += $bobot;
+            $kategoriScores[$kategori]['weighted_completion'] += $weightedScore;
+            $kategoriScores[$kategori]['butir_count']++;
+
+            if ($status === 'approved') {
+                $kategoriScores[$kategori]['completed_butir']++;
+            }
+
+            // Store butir details for breakdown
+            $butirDetails[] = [
+                'id' => $butir->id,
+                'kode' => $butir->kode,
+                'nama' => $butir->nama,
+                'kategori' => $kategori,
+                'bobot' => $bobot,
+                'completion_percentage' => $completionPercentage,
+                'weighted_score' => round($weightedScore, 2),
+                'status' => $status,
+                'is_mandatory' => $butir->is_mandatory ?? false,
+            ];
+        }
+
+        // Calculate overall predicted score
+        $predictedScore = $totalWeight > 0
+            ? round(($weightedCompletion / $totalWeight) * 100, 2)
+            : 0;
+
+        // Calculate kategori scores
+        foreach ($kategoriScores as $key => $kategori) {
+            $kategoriScores[$key]['score'] = $kategori['total_weight'] > 0
+                ? round(($kategori['weighted_completion'] / $kategori['total_weight']) * 100, 2)
+                : 0;
+            $kategoriScores[$key]['completion_rate'] = $kategori['butir_count'] > 0
+                ? round(($kategori['completed_butir'] / $kategori['butir_count']) * 100, 2)
+                : 0;
+        }
+
+        // Determine grade based on predicted score (customize based on accreditation standards)
+        $grade = $this->getGrade($predictedScore);
+
+        // Calculate max possible score if all butir are completed
+        $maxPossibleScore = 100;
+
+        // Calculate gap to max score
+        $gapToMax = $maxPossibleScore - $predictedScore;
+
+        // Find critical butir that can improve score significantly
+        $criticalButir = collect($butirDetails)
+            ->filter(function ($butir) {
+                return $butir['status'] !== 'approved' && $butir['bobot'] > 0;
+            })
+            ->sortByDesc('bobot')
+            ->take(10)
+            ->values()
+            ->toArray();
+
+        return [
+            'summary' => [
+                'predicted_score' => $predictedScore,
+                'max_possible_score' => $maxPossibleScore,
+                'gap_to_max' => $gapToMax,
+                'grade' => $grade['grade'],
+                'grade_label' => $grade['label'],
+                'grade_description' => $grade['description'],
+                'total_weight' => $totalWeight,
+                'weighted_completion' => round($weightedCompletion, 2),
+                'total_butir' => count($allButir),
+                'completed_butir' => collect($butirDetails)->where('status', 'approved')->count(),
+            ],
+            'kategori_scores' => array_values($kategoriScores),
+            'critical_butir' => $criticalButir,
+            'butir_details' => $butirDetails,
+            'recommendations' => $this->getScoringRecommendations($predictedScore, $gapToMax, $criticalButir),
+        ];
+    }
+
+    /**
+     * Get grade based on score (customize based on your accreditation standards)
+     */
+    protected function getGrade(float $score): array
+    {
+        // Example grading (adjust based on BAN-PT, LAMEMBA, or LAMINFOKOM standards)
+        if ($score >= 361) { // Score > 361 (A/Unggul)
+            return [
+                'grade' => 'A',
+                'label' => 'Unggul',
+                'description' => 'Program studi melampaui standar yang ditetapkan',
+                'color' => 'green',
+            ];
+        } elseif ($score >= 301) { // Score 301-360 (B/Baik Sekali)
+            return [
+                'grade' => 'B',
+                'label' => 'Baik Sekali',
+                'description' => 'Program studi memenuhi standar dan melampaui pada beberapa aspek',
+                'color' => 'blue',
+            ];
+        } elseif ($score >= 241) { // Score 241-300 (C/Baik)
+            return [
+                'grade' => 'C',
+                'label' => 'Baik',
+                'description' => 'Program studi memenuhi standar minimum',
+                'color' => 'yellow',
+            ];
+        } else { // Score < 241 (Tidak Terakreditasi)
+            return [
+                'grade' => 'TT',
+                'label' => 'Tidak Terakreditasi',
+                'description' => 'Program studi belum memenuhi standar minimum',
+                'color' => 'red',
+            ];
+        }
+    }
+
+    /**
+     * Get scoring recommendations
+     */
+    protected function getScoringRecommendations(float $currentScore, float $gapToMax, array $criticalButir): array
+    {
+        $recommendations = [];
+
+        if ($currentScore < 241) {
+            $recommendations[] = [
+                'priority' => 'critical',
+                'title' => 'Skor Dibawah Standar Minimum',
+                'description' => "Skor prediksi saat ini ({$currentScore}) masih di bawah standar minimum (241). Fokus pada butir wajib dan butir dengan bobot tinggi.",
+                'target_score' => 241,
+                'score_needed' => round(241 - $currentScore, 2),
+            ];
+        } elseif ($currentScore < 301) {
+            $recommendations[] = [
+                'priority' => 'high',
+                'title' => 'Potensi Peningkatan ke Peringkat B',
+                'description' => "Dengan skor {$currentScore}, Anda berpotensi naik ke peringkat B (Baik Sekali). Selesaikan butir dengan bobot tinggi.",
+                'target_score' => 301,
+                'score_needed' => round(301 - $currentScore, 2),
+            ];
+        } elseif ($currentScore < 361) {
+            $recommendations[] = [
+                'priority' => 'medium',
+                'title' => 'Potensi Peningkatan ke Peringkat A',
+                'description' => "Dengan skor {$currentScore}, Anda berpotensi mencapai peringkat A (Unggul). Fokus pada excellence di semua aspek.",
+                'target_score' => 361,
+                'score_needed' => round(361 - $currentScore, 2),
+            ];
+        } else {
+            $recommendations[] = [
+                'priority' => 'low',
+                'title' => 'Pertahankan Kualitas',
+                'description' => "Skor Anda sudah sangat baik ({$currentScore}). Pastikan semua dokumen pendukung lengkap dan valid.",
+                'target_score' => 400,
+                'score_needed' => round(400 - $currentScore, 2),
+            ];
+        }
+
+        // Add specific recommendations for critical butir
+        if (count($criticalButir) > 0) {
+            $topButir = array_slice($criticalButir, 0, 3);
+            $totalPotentialGain = array_sum(array_column($topButir, 'bobot'));
+
+            $recommendations[] = [
+                'priority' => 'high',
+                'title' => 'Fokus pada Butir Prioritas',
+                'description' => "Menyelesaikan 3 butir teratas dengan bobot tertinggi dapat menambah hingga {$totalPotentialGain} poin ke skor Anda.",
+                'butir_kode' => array_column($topButir, 'kode'),
+                'potential_gain' => $totalPotentialGain,
+            ];
+        }
+
+        return $recommendations;
+    }
+
+    /**
      * Get periode by program studi
      */
     public function getByProgram(int $programStudiId): Collection
