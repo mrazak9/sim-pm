@@ -205,6 +205,19 @@ const routes = [
     component: () => import('@/views/akreditasi/ScoringSimulation.vue'),
     meta: { requiresAuth: true },
   },
+  // Document Management Routes
+  {
+    path: '/dokumen',
+    name: 'document-list',
+    component: () => import('@/views/dokumen/DocumentList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/dokumen/:id',
+    name: 'document-detail',
+    component: () => import('@/views/dokumen/DocumentDetail.vue'),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
