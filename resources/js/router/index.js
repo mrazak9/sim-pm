@@ -314,6 +314,102 @@ const routes = [
     component: () => import('@/views/audit/RTLForm.vue'),
     meta: { requiresAuth: true },
   },
+  // SPMI Module Routes
+  // SPMI Standards
+  {
+    path: '/spmi/standards',
+    name: 'spmi-standard-list',
+    component: () => import('@/views/spmi/SpmiStandardList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/standards/create',
+    name: 'spmi-standard-create',
+    component: () => import('@/views/spmi/SpmiStandardForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/standards/:id/edit',
+    name: 'spmi-standard-edit',
+    component: () => import('@/views/spmi/SpmiStandardForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // SPMI Indicators
+  {
+    path: '/spmi/indicators',
+    name: 'spmi-indicator-list',
+    component: () => import('@/views/spmi/SpmiIndicatorList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/indicators/create',
+    name: 'spmi-indicator-create',
+    component: () => import('@/views/spmi/SpmiIndicatorForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/indicators/:id/edit',
+    name: 'spmi-indicator-edit',
+    component: () => import('@/views/spmi/SpmiIndicatorForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // SPMI Monitoring
+  {
+    path: '/spmi/monitorings',
+    name: 'spmi-monitoring-list',
+    component: () => import('@/views/spmi/SpmiMonitoringList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/monitorings/create',
+    name: 'spmi-monitoring-create',
+    component: () => import('@/views/spmi/SpmiMonitoringForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/monitorings/:id/edit',
+    name: 'spmi-monitoring-edit',
+    component: () => import('@/views/spmi/SpmiMonitoringForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // RTM (Rapat Tinjauan Manajemen)
+  {
+    path: '/spmi/rtm',
+    name: 'rtm-list',
+    component: () => import('@/views/spmi/RTMList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/rtm/create',
+    name: 'rtm-create',
+    component: () => import('@/views/spmi/RTMForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/rtm/:id/edit',
+    name: 'rtm-edit',
+    component: () => import('@/views/spmi/RTMForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // RTM Action Items
+  {
+    path: '/spmi/rtm-actions',
+    name: 'rtm-action-list',
+    component: () => import('@/views/spmi/RTMActionItemList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/rtm-actions/create',
+    name: 'rtm-action-create',
+    component: () => import('@/views/spmi/RTMActionItemForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/rtm-actions/:id/edit',
+    name: 'rtm-action-edit',
+    component: () => import('@/views/spmi/RTMActionItemForm.vue'),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
