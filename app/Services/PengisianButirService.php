@@ -3,12 +3,14 @@
 namespace App\Services;
 
 use App\Models\PengisianButir;
+use App\Models\PengisianButirLock;
 use App\Repositories\PengisianButirRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class PengisianButirService
 {
@@ -701,5 +703,189 @@ class PengisianButirService
                 'files_changed' => json_encode($v1->files) !== json_encode($v2->files),
             ],
         ];
+    }
+
+    /**
+     * Acquire edit lock for pengisian butir
+     *
+     * @param int $pengisianId
+     * @param int $durationMinutes
+     * @return PengisianButirLock
+     * @throws \Exception
+     */
+    public function acquireLock(int $pengisianId, int $durationMinutes = 30): PengisianButirLock
+    {
+        DB::beginTransaction();
+
+        try {
+            // Clean up expired locks first
+            $this->cleanupExpiredLocks();
+
+            $pengisianButir = $this->repository->findById($pengisianId);
+
+            if (!$pengisianButir) {
+                throw new \Exception('Pengisian Butir tidak ditemukan');
+            }
+
+            // Check if there's an active lock by another user
+            $existingLock = PengisianButirLock::where('pengisian_butir_id', $pengisianId)
+                ->active()
+                ->first();
+
+            if ($existingLock && $existingLock->user_id !== Auth::id()) {
+                throw new \Exception(
+                    "Pengisian butir sedang diedit oleh {$existingLock->user->name}. " .
+                    "Silakan coba lagi dalam {$existingLock->getRemainingMinutes()} menit."
+                );
+            }
+
+            // Create or update lock
+            $lock = PengisianButirLock::updateOrCreate(
+                ['pengisian_butir_id' => $pengisianId],
+                [
+                    'user_id' => Auth::id(),
+                    'locked_at' => Carbon::now(),
+                    'expires_at' => Carbon::now()->addMinutes($durationMinutes),
+                ]
+            );
+
+            DB::commit();
+
+            Log::info('Edit lock acquired', [
+                'pengisian_butir_id' => $pengisianId,
+                'user_id' => Auth::id(),
+                'expires_at' => $lock->expires_at,
+            ]);
+
+            return $lock->load('user');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to acquire lock', [
+                'error' => $e->getMessage(),
+                'pengisian_id' => $pengisianId,
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Release edit lock
+     *
+     * @param int $pengisianId
+     * @return bool
+     */
+    public function releaseLock(int $pengisianId): bool
+    {
+        DB::beginTransaction();
+
+        try {
+            $lock = PengisianButirLock::where('pengisian_butir_id', $pengisianId)
+                ->where('user_id', Auth::id())
+                ->first();
+
+            if ($lock) {
+                $lock->delete();
+
+                Log::info('Edit lock released', [
+                    'pengisian_butir_id' => $pengisianId,
+                    'user_id' => Auth::id(),
+                ]);
+            }
+
+            DB::commit();
+
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to release lock', [
+                'error' => $e->getMessage(),
+                'pengisian_id' => $pengisianId,
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Extend edit lock duration
+     *
+     * @param int $pengisianId
+     * @param int $additionalMinutes
+     * @return PengisianButirLock
+     */
+    public function extendLock(int $pengisianId, int $additionalMinutes = 30): PengisianButirLock
+    {
+        DB::beginTransaction();
+
+        try {
+            $lock = PengisianButirLock::where('pengisian_butir_id', $pengisianId)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
+            $lock->update([
+                'expires_at' => Carbon::now()->addMinutes($additionalMinutes),
+            ]);
+
+            DB::commit();
+
+            Log::info('Edit lock extended', [
+                'pengisian_butir_id' => $pengisianId,
+                'user_id' => Auth::id(),
+                'new_expires_at' => $lock->expires_at,
+            ]);
+
+            return $lock->load('user');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to extend lock', [
+                'error' => $e->getMessage(),
+                'pengisian_id' => $pengisianId,
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Check lock status
+     *
+     * @param int $pengisianId
+     * @return array
+     */
+    public function checkEditLock(int $pengisianId): array
+    {
+        $lock = PengisianButirLock::where('pengisian_butir_id', $pengisianId)
+            ->active()
+            ->with('user')
+            ->first();
+
+        if (!$lock) {
+            return [
+                'is_locked' => false,
+                'locked_by' => null,
+                'locked_by_current_user' => false,
+                'expires_at' => null,
+                'remaining_minutes' => 0,
+            ];
+        }
+
+        return [
+            'is_locked' => true,
+            'locked_by' => [
+                'id' => $lock->user->id,
+                'name' => $lock->user->name,
+            ],
+            'locked_by_current_user' => $lock->user_id === Auth::id(),
+            'expires_at' => $lock->expires_at,
+            'remaining_minutes' => $lock->getRemainingMinutes(),
+        ];
+    }
+
+    /**
+     * Clean up expired locks
+     *
+     * @return int Number of locks cleaned up
+     */
+    protected function cleanupExpiredLocks(): int
+    {
+        return PengisianButirLock::expired()->delete();
     }
 }

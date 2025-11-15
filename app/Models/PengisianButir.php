@@ -63,6 +63,16 @@ class PengisianButir extends Model
         return $this->hasMany(PengisianButirVersion::class)->orderBy('version_number', 'desc');
     }
 
+    public function comments()
+    {
+        return $this->hasMany(ButirComment::class)->orderBy('created_at', 'desc');
+    }
+
+    public function lock()
+    {
+        return $this->hasOne(PengisianButirLock::class);
+    }
+
     /**
      * Scopes
      */
