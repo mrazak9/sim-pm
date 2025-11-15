@@ -213,6 +213,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/dokumen/categories',
+    name: 'document-categories',
+    component: () => import('@/views/dokumen/CategoryManagement.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/dokumen/:id',
     name: 'document-detail',
     component: () => import('@/views/dokumen/DocumentDetail.vue'),
