@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\PengisianButirController;
 use App\Http\Controllers\Api\ButirCommentController;
 use App\Http\Controllers\Api\DokumenAkreditasiController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\DocumentController;
+use App\Http\Controllers\Api\DocumentCategoryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -161,4 +163,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
     Route::post('notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
     Route::post('notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
+
+    // Document Management Routes
+
+    // Document Category Routes
+    Route::get('document-categories/tree', [DocumentCategoryController::class, 'tree']);
+    Route::apiResource('document-categories', DocumentCategoryController::class);
+
+    // Document Routes
+    Route::get('documents/my-documents', [DocumentController::class, 'myDocuments']);
+    Route::get('documents/shared-with-me', [DocumentController::class, 'sharedWithMe']);
+    Route::post('documents/{id}/upload-version', [DocumentController::class, 'uploadVersion']);
+    Route::post('documents/{documentId}/restore-version/{versionNumber}', [DocumentController::class, 'restoreVersion']);
+    Route::post('documents/{id}/update-status', [DocumentController::class, 'updateStatus']);
+    Route::post('documents/{id}/share', [DocumentController::class, 'share']);
+    Route::delete('document-shares/{shareId}', [DocumentController::class, 'revokeShare']);
+    Route::delete('documents/{id}/force', [DocumentController::class, 'forceDestroy']);
+    Route::apiResource('documents', DocumentController::class);
 });
