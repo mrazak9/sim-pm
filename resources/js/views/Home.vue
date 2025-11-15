@@ -15,10 +15,8 @@
       <!-- Metric Card: Documents -->
       <MetricCard
         title="Total Dokumen"
-        :value="24"
-        :change="12"
-        changeType="increase"
-        subtitle="dari bulan lalu"
+        :value="metrics.totalDokumen"
+        subtitle="dokumen akreditasi"
         :iconComponent="DocumentIcon"
         iconColor="text-blue-600 dark:text-blue-400"
         iconBgColor="bg-blue-100 dark:bg-blue-900/20"
@@ -27,7 +25,7 @@
       <!-- Metric Card: Units -->
       <MetricCard
         title="Unit Kerja"
-        :value="12"
+        :value="metrics.totalUnitKerja"
         subtitle="Total unit aktif"
         :iconComponent="BuildingIcon"
         iconColor="text-green-600 dark:text-green-400"
@@ -37,20 +35,18 @@
       <!-- Metric Card: Programs -->
       <MetricCard
         title="Program Studi"
-        :value="18"
-        subtitle="Terakreditasi"
+        :value="metrics.totalProgramStudi"
+        subtitle="program studi aktif"
         :iconComponent="BookIcon"
         iconColor="text-yellow-600 dark:text-yellow-400"
         iconBgColor="bg-yellow-100 dark:bg-yellow-900/20"
       />
 
-      <!-- Metric Card: Users -->
+      <!-- Metric Card: Periode Akreditasi -->
       <MetricCard
-        title="Pengguna"
-        :value="156"
-        :change="8"
-        changeType="increase"
-        subtitle="pengguna baru"
+        title="Periode Akreditasi"
+        :value="metrics.totalPeriodeAkreditasi"
+        subtitle="periode berjalan"
         :iconComponent="UsersIcon"
         iconColor="text-purple-600 dark:text-purple-400"
         iconBgColor="bg-purple-100 dark:bg-purple-900/20"
@@ -283,10 +279,18 @@ import PieChart from '@/components/charts/PieChart.vue';
 import BarChart from '@/components/charts/BarChart.vue';
 import axios from 'axios';
 
+// Metrics data
+const metrics = ref({
+  totalDokumen: 0,
+  totalUnitKerja: 0,
+  totalProgramStudi: 0,
+  totalPeriodeAkreditasi: 0
+});
+
 // Chart data refs
 const ikuStatusData = ref({
   labels: ['Tercapai', 'Sesuai Target', 'Perlu Perhatian', 'Kritis'],
-  data: [5, 8, 3, 2],
+  data: [0, 0, 0, 0],
   colors: [
     'rgba(59, 130, 246, 0.8)',
     'rgba(16, 185, 129, 0.8)',
@@ -297,7 +301,7 @@ const ikuStatusData = ref({
 
 const akreditasiStatusData = ref({
   labels: ['Persiapan', 'Pengisian', 'Review', 'Submit', 'Visitasi', 'Selesai'],
-  data: [2, 3, 2, 1, 0, 4],
+  data: [0, 0, 0, 0, 0, 0],
   colors: [
     'rgba(156, 163, 175, 0.8)',
     'rgba(59, 130, 246, 0.8)',
@@ -309,14 +313,65 @@ const akreditasiStatusData = ref({
 });
 
 const progressData = ref({
-  iku: 75,
-  akreditasi: 68,
-  masterData: 85
+  iku: 0,
+  akreditasi: 0,
+  masterData: 0
 });
 
 // Fetch dashboard summary data
 const fetchDashboardSummary = async () => {
   try {
+    console.log('Fetching dashboard data...');
+
+    // Fetch Unit Kerja statistics
+    const unitKerjaStats = await axios.get('/api/unit-kerja/statistics');
+    if (unitKerjaStats.data.success) {
+      metrics.value.totalUnitKerja = unitKerjaStats.data.data.total || 0;
+      console.log('Unit Kerja:', metrics.value.totalUnitKerja);
+    }
+
+    // Fetch Program Studi statistics
+    const prodiStats = await axios.get('/api/program-studi/statistics');
+    if (prodiStats.data.success) {
+      metrics.value.totalProgramStudi = prodiStats.data.data.total || 0;
+      console.log('Program Studi:', metrics.value.totalProgramStudi);
+    }
+
+    // Fetch Periode Akreditasi count
+    const periodeResp = await axios.get('/api/periode-akreditasi?per_page=1');
+    if (periodeResp.data.success && periodeResp.data.meta) {
+      metrics.value.totalPeriodeAkreditasi = periodeResp.data.meta.total || 0;
+      console.log('Periode Akreditasi:', metrics.value.totalPeriodeAkreditasi);
+    }
+
+    // Count Periode Akreditasi by status for chart
+    const periodeAll = await axios.get('/api/periode-akreditasi?per_page=all');
+    if (periodeAll.data.success) {
+      const periodes = periodeAll.data.data || [];
+      const statusCount = {
+        'persiapan': 0,
+        'pengisian': 0,
+        'review': 0,
+        'submit': 0,
+        'visitasi': 0,
+        'selesai': 0
+      };
+      periodes.forEach(p => {
+        if (statusCount.hasOwnProperty(p.status)) {
+          statusCount[p.status]++;
+        }
+      });
+      akreditasiStatusData.value.data = [
+        statusCount.persiapan,
+        statusCount.pengisian,
+        statusCount.review,
+        statusCount.submit,
+        statusCount.visitasi,
+        statusCount.selesai
+      ];
+      console.log('Akreditasi status:', statusCount);
+    }
+
     // Fetch IKU statistics
     const ikuStats = await axios.get('/api/iku-targets/dashboard-statistics');
     if (ikuStats.data.success) {
@@ -328,10 +383,25 @@ const fetchDashboardSummary = async () => {
         stats.critical || 0
       ];
       progressData.value.iku = Math.round(stats.avg_achievement || 0);
+      console.log('IKU stats:', stats);
     }
 
-    // Fetch Akreditasi statistics (basic implementation)
-    // This can be enhanced with actual API endpoints
+    // Calculate master data completeness
+    const totalMasterData = metrics.value.totalUnitKerja + metrics.value.totalProgramStudi;
+    const expectedMasterData = 50; // Estimate
+    progressData.value.masterData = totalMasterData > 0
+      ? Math.min(100, Math.round((totalMasterData / expectedMasterData) * 100))
+      : 0;
+
+    // Calculate akreditasi completeness
+    const periodeWithData = (periodeAll.data?.data || []).filter(p =>
+      p.status === 'selesai' || p.status === 'visitasi'
+    ).length;
+    progressData.value.akreditasi = metrics.value.totalPeriodeAkreditasi > 0
+      ? Math.round((periodeWithData / metrics.value.totalPeriodeAkreditasi) * 100)
+      : 0;
+
+    console.log('Dashboard data loaded successfully');
   } catch (error) {
     console.error('Failed to fetch dashboard summary:', error);
   }

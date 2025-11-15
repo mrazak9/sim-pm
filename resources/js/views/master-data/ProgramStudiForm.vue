@@ -285,7 +285,9 @@ const fetchProgramStudi = async () => {
 const fetchUnitKerjaOptions = async () => {
   try {
     const response = await getUnitKerjas({ per_page: 100, is_active: 1 });
-    unitKerjaOptions.value = response.data.data;
+    // response is already response.data from composable
+    unitKerjaOptions.value = response.data || [];
+    console.log('Unit Kerja options loaded:', unitKerjaOptions.value.length);
   } catch (error) {
     console.error('Failed to fetch unit kerja options:', error);
   }

@@ -173,13 +173,14 @@ const fetchTahunAkademik = async () => {
     const data = response.data;
 
     form.value = {
-      tahun: data.tahun,
+      tahun: data.nama_tahun || data.tahun,
       semester: data.semester,
       tanggal_mulai: data.tanggal_mulai,
       tanggal_selesai: data.tanggal_selesai,
       deskripsi: data.deskripsi || '',
       is_active: data.is_active,
     };
+    console.log('Tahun Akademik data loaded for edit:', form.value);
   } catch (error) {
     console.error('Failed to fetch tahun akademik:', error);
     errorMessage.value = 'Gagal memuat data tahun akademik';

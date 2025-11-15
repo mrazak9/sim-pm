@@ -89,7 +89,7 @@
             </tr>
             <tr v-else v-for="item in tahunAkademiks" :key="item.id" class="border-b border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
               <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                {{ item.tahun }}
+                {{ item.nama_tahun || item.tahun }}
               </td>
               <td class="px-6 py-4">
                 <span :class="[
@@ -251,15 +251,20 @@ const fetchTahunAkademiks = async (page = 1) => {
     });
 
     const response = await getTahunAkademiks(params);
-    tahunAkademiks.value = response.data.data;
-    pagination.value = {
-      current_page: response.data.current_page,
-      last_page: response.data.last_page,
-      per_page: response.data.per_page,
-      total: response.data.total,
-      from: response.data.from,
-      to: response.data.to,
-    };
+    console.log('Tahun Akademik API Response:', response);
+    // response is already response.data from composable
+    tahunAkademiks.value = response.data || [];
+    if (response.meta) {
+      pagination.value = {
+        current_page: response.meta.current_page,
+        last_page: response.meta.last_page,
+        per_page: response.meta.per_page,
+        total: response.meta.total,
+        from: response.meta.from,
+        to: response.meta.to,
+      };
+    }
+    console.log('Tahun Akademiks loaded:', tahunAkademiks.value.length, 'items');
   } catch (error) {
     console.error('Failed to fetch tahun akademiks:', error);
   }

@@ -253,10 +253,10 @@ const fetchUnitKerja = async () => {
     const data = response.data;
 
     form.value = {
-      kode: data.kode,
-      nama: data.nama,
+      kode: data.kode_unit || data.kode,
+      nama: data.nama_unit || data.nama,
       nama_singkat: data.nama_singkat || '',
-      jenis: data.jenis,
+      jenis: data.jenis_unit || data.jenis,
       parent_id: data.parent_id,
       deskripsi: data.deskripsi || '',
       email: data.email || '',
@@ -265,6 +265,7 @@ const fetchUnitKerja = async () => {
       website: data.website || '',
       is_active: data.is_active,
     };
+    console.log('Unit Kerja data loaded for edit:', form.value);
   } catch (error) {
     console.error('Failed to fetch unit kerja:', error);
     errorMessage.value = 'Gagal memuat data unit kerja';
@@ -274,8 +275,11 @@ const fetchUnitKerja = async () => {
 const fetchParentOptions = async () => {
   try {
     const response = await getUnitKerjas({ per_page: 100, is_active: 1 });
+    // response is already response.data from composable
+    const allUnits = response.data || [];
     // Filter out current item when editing to prevent circular reference
-    parentOptions.value = response.data.data.filter(uk => uk.id !== unitKerjaId.value);
+    parentOptions.value = allUnits.filter(uk => uk.id !== unitKerjaId.value);
+    console.log('Parent options loaded:', parentOptions.value.length);
   } catch (error) {
     console.error('Failed to fetch parent options:', error);
   }

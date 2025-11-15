@@ -95,19 +95,19 @@
             </tr>
             <tr v-else v-for="item in unitKerjas" :key="item.id" class="border-b border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
               <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                {{ item.kode }}
+                {{ item.kode_unit || item.kode }}
               </td>
               <td class="px-6 py-4">
-                <p class="font-medium text-gray-900 dark:text-white">{{ item.nama }}</p>
+                <p class="font-medium text-gray-900 dark:text-white">{{ item.nama_unit || item.nama }}</p>
                 <p v-if="item.nama_singkat" class="text-xs text-gray-500 dark:text-gray-400">{{ item.nama_singkat }}</p>
               </td>
               <td class="px-6 py-4">
                 <span class="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                  {{ getJenisLabel(item.jenis) }}
+                  {{ item.jenis_unit_label || getJenisLabel(item.jenis_unit || item.jenis) }}
                 </span>
               </td>
               <td class="px-6 py-4 text-gray-900 dark:text-white">
-                {{ item.parent?.nama || '-' }}
+                {{ item.parent?.nama_unit || item.parent?.nama || '-' }}
               </td>
               <td class="px-6 py-4 text-gray-900 dark:text-white">
                 {{ item.email || '-' }}
@@ -244,15 +244,20 @@ const fetchUnitKerjas = async (page = 1) => {
     });
 
     const response = await getUnitKerjas(params);
-    unitKerjas.value = response.data.data;
-    pagination.value = {
-      current_page: response.data.current_page,
-      last_page: response.data.last_page,
-      per_page: response.data.per_page,
-      total: response.data.total,
-      from: response.data.from,
-      to: response.data.to,
-    };
+    console.log('Unit Kerja API Response:', response);
+    // response is already response.data from composable
+    unitKerjas.value = response.data || [];
+    if (response.meta) {
+      pagination.value = {
+        current_page: response.meta.current_page,
+        last_page: response.meta.last_page,
+        per_page: response.meta.per_page,
+        total: response.meta.total,
+        from: response.meta.from,
+        to: response.meta.to,
+      };
+    }
+    console.log('Unit Kerjas loaded:', unitKerjas.value.length, 'items');
   } catch (error) {
     console.error('Failed to fetch unit kerjas:', error);
   }

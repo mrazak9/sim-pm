@@ -254,15 +254,20 @@ const fetchJabatans = async (page = 1) => {
     });
 
     const response = await getJabatans(params);
-    jabatans.value = response.data.data;
-    pagination.value = {
-      current_page: response.data.current_page,
-      last_page: response.data.last_page,
-      per_page: response.data.per_page,
-      total: response.data.total,
-      from: response.data.from,
-      to: response.data.to,
-    };
+    console.log('Jabatan API Response:', response);
+    // response is already response.data from composable
+    jabatans.value = response.data || [];
+    if (response.meta) {
+      pagination.value = {
+        current_page: response.meta.current_page,
+        last_page: response.meta.last_page,
+        per_page: response.meta.per_page,
+        total: response.meta.total,
+        from: response.meta.from,
+        to: response.meta.to,
+      };
+    }
+    console.log('Jabatans loaded:', jabatans.value.length, 'items');
   } catch (error) {
     console.error('Failed to fetch jabatans:', error);
   }
