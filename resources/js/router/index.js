@@ -198,6 +198,13 @@ const routes = [
     component: () => import('@/views/akreditasi/DokumenAkreditasiList.vue'),
     meta: { requiresAuth: true },
   },
+  // Scoring Simulation Route
+  {
+    path: '/akreditasi/scoring-simulation',
+    name: 'scoring-simulation',
+    component: () => import('@/views/akreditasi/ScoringSimulation.vue'),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
