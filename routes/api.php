@@ -115,6 +115,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('periode-akreditasi/{id}/dashboard', [PeriodeAkreditasiController::class, 'dashboard']);
     Route::get('periode-akreditasi/{id}/statistics', [PeriodeAkreditasiController::class, 'statistics']);
     Route::get('periode-akreditasi/{id}/gap-analysis', [PeriodeAkreditasiController::class, 'gapAnalysis']);
+    Route::get('periode-akreditasi/{id}/scoring-simulation', [PeriodeAkreditasiController::class, 'scoringSimulation']);
     Route::get('periode-akreditasi/{id}/export/pdf', [PeriodeAkreditasiController::class, 'exportPDF']);
     Route::get('periode-akreditasi/{id}/export/excel', [PeriodeAkreditasiController::class, 'exportExcel']);
     Route::post('periode-akreditasi/{id}/copy-butir-from-template', [PeriodeAkreditasiController::class, 'copyButirFromTemplate']);
@@ -133,6 +134,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('pengisian-butir/{id}/submit', [PengisianButirController::class, 'submit']);
     Route::post('pengisian-butir/{id}/approve', [PengisianButirController::class, 'approve']);
     Route::post('pengisian-butir/{id}/revision', [PengisianButirController::class, 'revision']);
+    Route::get('pengisian-butir/{id}/check-lock-status', [PengisianButirController::class, 'checkLockStatus']);
     Route::get('pengisian-butir/periode/{periodeId}/summary', [PengisianButirController::class, 'summary']);
     Route::apiResource('pengisian-butir', PengisianButirController::class);
 

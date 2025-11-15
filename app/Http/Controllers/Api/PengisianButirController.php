@@ -257,4 +257,26 @@ class PengisianButirController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Check lock status of pengisian butir.
+     */
+    public function checkLockStatus(string $id): JsonResponse
+    {
+        try {
+            $lockStatus = $this->pengisianButirService->checkLockStatus($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lock status berhasil diambil',
+                'data' => $lockStatus,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil lock status',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

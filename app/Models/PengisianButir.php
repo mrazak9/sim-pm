@@ -58,6 +58,11 @@ class PengisianButir extends Model
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
+    public function versions()
+    {
+        return $this->hasMany(PengisianButirVersion::class)->orderBy('version_number', 'desc');
+    }
+
     /**
      * Scopes
      */
