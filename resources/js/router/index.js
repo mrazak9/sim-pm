@@ -207,6 +207,12 @@ const routes = [
   },
   // Document Management Routes
   {
+    path: '/dokumen/dashboard',
+    name: 'document-dashboard',
+    component: () => import('@/views/dokumen/DocumentDashboard.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/dokumen',
     name: 'document-list',
     component: () => import('@/views/dokumen/DocumentList.vue'),
@@ -222,6 +228,13 @@ const routes = [
     path: '/dokumen/:id',
     name: 'document-detail',
     component: () => import('@/views/dokumen/DocumentDetail.vue'),
+    meta: { requiresAuth: true },
+  },
+  // User Activity Dashboard
+  {
+    path: '/activity',
+    name: 'user-activity',
+    component: () => import('@/views/UserActivityDashboard.vue'),
     meta: { requiresAuth: true },
   },
 ];
