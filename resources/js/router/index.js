@@ -190,6 +190,12 @@ const routes = [
     component: () => import('@/views/akreditasi/PeriodeAkreditasiDetail.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/akreditasi/periode/:periodeId/pengisian',
+    name: 'pengisian-butir-list-by-periode',
+    component: () => import('@/views/akreditasi/PengisianButirList.vue'),
+    meta: { requiresAuth: true },
+  },
   // Butir Akreditasi Routes
   {
     path: '/akreditasi/butir',

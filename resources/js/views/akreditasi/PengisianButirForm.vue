@@ -33,8 +33,8 @@
 
       <div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
         <form @submit.prevent="handleSubmit" class="space-y-6">
-          <!-- Periode & Butir Selection (only for create) -->
-          <div v-if="!isEdit" class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <!-- Periode & Butir Selection (only for create without query params) -->
+          <div v-if="!isEdit && !route.query.periode_id && !route.query.butir_id" class="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
                 Periode Akreditasi <span class="text-red-500">*</span>
@@ -224,12 +224,13 @@
               <span v-if="loading">Mengajukan...</span>
               <span v-else>Ajukan untuk Review</span>
             </button>
-            <router-link
-              to="/akreditasi/pengisian"
+            <button
+              type="button"
+              @click="handleCancel"
               class="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-center text-sm font-medium text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
             >
               Batal
-            </router-link>
+            </button>
           </div>
         </form>
       </div>
@@ -427,7 +428,7 @@ const handleSubmit = async () => {
 
     // Show success message briefly then redirect
     setTimeout(() => {
-      router.push('/akreditasi/pengisian')
+      handleCancel()
     }, 1500)
   } catch (err) {
     console.error('Error saving pengisian:', err)
@@ -491,6 +492,16 @@ const handleLockStatusChanged = (lockStatusData) => {
 const handleContactAdmin = () => {
   // You can implement email or notification logic here
   alert('Silakan hubungi administrator untuk meminta perpanjangan deadline atau unlock pengisian.')
+}
+
+// Cancel Handler - Navigate back to appropriate page
+const handleCancel = () => {
+  // If came from periode detail (has periode_id in query), go back to list
+  if (route.query.periode_id) {
+    router.push(`/akreditasi/periode/${route.query.periode_id}/pengisian`)
+  } else {
+    router.push('/akreditasi/pengisian')
+  }
 }
 
 // Version Restored Handler
