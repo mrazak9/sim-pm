@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\ProgramStudiController;
 use App\Http\Controllers\Api\JabatanController;
 use App\Http\Controllers\Api\TahunAkademikController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\IKUController;
 use App\Http\Controllers\Api\IKUTargetController;
 use App\Http\Controllers\Api\IKUProgressController;
@@ -21,6 +23,11 @@ use App\Http\Controllers\Api\AuditPlanController;
 use App\Http\Controllers\Api\AuditScheduleController;
 use App\Http\Controllers\Api\AuditFindingController;
 use App\Http\Controllers\Api\RTLController;
+use App\Http\Controllers\Api\SpmiStandardController;
+use App\Http\Controllers\Api\SpmiIndicatorController;
+use App\Http\Controllers\Api\SpmiMonitoringController;
+use App\Http\Controllers\Api\RTMController;
+use App\Http\Controllers\Api\RTMActionItemController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -89,6 +96,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('users', UserController::class);
     Route::post('users/{id}/assign-roles', [UserController::class, 'assignRoles']);
     Route::post('users/{id}/assign-permissions', [UserController::class, 'assignPermissions']);
+
+    // Role & Permission Routes
+    Route::get('roles', [RoleController::class, 'index']);
+    Route::get('roles/{id}', [RoleController::class, 'show']);
+    Route::get('permissions', [PermissionController::class, 'index']);
+    Route::get('permissions/{id}', [PermissionController::class, 'show']);
 
     // IKU Management Routes
     Route::get('iku/statistics', [IKUController::class, 'statistics']);
@@ -227,4 +240,56 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('rtls/{id}/progress', [RTLController::class, 'addProgress']);
     Route::post('rtls/{id}/verify', [RTLController::class, 'verify']);
     Route::apiResource('rtls', RTLController::class);
+
+    // SPMI Module Routes
+
+    // SPMI Standard Routes
+    Route::get('spmi-standards/statistics', [SpmiStandardController::class, 'statistics']);
+    Route::get('spmi-standards/due-for-review', [SpmiStandardController::class, 'getDueForReview']);
+    Route::post('spmi-standards/{id}/approve', [SpmiStandardController::class, 'approve']);
+    Route::post('spmi-standards/{id}/revise', [SpmiStandardController::class, 'revise']);
+    Route::post('spmi-standards/{id}/archive', [SpmiStandardController::class, 'archive']);
+    Route::apiResource('spmi-standards', SpmiStandardController::class);
+
+    // SPMI Indicator Routes
+    Route::get('spmi-indicators/statistics', [SpmiIndicatorController::class, 'statistics']);
+    Route::post('spmi-indicators/{id}/activate', [SpmiIndicatorController::class, 'activate']);
+    Route::post('spmi-indicators/{id}/deactivate', [SpmiIndicatorController::class, 'deactivate']);
+    Route::post('spmi-indicators/{id}/targets', [SpmiIndicatorController::class, 'createTarget']);
+    Route::put('spmi-indicators/{id}/targets/{targetId}', [SpmiIndicatorController::class, 'updateTarget']);
+    Route::post('spmi-indicators/{id}/achievements', [SpmiIndicatorController::class, 'recordAchievement']);
+    Route::apiResource('spmi-indicators', SpmiIndicatorController::class);
+
+    // SPMI Monitoring Routes
+    Route::get('spmi-monitorings/statistics', [SpmiMonitoringController::class, 'statistics']);
+    Route::get('spmi-monitorings/dashboard-data', [SpmiMonitoringController::class, 'dashboardData']);
+    Route::post('spmi-monitorings/{id}/start', [SpmiMonitoringController::class, 'start']);
+    Route::post('spmi-monitorings/{id}/complete', [SpmiMonitoringController::class, 'complete']);
+    Route::post('spmi-monitorings/{id}/upload-report', [SpmiMonitoringController::class, 'uploadReport']);
+    Route::apiResource('spmi-monitorings', SpmiMonitoringController::class);
+
+    // RTM Routes
+    Route::get('rtms/statistics', [RTMController::class, 'statistics']);
+    Route::get('rtms/upcoming', [RTMController::class, 'upcoming']);
+    Route::post('rtms/{id}/start', [RTMController::class, 'start']);
+    Route::post('rtms/{id}/complete', [RTMController::class, 'complete']);
+    Route::post('rtms/{id}/cancel', [RTMController::class, 'cancel']);
+    Route::post('rtms/{id}/participants', [RTMController::class, 'addParticipant']);
+    Route::delete('rtms/{id}/participants', [RTMController::class, 'removeParticipant']);
+    Route::post('rtms/{id}/attendance', [RTMController::class, 'markAttendance']);
+    Route::post('rtms/{id}/upload-minutes', [RTMController::class, 'uploadMinutes']);
+    Route::post('rtms/{id}/upload-attendance', [RTMController::class, 'uploadAttendance']);
+    Route::apiResource('rtms', RTMController::class);
+
+    // RTM Action Item Routes
+    Route::get('rtm-action-items/statistics', [RTMActionItemController::class, 'statistics']);
+    Route::get('rtm-action-items/dashboard-statistics', [RTMActionItemController::class, 'dashboardStatistics']);
+    Route::get('rtm-action-items/overdue', [RTMActionItemController::class, 'overdue']);
+    Route::get('rtm-action-items/due-soon', [RTMActionItemController::class, 'dueSoon']);
+    Route::post('rtm-action-items/{id}/start', [RTMActionItemController::class, 'start']);
+    Route::post('rtm-action-items/{id}/complete', [RTMActionItemController::class, 'complete']);
+    Route::post('rtm-action-items/{id}/cancel', [RTMActionItemController::class, 'cancel']);
+    Route::post('rtm-action-items/{id}/progress', [RTMActionItemController::class, 'addProgress']);
+    Route::post('rtm-action-items/{id}/extend', [RTMActionItemController::class, 'extend']);
+    Route::apiResource('rtm-action-items', RTMActionItemController::class);
 });

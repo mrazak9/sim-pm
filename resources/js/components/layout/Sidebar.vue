@@ -216,19 +216,97 @@
 
       <!-- Menu Group: Audit -->
       <div class="mb-6">
-        <h3 class="mb-4 text-xs uppercase text-gray-400 font-semibold">
+        <button
+          @click="toggleAudit"
+          class="mb-2 flex w-full items-center justify-between rounded-lg px-2 py-2 text-xs font-semibold uppercase text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
           <span v-if="sidebarExpanded || sidebarMobileOpen">AUDIT</span>
-          <span v-else class="flex justify-center">•••</span>
-        </h3>
+          <span v-else class="flex w-full justify-center">•••</span>
+          <svg
+            v-if="sidebarExpanded || sidebarMobileOpen"
+            :class="['h-4 w-4 transition-transform', auditOpen ? 'rotate-180' : '']"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-        <ul class="space-y-2">
+        <transition
+          enter-active-class="transition-all duration-200 ease-out"
+          enter-from-class="max-h-0 opacity-0"
+          enter-to-class="max-h-96 opacity-100"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="max-h-96 opacity-100"
+          leave-to-class="max-h-0 opacity-0"
+        >
+          <ul v-show="auditOpen" class="space-y-2 overflow-hidden">
+          <!-- Rencana Audit -->
           <li>
             <router-link
-              to="/audit"
+              to="/audit/plans"
               @click="closeMobileSidebar"
               :class="[
                 'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
-                $route.path.startsWith('/audit')
+                $route.path.startsWith('/audit/plans')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Rencana Audit</span>
+            </router-link>
+          </li>
+
+          <!-- Jadwal Audit -->
+          <li>
+            <router-link
+              to="/audit/schedules"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.startsWith('/audit/schedules')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Jadwal Audit</span>
+            </router-link>
+          </li>
+
+          <!-- Temuan Audit -->
+          <li>
+            <router-link
+              to="/audit/findings"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.startsWith('/audit/findings')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Temuan Audit</span>
+            </router-link>
+          </li>
+
+          <!-- RTL -->
+          <li>
+            <router-link
+              to="/audit/rtl"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.startsWith('/audit/rtl')
                   ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
               ]"
@@ -236,10 +314,244 @@
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
-              <span v-if="sidebarExpanded || sidebarMobileOpen">Audit Internal</span>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Tindak Lanjut (RTL)</span>
             </router-link>
           </li>
-        </ul>
+          </ul>
+        </transition>
+      </div>
+
+      <!-- Menu Group: SPMI -->
+      <div class="mb-6">
+        <button
+          @click="toggleSPMI"
+          class="mb-2 flex w-full items-center justify-between rounded-lg px-2 py-2 text-xs font-semibold uppercase text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
+          <span v-if="sidebarExpanded || sidebarMobileOpen">SPMI</span>
+          <span v-else class="flex w-full justify-center">•••</span>
+          <svg
+            v-if="sidebarExpanded || sidebarMobileOpen"
+            :class="['h-4 w-4 transition-transform', spmiOpen ? 'rotate-180' : '']"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        <transition
+          enter-active-class="transition-all duration-200 ease-out"
+          enter-from-class="max-h-0 opacity-0"
+          enter-to-class="max-h-96 opacity-100"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="max-h-96 opacity-100"
+          leave-to-class="max-h-0 opacity-0"
+        >
+          <ul v-show="spmiOpen" class="space-y-2 overflow-hidden">
+          <!-- Standar SPMI -->
+          <li>
+            <router-link
+              to="/spmi/standards"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.startsWith('/spmi/standards')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Standar SPMI</span>
+            </router-link>
+          </li>
+
+          <!-- Indikator -->
+          <li>
+            <router-link
+              to="/spmi/indicators"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.startsWith('/spmi/indicators')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Indikator</span>
+            </router-link>
+          </li>
+
+          <!-- Monitoring -->
+          <li>
+            <router-link
+              to="/spmi/monitorings"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.startsWith('/spmi/monitorings')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Monitoring</span>
+            </router-link>
+          </li>
+
+          <!-- RTM -->
+          <li>
+            <router-link
+              to="/spmi/rtm"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.startsWith('/spmi/rtm') && !$route.path.includes('rtm-actions')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">RTM</span>
+            </router-link>
+          </li>
+
+          <!-- Action Items RTM -->
+          <li>
+            <router-link
+              to="/spmi/rtm-actions"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.startsWith('/spmi/rtm-actions')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Action Items</span>
+            </router-link>
+          </li>
+          </ul>
+        </transition>
+      </div>
+
+      <!-- Menu Group: User Management -->
+      <div class="mb-6">
+        <button
+          @click="toggleUsers"
+          class="mb-2 flex w-full items-center justify-between rounded-lg px-2 py-2 text-xs font-semibold uppercase text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
+          <span v-if="sidebarExpanded || sidebarMobileOpen">PENGGUNA</span>
+          <span v-else class="flex w-full justify-center">•••</span>
+          <svg
+            v-if="sidebarExpanded || sidebarMobileOpen"
+            :class="['h-4 w-4 transition-transform', usersOpen ? 'rotate-180' : '']"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        <transition
+          enter-active-class="transition-all duration-200 ease-out"
+          enter-from-class="max-h-0 opacity-0"
+          enter-to-class="max-h-96 opacity-100"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="max-h-96 opacity-100"
+          leave-to-class="max-h-0 opacity-0"
+        >
+          <ul v-show="usersOpen" class="space-y-2 overflow-hidden">
+          <!-- Daftar Pengguna -->
+          <li>
+            <router-link
+              to="/users"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.includes('/users') && !$route.path.includes('/roles') && !$route.path.includes('/permissions')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Daftar Pengguna</span>
+            </router-link>
+          </li>
+
+          <!-- Role Management -->
+          <li>
+            <router-link
+              to="/users/roles"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.includes('/users/roles')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Role</span>
+            </router-link>
+          </li>
+
+          <!-- Permission Management -->
+          <li>
+            <router-link
+              to="/users/permissions"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.includes('/users/permissions')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Permission</span>
+            </router-link>
+          </li>
+
+          <!-- Profile -->
+          <li>
+            <router-link
+              to="/profile"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path === '/profile'
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Profil Saya</span>
+            </router-link>
+          </li>
+          </ul>
+        </transition>
       </div>
 
       <!-- Menu Group: IKU -->
@@ -489,6 +801,9 @@ const userInitials = computed(() => {
 
 // Collapsible menu states
 const masterDataOpen = ref(true);
+const auditOpen = ref(true);
+const spmiOpen = ref(true);
+const usersOpen = ref(true);
 const ikuOpen = ref(true);
 const akreditasiOpen = ref(true);
 
@@ -496,6 +811,21 @@ const akreditasiOpen = ref(true);
 const toggleMasterData = () => {
   masterDataOpen.value = !masterDataOpen.value;
   localStorage.setItem('sidebar_masterData', masterDataOpen.value);
+};
+
+const toggleAudit = () => {
+  auditOpen.value = !auditOpen.value;
+  localStorage.setItem('sidebar_audit', auditOpen.value);
+};
+
+const toggleSPMI = () => {
+  spmiOpen.value = !spmiOpen.value;
+  localStorage.setItem('sidebar_spmi', spmiOpen.value);
+};
+
+const toggleUsers = () => {
+  usersOpen.value = !usersOpen.value;
+  localStorage.setItem('sidebar_users', usersOpen.value);
 };
 
 const toggleIKU = () => {
@@ -511,11 +841,17 @@ const toggleAkreditasi = () => {
 // Load saved states from localStorage
 onMounted(() => {
   const savedMasterData = localStorage.getItem('sidebar_masterData');
+  const savedAudit = localStorage.getItem('sidebar_audit');
   const savedIKU = localStorage.getItem('sidebar_iku');
   const savedAkreditasi = localStorage.getItem('sidebar_akreditasi');
+  const savedSPMI = localStorage.getItem('sidebar_spmi');
+  const savedUsers = localStorage.getItem('sidebar_users');
 
   if (savedMasterData !== null) masterDataOpen.value = savedMasterData === 'true';
+  if (savedAudit !== null) auditOpen.value = savedAudit === 'true';
   if (savedIKU !== null) ikuOpen.value = savedIKU === 'true';
   if (savedAkreditasi !== null) akreditasiOpen.value = savedAkreditasi === 'true';
+  if (savedSPMI !== null) spmiOpen.value = savedSPMI === 'true';
+  if (savedUsers !== null) usersOpen.value = savedUsers === 'true';
 });
 </script>

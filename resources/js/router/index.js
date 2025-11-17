@@ -14,6 +14,43 @@ const routes = [
     component: () => import('@/views/auth/Login.vue'),
     meta: { guest: true },
   },
+  // User Management Routes
+  {
+    path: '/users',
+    name: 'user-list',
+    component: () => import('@/views/users/UserList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/users/create',
+    name: 'user-create',
+    component: () => import('@/views/users/UserForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/users/:id/edit',
+    name: 'user-edit',
+    component: () => import('@/views/users/UserForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/users/roles',
+    name: 'role-management',
+    component: () => import('@/views/users/RoleManagement.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/users/permissions',
+    name: 'permission-management',
+    component: () => import('@/views/users/PermissionManagement.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/profile',
+    name: 'user-profile',
+    component: () => import('@/views/users/UserProfile.vue'),
+    meta: { requiresAuth: true },
+  },
   // IKU Routes
   {
     path: '/iku',
@@ -235,6 +272,179 @@ const routes = [
     path: '/activity',
     name: 'user-activity',
     component: () => import('@/views/UserActivityDashboard.vue'),
+    meta: { requiresAuth: true },
+  },
+  // Audit Module Routes
+  // Audit Plans
+  {
+    path: '/audit/plans',
+    name: 'audit-plan-list',
+    component: () => import('@/views/audit/AuditPlanList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/plans/create',
+    name: 'audit-plan-create',
+    component: () => import('@/views/audit/AuditPlanForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/plans/:id/edit',
+    name: 'audit-plan-edit',
+    component: () => import('@/views/audit/AuditPlanForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // Audit Schedules
+  {
+    path: '/audit/schedules',
+    name: 'audit-schedule-list',
+    component: () => import('@/views/audit/AuditScheduleList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/schedules/create',
+    name: 'audit-schedule-create',
+    component: () => import('@/views/audit/AuditScheduleForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/schedules/:id/edit',
+    name: 'audit-schedule-edit',
+    component: () => import('@/views/audit/AuditScheduleForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // Audit Findings
+  {
+    path: '/audit/findings',
+    name: 'audit-finding-list',
+    component: () => import('@/views/audit/AuditFindingList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/findings/create',
+    name: 'audit-finding-create',
+    component: () => import('@/views/audit/AuditFindingForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/findings/:id/edit',
+    name: 'audit-finding-edit',
+    component: () => import('@/views/audit/AuditFindingForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // RTL (Rencana Tindak Lanjut)
+  {
+    path: '/audit/rtl',
+    name: 'rtl-list',
+    component: () => import('@/views/audit/RTLList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/rtl/create',
+    name: 'rtl-create',
+    component: () => import('@/views/audit/RTLForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/rtl/:id/edit',
+    name: 'rtl-edit',
+    component: () => import('@/views/audit/RTLForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // SPMI Module Routes
+  // SPMI Standards
+  {
+    path: '/spmi/standards',
+    name: 'spmi-standard-list',
+    component: () => import('@/views/spmi/SpmiStandardList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/standards/create',
+    name: 'spmi-standard-create',
+    component: () => import('@/views/spmi/SpmiStandardForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/standards/:id/edit',
+    name: 'spmi-standard-edit',
+    component: () => import('@/views/spmi/SpmiStandardForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // SPMI Indicators
+  {
+    path: '/spmi/indicators',
+    name: 'spmi-indicator-list',
+    component: () => import('@/views/spmi/SpmiIndicatorList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/indicators/create',
+    name: 'spmi-indicator-create',
+    component: () => import('@/views/spmi/SpmiIndicatorForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/indicators/:id/edit',
+    name: 'spmi-indicator-edit',
+    component: () => import('@/views/spmi/SpmiIndicatorForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // SPMI Monitoring
+  {
+    path: '/spmi/monitorings',
+    name: 'spmi-monitoring-list',
+    component: () => import('@/views/spmi/SpmiMonitoringList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/monitorings/create',
+    name: 'spmi-monitoring-create',
+    component: () => import('@/views/spmi/SpmiMonitoringForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/monitorings/:id/edit',
+    name: 'spmi-monitoring-edit',
+    component: () => import('@/views/spmi/SpmiMonitoringForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // RTM (Rapat Tinjauan Manajemen)
+  {
+    path: '/spmi/rtm',
+    name: 'rtm-list',
+    component: () => import('@/views/spmi/RTMList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/rtm/create',
+    name: 'rtm-create',
+    component: () => import('@/views/spmi/RTMForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/rtm/:id/edit',
+    name: 'rtm-edit',
+    component: () => import('@/views/spmi/RTMForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // RTM Action Items
+  {
+    path: '/spmi/rtm-actions',
+    name: 'rtm-action-list',
+    component: () => import('@/views/spmi/RTMActionItemList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/rtm-actions/create',
+    name: 'rtm-action-create',
+    component: () => import('@/views/spmi/RTMActionItemForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/spmi/rtm-actions/:id/edit',
+    name: 'rtm-action-edit',
+    component: () => import('@/views/spmi/RTMActionItemForm.vue'),
     meta: { requiresAuth: true },
   },
 ];
