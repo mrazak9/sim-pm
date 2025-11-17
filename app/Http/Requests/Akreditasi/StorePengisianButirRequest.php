@@ -36,6 +36,7 @@ class StorePengisianButirRequest extends FormRequest
             'pic_user_id' => 'nullable|exists:users,id',
             'konten' => 'nullable|string',
             'konten_plain' => 'nullable|string',
+            'form_data' => 'nullable|array',
             'files' => 'nullable|array',
             'status' => 'nullable|in:draft,submitted,review,revision,approved',
             'notes' => 'nullable|string',

@@ -113,12 +113,27 @@ class PengisianButirController extends Controller
             // Load butir akreditasi relation to get template metadata
             $pengisian->load('butirAkreditasi', 'periodeAkreditasi', 'picUser', 'reviewer');
 
+            // Debug logging
+            \Log::info('=== PengisianButirController::show ===', [
+                'id' => $id,
+                'has_form_data' => !empty($pengisian->form_data),
+                'form_data_type' => gettype($pengisian->form_data),
+                'form_data_sample' => is_string($pengisian->form_data) ? substr($pengisian->form_data, 0, 100) : $pengisian->form_data,
+                'has_template' => !empty($pengisian->butirAkreditasi->metadata['form_config']),
+                'konten_length' => strlen($pengisian->konten ?? ''),
+            ]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Detail pengisian butir berhasil diambil',
                 'data' => new PengisianButirResource($pengisian),
             ]);
         } catch (\Exception $e) {
+            \Log::error('Error in show PengisianButir', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Pengisian butir tidak ditemukan',
@@ -133,7 +148,20 @@ class PengisianButirController extends Controller
     public function update(UpdatePengisianButirRequest $request, string $id): JsonResponse
     {
         try {
-            $pengisian = $this->pengisianButirService->updatePengisianButir($id, $request->validated());
+            $validatedData = $request->validated();
+
+            // Debug logging
+            \Log::info('=== PengisianButirController::update ===', [
+                'id' => $id,
+                'has_form_data_in_request' => isset($validatedData['form_data']),
+                'form_data_type' => isset($validatedData['form_data']) ? gettype($validatedData['form_data']) : 'not set',
+                'form_data_is_null' => isset($validatedData['form_data']) && $validatedData['form_data'] === null,
+                'konten_length' => strlen($validatedData['konten'] ?? ''),
+                'completion_percentage' => $validatedData['completion_percentage'] ?? 'not set',
+                'is_complete' => $validatedData['is_complete'] ?? 'not set',
+            ]);
+
+            $pengisian = $this->pengisianButirService->updatePengisianButir($id, $validatedData);
 
             return response()->json([
                 'success' => true,
