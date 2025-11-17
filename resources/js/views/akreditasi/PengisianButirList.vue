@@ -285,15 +285,24 @@ const fetchSummary = async () => {
 
 const fetchButirList = async () => {
   try {
+    console.log('Fetching butir list for periode:', periodeId.value)
+    console.log('Instrumen:', periode.value?.instrumen)
+
     // Fetch all butir for the current instrumen
     const butirResponse = await getButirList({
-      instrumen: periode.value?.instrumen
+      instrumen: periode.value?.instrumen,
+      per_page: 'all'
     })
+
+    console.log('Butir response:', butirResponse)
 
     // Fetch pengisian data for this periode
     const pengisianResponse = await getPengisianList({
-      periode_akreditasi_id: periodeId.value
+      periode_akreditasi_id: periodeId.value,
+      per_page: 'all'
     })
+
+    console.log('Pengisian response:', pengisianResponse)
 
     // Merge butir with pengisian data
     const pengisianMap = {}
@@ -301,9 +310,23 @@ const fetchButirList = async () => {
       pengisianResponse.data.data.forEach(pengisian => {
         pengisianMap[pengisian.butir_akreditasi_id] = pengisian
       })
+    } else if (Array.isArray(pengisianResponse.data)) {
+      // Handle non-paginated response
+      pengisianResponse.data.forEach(pengisian => {
+        pengisianMap[pengisian.butir_akreditasi_id] = pengisian
+      })
     }
 
-    let butirData = butirResponse.data?.data || []
+    // Handle both paginated and non-paginated responses
+    let butirData = []
+    if (butirResponse.data?.data) {
+      butirData = butirResponse.data.data
+    } else if (Array.isArray(butirResponse.data)) {
+      butirData = butirResponse.data
+    }
+
+    console.log('Butir data:', butirData.length, 'items')
+    console.log('Pengisian map:', Object.keys(pengisianMap).length, 'items')
 
     // Add pengisian info to each butir
     butirData = butirData.map(butir => {
