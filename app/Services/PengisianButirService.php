@@ -4,21 +4,28 @@ namespace App\Services;
 
 use App\Models\PengisianButir;
 use App\Models\PengisianButirLock;
+use App\Models\ButirAkreditasi;
 use App\Repositories\PengisianButirRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 
 class PengisianButirService
 {
     protected PengisianButirRepository $repository;
+    protected DynamicFormValidatorService $formValidator;
 
-    public function __construct(PengisianButirRepository $repository)
-    {
+    public function __construct(
+        PengisianButirRepository $repository,
+        DynamicFormValidatorService $formValidator
+    ) {
         $this->repository = $repository;
+        $this->formValidator = $formValidator;
     }
 
     /**
@@ -80,6 +87,11 @@ class PengisianButirService
                 }
             }
 
+            // Validate form_data if present
+            if (isset($data['butir_akreditasi_id']) && isset($data['form_data'])) {
+                $this->validateFormData($data['form_data'], $data['butir_akreditasi_id']);
+            }
+
             // Set default status
             if (!isset($data['status'])) {
                 $data['status'] = 'draft';
@@ -133,6 +145,11 @@ class PengisianButirService
             // Only allow updates if status is draft or revision
             if (!in_array($pengisianButir->status, ['draft', 'revision'])) {
                 throw new \Exception('Pengisian butir hanya dapat diubah jika statusnya draft atau revision');
+            }
+
+            // Validate form_data if present
+            if (isset($data['form_data'])) {
+                $this->validateFormData($data['form_data'], $pengisianButir->butir_akreditasi_id);
             }
 
             // Recalculate completion percentage
@@ -462,9 +479,29 @@ class PengisianButirService
 
     /**
      * Calculate completion percentage
+     * Dynamically calculates based on form type or uses legacy calculation
      */
     protected function calculateCompletionPercentage(array $data): float
     {
+        // If is_complete is explicitly set to true, return 100%
+        if (isset($data['is_complete']) && $data['is_complete'] === true) {
+            return 100.0;
+        }
+
+        // Check if this uses dynamic forms
+        if (isset($data['form_data']) && isset($data['butir_akreditasi_id'])) {
+            $butir = ButirAkreditasi::find($data['butir_akreditasi_id']);
+
+            if ($butir && !empty($butir->metadata['form_config'])) {
+                // Use dynamic calculation based on form type
+                return round($this->formValidator->calculateCompletion(
+                    $data['form_data'],
+                    $butir->metadata['form_config']
+                ), 2);
+            }
+        }
+
+        // Legacy calculation for rich text input
         $requiredFields = ['konten', 'konten_plain'];
         $filledFields = 0;
         $totalFields = count($requiredFields);
@@ -475,12 +512,44 @@ class PengisianButirService
             }
         }
 
-        // If is_complete is explicitly set to true, return 100%
-        if (isset($data['is_complete']) && $data['is_complete'] === true) {
-            return 100.0;
+        return $totalFields > 0 ? round(($filledFields / $totalFields) * 100, 2) : 0.0;
+    }
+
+    /**
+     * Validate form_data against butir template configuration
+     *
+     * @param array $formData
+     * @param int $butirId
+     * @throws ValidationException
+     */
+    protected function validateFormData(array $formData, int $butirId): void
+    {
+        $butir = ButirAkreditasi::find($butirId);
+
+        if (!$butir) {
+            throw new \Exception('Butir Akreditasi tidak ditemukan');
         }
 
-        return $totalFields > 0 ? round(($filledFields / $totalFields) * 100, 2) : 0.0;
+        // If butir doesn't have form_config, no validation needed
+        if (empty($butir->metadata['form_config'])) {
+            return;
+        }
+
+        // Get validation rules from the validator service
+        $validationResult = $this->formValidator->validate($formData, $butir);
+
+        // If validation rules are returned, run the validator
+        if (!empty($validationResult['rules'])) {
+            $validator = Validator::make(
+                $formData,
+                $validationResult['rules'],
+                $validationResult['messages'] ?? []
+            );
+
+            if ($validator->fails()) {
+                throw new ValidationException($validator);
+            }
+        }
     }
 
     /**
