@@ -135,7 +135,7 @@ class PeriodeAkreditasiService
             }
 
             // Validate dates if provided
-            if (isset($data['tanggal_mulai']) || isset($data['tanggal_selesai'])) {
+            if (isset($data['tanggal_mulai']) || isset($data['tanggal_berakhir']) || isset($data['deadline_pengumpulan'])) {
                 $this->validateDates($data, $periodeAkreditasi);
             }
 
@@ -417,7 +417,7 @@ class PeriodeAkreditasiService
                 'status' => $periode->status,
                 'deadline_pengumpulan' => $periode->deadline_pengumpulan,
                 'tanggal_mulai' => $periode->tanggal_mulai,
-                'tanggal_selesai' => $periode->tanggal_selesai,
+                'tanggal_berakhir' => $periode->tanggal_berakhir,
             ],
         ];
     }
@@ -936,20 +936,20 @@ class PeriodeAkreditasiService
             ? Carbon::parse($data['tanggal_mulai'])
             : ($existing ? Carbon::parse($existing->tanggal_mulai) : null);
 
-        $tanggalSelesai = isset($data['tanggal_selesai'])
-            ? Carbon::parse($data['tanggal_selesai'])
-            : ($existing ? Carbon::parse($existing->tanggal_selesai) : null);
+        $tanggalBerakhir = isset($data['tanggal_berakhir'])
+            ? Carbon::parse($data['tanggal_berakhir'])
+            : ($existing ? Carbon::parse($existing->tanggal_berakhir) : null);
 
         $deadlinePengumpulan = isset($data['deadline_pengumpulan'])
             ? Carbon::parse($data['deadline_pengumpulan'])
             : ($existing && $existing->deadline_pengumpulan ? Carbon::parse($existing->deadline_pengumpulan) : null);
 
-        if ($tanggalMulai && $tanggalSelesai && $tanggalSelesai->lt($tanggalMulai)) {
-            throw new \Exception('Tanggal selesai harus lebih besar dari tanggal mulai');
+        if ($tanggalMulai && $tanggalBerakhir && $tanggalBerakhir->lt($tanggalMulai)) {
+            throw new \Exception('Tanggal berakhir harus lebih besar dari tanggal mulai');
         }
 
-        if ($deadlinePengumpulan && $tanggalSelesai && $deadlinePengumpulan->gt($tanggalSelesai)) {
-            throw new \Exception('Deadline pengumpulan tidak boleh melewati tanggal selesai');
+        if ($deadlinePengumpulan && $tanggalBerakhir && $deadlinePengumpulan->gt($tanggalBerakhir)) {
+            throw new \Exception('Deadline pengumpulan tidak boleh melewati tanggal berakhir');
         }
 
         if ($deadlinePengumpulan && $tanggalMulai && $deadlinePengumpulan->lt($tanggalMulai)) {
@@ -962,17 +962,17 @@ class PeriodeAkreditasiService
      */
     protected function checkOverlap(array $data, ?int $exceptId = null): bool
     {
-        if (!isset($data['tanggal_mulai']) || !isset($data['tanggal_selesai'])) {
+        if (!isset($data['tanggal_mulai']) || !isset($data['tanggal_berakhir'])) {
             return false;
         }
 
         $query = PeriodeAkreditasi::query()
             ->where(function($q) use ($data) {
-                $q->whereBetween('tanggal_mulai', [$data['tanggal_mulai'], $data['tanggal_selesai']])
-                  ->orWhereBetween('tanggal_selesai', [$data['tanggal_mulai'], $data['tanggal_selesai']])
+                $q->whereBetween('tanggal_mulai', [$data['tanggal_mulai'], $data['tanggal_berakhir']])
+                  ->orWhereBetween('tanggal_berakhir', [$data['tanggal_mulai'], $data['tanggal_berakhir']])
                   ->orWhere(function($q2) use ($data) {
                       $q2->where('tanggal_mulai', '<=', $data['tanggal_mulai'])
-                         ->where('tanggal_selesai', '>=', $data['tanggal_selesai']);
+                         ->where('tanggal_berakhir', '>=', $data['tanggal_berakhir']);
                   });
             });
 

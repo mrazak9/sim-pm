@@ -466,7 +466,7 @@ class PengisianButirService
     }
 
     /**
-     * Get summary by periode (alias for backward compatibility)
+     * Get summary for a periode (alias for backward compatibility)
      */
     public function getSummaryByPeriode(int $periodeId): array
     {

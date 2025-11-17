@@ -80,7 +80,7 @@ class PeriodeAkreditasiRepository
         // Validate sort column to prevent SQL injection
         $allowedSortColumns = [
             'id', 'nama', 'jenis_akreditasi', 'lembaga', 'instrumen',
-            'status', 'tanggal_mulai', 'tanggal_selesai', 'deadline_pengumpulan',
+            'status', 'tanggal_mulai', 'tanggal_berakhir', 'deadline_pengumpulan',
             'created_at', 'updated_at'
         ];
 
