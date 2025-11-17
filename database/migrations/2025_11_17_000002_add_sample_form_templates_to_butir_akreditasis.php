@@ -28,8 +28,10 @@ return new class extends Migration
         // Find PKM butir (adjust kode based on your data)
         // This is just an example - update the WHERE clause based on actual butir codes
         DB::table('butir_akreditasis')
-            ->where('nama', 'LIKE', '%Pengabdian%Masyarakat%')
-            ->orWhere('kode', 'LIKE', '%C.2%')
+            ->where(function($query) {
+                $query->where('nama', 'ILIKE', '%Pengabdian%Masyarakat%')
+                      ->orWhere('kode', 'ILIKE', '%C.2%');
+            })
             ->limit(1)
             ->update([
                 'metadata' => json_encode([
@@ -122,8 +124,10 @@ return new class extends Migration
     protected function addPublikasiTemplate(): void
     {
         DB::table('butir_akreditasis')
-            ->where('nama', 'LIKE', '%Publikasi%')
-            ->orWhere('kode', 'LIKE', '%C.3%')
+            ->where(function($query) {
+                $query->where('nama', 'ILIKE', '%Publikasi%')
+                      ->orWhere('kode', 'ILIKE', '%C.3%');
+            })
             ->limit(1)
             ->update([
                 'metadata' => json_encode([
@@ -205,8 +209,10 @@ return new class extends Migration
     protected function addVisiMisiTemplate(): void
     {
         DB::table('butir_akreditasis')
-            ->where('nama', 'LIKE', '%Visi%Misi%')
-            ->orWhere('kode', 'LIKE', '%A.1%')
+            ->where(function($query) {
+                $query->where('nama', 'ILIKE', '%Visi%Misi%')
+                      ->orWhere('kode', 'ILIKE', '%A.1%');
+            })
             ->limit(1)
             ->update([
                 'metadata' => json_encode([
@@ -267,9 +273,11 @@ return new class extends Migration
     {
         // Reset metadata for affected butir
         DB::table('butir_akreditasis')
-            ->where('nama', 'LIKE', '%Pengabdian%Masyarakat%')
-            ->orWhere('nama', 'LIKE', '%Publikasi%')
-            ->orWhere('nama', 'LIKE', '%Visi%Misi%')
+            ->where(function($query) {
+                $query->where('nama', 'ILIKE', '%Pengabdian%Masyarakat%')
+                      ->orWhere('nama', 'ILIKE', '%Publikasi%')
+                      ->orWhere('nama', 'ILIKE', '%Visi%Misi%');
+            })
             ->update(['metadata' => null]);
     }
 };
