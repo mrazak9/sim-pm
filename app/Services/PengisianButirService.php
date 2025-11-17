@@ -70,6 +70,14 @@ class PengisianButirService
     }
 
     /**
+     * Get pengisian butir by ID (alias for backward compatibility)
+     */
+    public function getPengisianButirById(int $id): ?PengisianButir
+    {
+        return $this->findById($id);
+    }
+
+    /**
      * Create new pengisian butir
      */
     public function create(array $data): PengisianButir
