@@ -32,7 +32,7 @@ class PengisianButirService
     /**
      * Get all pengisian butir with filters and pagination
      */
-    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function paginate(array $filters = [], int|string $perPage = 15): mixed
     {
         return $this->repository->paginate($filters, $perPage);
     }
@@ -43,10 +43,10 @@ class PengisianButirService
      */
     public function getAllPengisianButir(
         array $filters = [],
-        int $perPage = 15,
+        int|string $perPage = 15,
         string $sortBy = 'created_at',
         string $sortOrder = 'desc'
-    ): LengthAwarePaginator {
+    ): mixed {
         // Add sorting to filters
         $filters['sort_by'] = $sortBy;
         $filters['sort_order'] = $sortOrder;

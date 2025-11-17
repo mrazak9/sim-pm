@@ -28,7 +28,7 @@ class PengisianButirRepository
     /**
      * Get all pengisian butir with filters and pagination
      */
-    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function paginate(array $filters = [], int|string $perPage = 15): mixed
     {
         $query = $this->model->with(['periodeAkreditasi', 'butirAkreditasi', 'picUser', 'reviewer']);
 
@@ -77,7 +77,14 @@ class PengisianButirRepository
         $sortBy = $filters['sort_by'] ?? 'created_at';
         $sortOrder = $filters['sort_order'] ?? 'desc';
 
-        return $query->orderBy($sortBy, $sortOrder)->paginate($perPage);
+        $query->orderBy($sortBy, $sortOrder);
+
+        // Handle 'all' for non-paginated results
+        if ($perPage === 'all') {
+            return $query->get();
+        }
+
+        return $query->paginate((int) $perPage);
     }
 
     /**
