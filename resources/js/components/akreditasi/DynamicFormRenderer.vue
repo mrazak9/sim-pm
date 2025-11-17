@@ -106,7 +106,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import TableFormRenderer from './forms/TableFormRenderer.vue'
 import NarrativeFormRenderer from './forms/NarrativeFormRenderer.vue'
 import ChecklistFormRenderer from './forms/ChecklistFormRenderer.vue'
@@ -131,12 +131,27 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'validate', 'completion'])
 
 const showHelp = ref(false)
-const formData = ref({ ...props.modelValue })
+
+// Initialize formData with modelValue
+console.log('🔄 DynamicFormRenderer - Initializing')
+console.log('Initial modelValue:', props.modelValue)
+console.log('modelValue type:', typeof props.modelValue)
+console.log('modelValue is null?', props.modelValue === null)
+console.log('modelValue keys:', props.modelValue ? Object.keys(props.modelValue) : 'N/A')
+
+const formData = ref({ ...(props.modelValue || {}) })
+console.log('Initial formData:', formData.value)
 
 // Watch for external changes to modelValue
 watch(() => props.modelValue, (newValue) => {
-  formData.value = { ...newValue }
-}, { deep: true })
+  console.log('🔄 DynamicFormRenderer - modelValue changed')
+  console.log('New modelValue:', newValue)
+  console.log('New modelValue type:', typeof newValue)
+  console.log('New modelValue keys:', newValue ? Object.keys(newValue) : 'N/A')
+
+  formData.value = { ...(newValue || {}) }
+  console.log('Updated formData:', formData.value)
+}, { deep: true, immediate: false })
 
 // Form type display helpers
 const formTypeLabel = computed(() => {
@@ -176,6 +191,15 @@ const handleFormDataChange = (newData) => {
 const handleValidation = (validationResult) => {
   emit('validate', validationResult)
 }
+
+// Lifecycle hook
+onMounted(() => {
+  console.log('✅ DynamicFormRenderer - Mounted')
+  console.log('formConfig at mount:', props.formConfig)
+  console.log('modelValue at mount:', props.modelValue)
+  console.log('formData at mount:', formData.value)
+  console.log('Form type:', props.formConfig?.type)
+})
 </script>
 
 <style scoped>
