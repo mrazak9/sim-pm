@@ -305,6 +305,14 @@ class PengisianButirService
     }
 
     /**
+     * Submit pengisian butir for review (alias for backward compatibility)
+     */
+    public function submitPengisianButir(int $id): PengisianButir
+    {
+        return $this->submit($id);
+    }
+
+    /**
      * Approve pengisian butir
      */
     public function approve(int $id, ?string $notes = null): PengisianButir
