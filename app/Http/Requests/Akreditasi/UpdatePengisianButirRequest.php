@@ -38,6 +38,7 @@ class UpdatePengisianButirRequest extends FormRequest
             'pic_user_id' => 'nullable|exists:users,id',
             'konten' => 'nullable|string',
             'konten_plain' => 'nullable|string',
+            'form_data' => 'nullable|array',
             'files' => 'nullable|array',
             'status' => 'sometimes|in:draft,submitted,review,revision,approved',
             'version' => 'sometimes|integer|min:1',

@@ -277,9 +277,21 @@ class PengisianButirService
                 throw new \Exception('Pengisian butir belum lengkap. Harap lengkapi semua field yang diperlukan');
             }
 
-            // Validate required fields
-            if (empty($pengisianButir->konten)) {
-                throw new \Exception('Konten pengisian tidak boleh kosong');
+            // Validate required fields based on form type
+            // Load butir akreditasi to check if it uses dynamic form
+            $pengisianButir->load('butirAkreditasi');
+            $hasDynamicForm = !empty($pengisianButir->butirAkreditasi->metadata['form_config']);
+
+            if ($hasDynamicForm) {
+                // For dynamic forms, validate form_data
+                if (empty($pengisianButir->form_data)) {
+                    throw new \Exception('Data form tidak boleh kosong');
+                }
+            } else {
+                // For legacy rich text editor, validate konten
+                if (empty($pengisianButir->konten)) {
+                    throw new \Exception('Konten pengisian tidak boleh kosong');
+                }
             }
 
             $pengisianButir = $this->repository->update($pengisianButir, [
