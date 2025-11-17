@@ -12,11 +12,33 @@
 
       <!-- Butir Info Card -->
       <div v-if="selectedButir" class="mb-6 rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
-        <h3 class="mb-2 font-semibold text-blue-900 dark:text-blue-300">Butir Akreditasi</h3>
+        <div class="flex items-start justify-between mb-2">
+          <h3 class="font-semibold text-blue-900 dark:text-blue-300">Butir Akreditasi</h3>
+          <!-- Template Badge -->
+          <span
+            v-if="hasDynamicForm"
+            class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+          >
+            📋 {{ selectedButir.metadata?.form_config?.type === 'table' ? 'Form Tabel' :
+                 selectedButir.metadata?.form_config?.type === 'narrative' ? 'Form Narasi' :
+                 'Form Template' }}
+          </span>
+          <span
+            v-else
+            class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+          >
+            Rich Text Editor
+          </span>
+        </div>
         <div class="space-y-1 text-sm text-blue-800 dark:text-blue-400">
           <p><span class="font-medium">Kode:</span> {{ selectedButir.kode }}</p>
           <p><span class="font-medium">Nama:</span> {{ selectedButir.nama }}</p>
           <p v-if="selectedButir.deskripsi"><span class="font-medium">Deskripsi:</span> {{ selectedButir.deskripsi }}</p>
+          <!-- Debug info (akan kita hapus nanti) -->
+          <p v-if="hasDynamicForm" class="pt-2 border-t border-blue-200">
+            <span class="font-medium text-green-600">✓ Template aktif:</span>
+            {{ selectedButir.metadata?.form_config?.label }}
+          </p>
         </div>
       </div>
 
@@ -66,8 +88,12 @@
                 <option value="">Pilih Butir</option>
                 <option v-for="butir in butirList" :key="butir.id" :value="butir.id">
                   {{ butir.kode }} - {{ butir.nama }}
+                  {{ butir.metadata?.form_config ? ' [📋 Form Template]' : '' }}
                 </option>
               </select>
+              <p class="mt-1 text-xs text-gray-500">
+                Butir dengan label [📋 Form Template] memiliki form input khusus
+              </p>
             </div>
           </div>
 
@@ -377,6 +403,16 @@ const handlePeriodeChange = () => {
 const handleButirChange = () => {
   const butir = butirList.value.find(b => b.id === form.value.butir_akreditasi_id)
   selectedButir.value = butir || null
+
+  // Debug logging
+  console.log('=== Butir Changed ===')
+  console.log('Selected Butir:', butir)
+  console.log('Has metadata:', !!butir?.metadata)
+  console.log('Metadata:', butir?.metadata)
+  console.log('Has form_config:', !!butir?.metadata?.form_config)
+  console.log('Form config:', butir?.metadata?.form_config)
+  console.log('hasDynamicForm computed:', hasDynamicForm.value)
+  console.log('===================')
 }
 
 const formatFieldName = (field) => {
