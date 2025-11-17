@@ -71,16 +71,30 @@
             </div>
           </div>
 
-          <!-- Konten (Rich Text Editor) -->
+          <!-- Dynamic Form or Rich Text Editor -->
           <div>
-            <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              Konten <span class="text-red-500">*</span>
-            </label>
-            <RichTextEditor
-              v-model="form.konten"
-              :error="hasFieldError('konten') ? getFieldError('konten') : ''"
-              :showCharCount="true"
-            />
+            <!-- Dynamic Form (if butir has form_config) -->
+            <div v-if="hasDynamicForm">
+              <DynamicFormRenderer
+                :form-config="selectedButir.metadata?.form_config"
+                v-model="form.form_data"
+                :readonly="isLocked"
+                @validate="handleFormValidation"
+                @completion="handleCompletionChange"
+              />
+            </div>
+
+            <!-- Legacy Rich Text Editor (default) -->
+            <div v-else>
+              <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                Konten <span class="text-red-500">*</span>
+              </label>
+              <RichTextEditor
+                v-model="form.konten"
+                :error="hasFieldError('konten') ? getFieldError('konten') : ''"
+                :showCharCount="true"
+              />
+            </div>
           </div>
 
           <!-- Notes -->
@@ -268,6 +282,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAkreditasiApi } from '@/composables/useAkreditasiApi'
 import MainLayout from '@/layouts/MainLayout.vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
+import DynamicFormRenderer from '@/components/akreditasi/DynamicFormRenderer.vue'
 import LockStatusIndicator from '@/components/akreditasi/LockStatusIndicator.vue'
 import VersionHistoryTimeline from '@/components/akreditasi/VersionHistoryTimeline.vue'
 import EditLockIndicator from '@/components/akreditasi/EditLockIndicator.vue'
@@ -283,11 +298,13 @@ const localError = ref(null)
 const successMessage = ref(null)
 const loadingButirs = ref(false)
 const isLocked = ref(false)
+const formIsValid = ref(true)
 
 const form = ref({
   periode_akreditasi_id: '',
   butir_akreditasi_id: '',
   konten: '',
+  form_data: null, // For dynamic forms
   notes: '',
   completion_percentage: 0,
   is_complete: false,
@@ -298,6 +315,11 @@ const form = ref({
 const periodeList = ref([])
 const butirList = ref([])
 const selectedButir = ref(null)
+
+// Check if selected butir uses dynamic form
+const hasDynamicForm = computed(() => {
+  return selectedButir.value && selectedButir.value.metadata?.form_config
+})
 
 // Clear messages when form changes
 watch(
@@ -400,18 +422,50 @@ const getStatusClass = (status) => {
   return classes[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
 }
 
+// Dynamic form handlers
+const handleFormValidation = (validationResult) => {
+  formIsValid.value = validationResult.isValid
+  if (!validationResult.isValid) {
+    localError.value = {
+      message: 'Form validation failed',
+      errors: { form_data: validationResult.errors }
+    }
+  } else {
+    localError.value = null
+  }
+}
+
+const handleCompletionChange = (completionPercentage) => {
+  form.value.completion_percentage = completionPercentage
+}
+
 const handleSubmit = async () => {
   localError.value = null
   successMessage.value = null
+
+  // Validate dynamic form if applicable
+  if (hasDynamicForm.value && !formIsValid.value) {
+    localError.value = 'Please fix form validation errors before saving'
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    return
+  }
 
   try {
     // Prepare data
     const data = { ...form.value }
 
-    // Generate plain text from HTML
-    const temp = document.createElement('div')
-    temp.innerHTML = data.konten
-    data.konten_plain = temp.textContent || temp.innerText || ''
+    // For dynamic forms, clear konten since we use form_data
+    if (hasDynamicForm.value) {
+      data.konten = ''
+      data.konten_plain = ''
+    } else {
+      // Generate plain text from HTML for legacy forms
+      const temp = document.createElement('div')
+      temp.innerHTML = data.konten
+      data.konten_plain = temp.textContent || temp.innerText || ''
+      // Clear form_data for legacy forms
+      data.form_data = null
+    }
 
     // Clean up
     if (data.notes === '') data.notes = null
@@ -515,6 +569,7 @@ const handleVersionRestored = async (restoredData) => {
 
     Object.assign(form.value, {
       konten: data.konten || '',
+      form_data: data.form_data || null,
       notes: data.notes || '',
       completion_percentage: data.completion_percentage || 0,
       is_complete: data.is_complete || false,
@@ -542,6 +597,7 @@ onMounted(async () => {
         periode_akreditasi_id: data.periode_akreditasi_id,
         butir_akreditasi_id: data.butir_akreditasi_id,
         konten: data.konten || '',
+        form_data: data.form_data || null,
         notes: data.notes || '',
         completion_percentage: data.completion_percentage || 0,
         is_complete: data.is_complete || false,
