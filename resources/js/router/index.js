@@ -190,6 +190,12 @@ const routes = [
     component: () => import('@/views/akreditasi/PeriodeAkreditasiDetail.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/akreditasi/periode/:periodeId/pengisian',
+    name: 'pengisian-butir-list-by-periode',
+    component: () => import('@/views/akreditasi/PengisianButirList.vue'),
+    meta: { requiresAuth: true },
+  },
   // Butir Akreditasi Routes
   {
     path: '/akreditasi/butir',
@@ -445,6 +451,37 @@ const routes = [
     path: '/spmi/rtm-actions/:id/edit',
     name: 'rtm-action-edit',
     component: () => import('@/views/spmi/RTMActionItemForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  // Survey (Kuesioner) Module Routes
+  {
+    path: '/surveys',
+    name: 'survey-list',
+    component: () => import('@/views/survey/SurveyList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/surveys/create',
+    name: 'survey-create',
+    component: () => import('@/views/survey/SurveyForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/surveys/:id/edit',
+    name: 'survey-edit',
+    component: () => import('@/views/survey/SurveyForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/surveys/:id/builder',
+    name: 'survey-builder',
+    component: () => import('@/views/survey/SurveyBuilder.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/surveys/:id/analytics',
+    name: 'survey-analytics',
+    component: () => import('@/views/survey/SurveyAnalytics.vue'),
     meta: { requiresAuth: true },
   },
 ];

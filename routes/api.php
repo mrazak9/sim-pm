@@ -28,6 +28,9 @@ use App\Http\Controllers\Api\SpmiIndicatorController;
 use App\Http\Controllers\Api\SpmiMonitoringController;
 use App\Http\Controllers\Api\RTMController;
 use App\Http\Controllers\Api\RTMActionItemController;
+use App\Http\Controllers\Api\SurveyController;
+use App\Http\Controllers\Api\SurveyQuestionController;
+use App\Http\Controllers\Api\SurveyResponseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -293,4 +296,31 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('rtm-action-items/{id}/progress', [RTMActionItemController::class, 'addProgress']);
     Route::post('rtm-action-items/{id}/extend', [RTMActionItemController::class, 'extend']);
     Route::apiResource('rtm-action-items', RTMActionItemController::class);
+
+    // Survey (Kuesioner) Module Routes
+    // Survey Routes
+    Route::get('surveys/statistics', [SurveyController::class, 'statistics']);
+    Route::get('surveys/published', [SurveyController::class, 'published']);
+    Route::get('surveys/active', [SurveyController::class, 'active']);
+    Route::get('surveys/by-creator', [SurveyController::class, 'byCreator']);
+    Route::post('surveys/{id}/publish', [SurveyController::class, 'publish']);
+    Route::post('surveys/{id}/close', [SurveyController::class, 'close']);
+    Route::post('surveys/{id}/duplicate', [SurveyController::class, 'duplicate']);
+    Route::apiResource('surveys', SurveyController::class);
+
+    // Survey Question Routes
+    Route::get('surveys/{surveyId}/questions', [SurveyQuestionController::class, 'index']);
+    Route::post('surveys/{surveyId}/questions', [SurveyQuestionController::class, 'store']);
+    Route::post('surveys/{surveyId}/questions/reorder', [SurveyQuestionController::class, 'reorder']);
+    Route::post('survey-questions/{id}/duplicate', [SurveyQuestionController::class, 'duplicate']);
+    Route::apiResource('survey-questions', SurveyQuestionController::class)->except(['index', 'store']);
+
+    // Survey Response Routes
+    Route::get('surveys/{surveyId}/responses', [SurveyResponseController::class, 'index']);
+    Route::post('surveys/{surveyId}/responses', [SurveyResponseController::class, 'store']);
+    Route::get('surveys/{surveyId}/analytics', [SurveyResponseController::class, 'analytics']);
+    Route::get('survey-responses/by-user', [SurveyResponseController::class, 'byUser']);
+    Route::get('survey-responses/my-responses', [SurveyResponseController::class, 'myResponses']);
+    Route::post('survey-responses/{id}/submit', [SurveyResponseController::class, 'submit']);
+    Route::apiResource('survey-responses', SurveyResponseController::class)->except(['index', 'store']);
 });
