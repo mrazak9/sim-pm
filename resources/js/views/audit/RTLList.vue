@@ -164,7 +164,7 @@
                   </button>
                   <button
                     v-if="rtl.status === 'completed'"
-                    @click="verifyRTL(rtl)"
+                    @click="verifyRTL_action(rtl)"
                     class="text-blue-600 hover:text-blue-700 dark:text-blue-400"
                     title="Verifikasi"
                   >
@@ -400,8 +400,6 @@ const formatDate = (dateString) => {
     day: 'numeric',
   });
 };
-
-const verifyRTL = verifyRTL_action;
 
 onMounted(() => {
   fetchStatistics();

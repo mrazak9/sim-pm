@@ -79,7 +79,7 @@
               @change="fetchUsers()"
             >
               <option value="">Semua Unit Kerja</option>
-              <option v-for="uk in unitKerjas" :key="uk.id" :value="uk.id">{{ uk.nama }}</option>
+              <option v-for="uk in unitKerjas" :key="uk.id" :value="uk.id">{{ uk.nama_unit || uk.nama }}</option>
             </select>
           </div>
         </div>
@@ -132,10 +132,10 @@
                 <p v-if="!user.nip && !user.nidn">-</p>
               </td>
               <td class="px-6 py-4 text-gray-900 dark:text-white">
-                {{ user.unit_kerja?.nama || '-' }}
+                {{ user.unit_kerja?.nama_unit || user.unit_kerja?.nama || '-' }}
               </td>
               <td class="px-6 py-4 text-gray-900 dark:text-white">
-                {{ user.jabatan?.nama || '-' }}
+                {{ user.jabatan?.nama_jabatan || user.jabatan?.nama || '-' }}
               </td>
               <td class="px-6 py-4">
                 <div class="flex flex-wrap gap-1">
@@ -361,10 +361,14 @@ const fetchUsers = async (page = 1) => {
     });
 
     const response = await getUsers(params);
+    console.log('Users API Response:', response);
 
     if (response.success) {
-      users.value = response.data;
-      pagination.value = response.meta;
+      users.value = response.data || [];
+      if (response.meta) {
+        pagination.value = response.meta;
+      }
+      console.log('Users loaded:', users.value.length, 'items');
     }
   } catch (error) {
     console.error('Failed to fetch users:', error);
@@ -397,8 +401,10 @@ const fetchRoles = async () => {
 const fetchUnitKerjas = async () => {
   try {
     const response = await getActiveUnitKerjas();
+    console.log('Unit Kerja API Response:', response);
     if (response.success) {
-      unitKerjas.value = response.data;
+      unitKerjas.value = response.data || [];
+      console.log('Unit Kerjas loaded:', unitKerjas.value.length, 'items');
     }
   } catch (error) {
     console.error('Failed to fetch unit kerja:', error);

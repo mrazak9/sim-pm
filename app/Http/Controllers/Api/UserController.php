@@ -46,7 +46,15 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $users,
+            'data' => $users->items(),
+            'meta' => [
+                'current_page' => $users->currentPage(),
+                'last_page' => $users->lastPage(),
+                'per_page' => $users->perPage(),
+                'total' => $users->total(),
+                'from' => $users->firstItem(),
+                'to' => $users->lastItem(),
+            ],
         ]);
     }
 
@@ -243,6 +251,24 @@ class UserController extends Controller
             'success' => true,
             'message' => 'Permissions assigned successfully',
             'data' => $user->load(['roles', 'permissions']),
+        ]);
+    }
+
+    public function statistics()
+    {
+        $totalUsers = User::count();
+        $activeUsers = User::where('is_active', true)->count();
+        $inactiveUsers = User::where('is_active', false)->count();
+        $totalRoles = \Spatie\Permission\Models\Role::count();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_users' => $totalUsers,
+                'active_users' => $activeUsers,
+                'inactive_users' => $inactiveUsers,
+                'total_roles' => $totalRoles,
+            ],
         ]);
     }
 }

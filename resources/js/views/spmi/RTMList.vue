@@ -257,7 +257,7 @@ import MainLayout from '@/layouts/MainLayout.vue';
 import { useSPMIApi } from '@/composables/useSPMIApi';
 import { useMasterDataApi } from '@/composables/useMasterDataApi';
 
-const { getRTMs, getRTMStatistics, deleteRTM, startRTM, completeRTM, cancelRTM, loading } = useSPMIApi();
+const { getRTMs, getRTMStatistics, deleteRTM, startRTM: startRTM_action, completeRTM: completeRTM_action, cancelRTM: cancelRTM_action, loading } = useSPMIApi();
 const { getTahunAkademiks } = useMasterDataApi();
 
 const rtms = ref([]);
@@ -358,7 +358,7 @@ const changePage = (page) => {
 const startRTM = async (rtm) => {
   if (confirm(`Apakah Anda yakin ingin memulai RTM "${rtm.title}"?`)) {
     try {
-      const response = await startRTM(rtm.id);
+      const response = await startRTM_action(rtm.id);
       if (response.success) {
         alert('RTM berhasil dimulai');
         fetchRTMs(pagination.value.current_page);
@@ -373,7 +373,7 @@ const startRTM = async (rtm) => {
 const completeRTM = async (rtm) => {
   if (confirm(`Apakah Anda yakin ingin menyelesaikan RTM "${rtm.title}"?`)) {
     try {
-      const response = await completeRTM(rtm.id, {});
+      const response = await completeRTM_action(rtm.id, {});
       if (response.success) {
         alert('RTM berhasil diselesaikan');
         fetchRTMs(pagination.value.current_page);
@@ -388,7 +388,7 @@ const completeRTM = async (rtm) => {
 const cancelRTM = async (rtm) => {
   if (confirm(`Apakah Anda yakin ingin membatalkan RTM "${rtm.title}"?`)) {
     try {
-      const response = await cancelRTM(rtm.id, {});
+      const response = await cancelRTM_action(rtm.id, {});
       if (response.success) {
         alert('RTM berhasil dibatalkan');
         fetchRTMs(pagination.value.current_page);

@@ -20,6 +20,8 @@
         "@heroicons/vue": "^2.2.0",
         "chart.js": "^4.5.1",
         "dayjs": "^1.11.19",
+        "html2canvas": "^1.4.1",
+        "jspdf": "^3.0.3",
         "pinia": "^3.0.4",
         "vee-validate": "^4.15.1",
         "vue": "^3.5.24",

@@ -93,6 +93,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('tahun-akademik', TahunAkademikController::class);
 
     // User Management Routes
+    Route::get('users/statistics', [UserController::class, 'statistics']);
     Route::apiResource('users', UserController::class);
     Route::post('users/{id}/assign-roles', [UserController::class, 'assignRoles']);
     Route::post('users/{id}/assign-permissions', [UserController::class, 'assignPermissions']);
