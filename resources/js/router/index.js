@@ -215,6 +215,19 @@ const routes = [
     component: () => import('@/views/akreditasi/ButirAkreditasiForm.vue'),
     meta: { requiresAuth: true },
   },
+  // Butir Template Management Routes
+  {
+    path: '/akreditasi/butir-templates',
+    name: 'butir-template-management',
+    component: () => import('@/views/akreditasi/ButirTemplateManagement.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/akreditasi/butir-templates/:id',
+    name: 'butir-template-builder',
+    component: () => import('@/views/akreditasi/ButirTemplateBuilder.vue'),
+    meta: { requiresAuth: true },
+  },
   // Pengisian Butir Routes
   {
     path: '/akreditasi/pengisian',
