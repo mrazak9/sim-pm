@@ -856,26 +856,42 @@ Testing & Quality           ░░░░░░░░░░░░░░░░░�
 - [x] Role assignment endpoint
 - [x] Permission assignment endpoint
 - [x] User profile endpoints
+- [x] RoleController (list roles)
+- [x] PermissionController (list permissions)
 - [ ] Password reset functionality
 - [ ] Email verification
 - [ ] User activity log
 
-**Completed By:** -
-**Date:** -
-**Notes:** Basic CRUD complete, advanced features needed
+**Completed By:** Claude Agent
+**Date:** 2025-11-15
+**Status:** ✅ COMPLETED (Core CRUD functionality)
+**Notes:** Basic CRUD complete with role/permission listing. Advanced features (password reset, email verification) deferred.
 
 ### 9.2 Frontend
-- [ ] User List view
-- [ ] User Form (create/edit)
-- [ ] Role assignment UI
-- [ ] Permission management UI
-- [ ] User profile page
+- [x] User List view (with statistics, filters, pagination)
+- [x] User Form (create/edit)
+- [x] Role assignment UI (modal in UserList)
+- [x] Role Management view (read-only display)
+- [x] Permission management UI (read-only display)
+- [x] User profile page (with password change)
+- [x] Composables for API calls (useUserApi.js)
+- [x] Frontend routing (6 routes)
+- [x] Sidebar navigation (4 menu items)
 - [ ] Activity log viewer
-- [ ] Composables for API calls
 
-**Completed By:** -
-**Date:** -
-**Status:** ❌ NOT STARTED
+**Completed By:** Claude Agent
+**Date:** 2025-11-15
+**Status:** ✅ COMPLETED
+**Commit:** 935fba0
+
+**Module Summary:**
+- **Frontend Files:** 6 (1 composable + 5 views)
+- **Frontend Lines:** ~2,083 lines
+- **Backend Files:** 2 controllers (RoleController, PermissionController)
+- **API Endpoints:** 4 new endpoints
+- **Routes:** 6 routes added
+- **Features:** Full CRUD, role/permission assignment, profile management, dark mode
+- **Deferred:** Activity log viewer, password reset, email verification
 
 ---
 
@@ -1212,6 +1228,109 @@ Testing & Quality           ░░░░░░░░░░░░░░░░░�
 ---
 
 ## 📅 CHANGELOG
+
+### [2025-11-15] - User Management Frontend - COMPLETE ✅
+
+#### Added
+- **Backend Controllers** (2 files)
+  - RoleController: List all roles with permissions
+  - PermissionController: List all permissions
+  - 4 new API endpoints for roles and permissions
+
+- **Frontend Composable** (1 file, ~350 lines)
+  - useUserApi.js with 20+ API methods:
+    * User CRUD operations (getUsers, createUser, updateUser, deleteUser)
+    * Role/permission assignment (assignRoles, assignPermissions)
+    * Statistics (getUserStatistics, getUsersByRole, getActiveUsers)
+    * Profile management (getProfile, updateProfile, changePassword)
+    * User status toggle
+
+- **Frontend Views** (5 files, ~1,726 lines)
+  - UserList.vue (~476 lines):
+    * Statistics cards (Total Users, Active, Inactive, Total Roles)
+    * Advanced filters (search, role, active status, unit kerja, jabatan)
+    * User table with role badges and status indicators
+    * Actions: Edit, Toggle Active, Assign Roles (modal), Delete
+    * Role assignment modal with multi-select checkboxes
+    * Pagination and responsive design
+
+  - UserForm.vue (~407 lines):
+    * Create/Edit mode detection
+    * Comprehensive form fields (name, email, password, NIP, NIDN, phone, address)
+    * Unit Kerja and Jabatan dropdowns from useMasterDataApi
+    * Multi-select roles with checkboxes
+    * Inline validation error display
+    * Loading states and error handling
+
+  - RoleManagement.vue (~219 lines):
+    * Read-only display of all roles
+    * Statistics: Total Roles, Permissions, Users
+    * Expandable rows showing permissions per role
+    * Filter by role name
+    * Shows permissions count and users count
+
+  - PermissionManagement.vue (~257 lines):
+    * Read-only display of all permissions
+    * Grouped by module (auto-extracted from permission names)
+    * Statistics: Total Permissions, Module Groups, Guards
+    * Filters: search by name, filter by guard
+    * Expandable module sections
+    * Shows which roles have each permission
+
+  - UserProfile.vue (~367 lines):
+    * Current user profile display and editing
+    * Editable: name, email, phone, address
+    * Read-only: NIP, NIDN, Unit Kerja, Jabatan
+    * User roles and permissions display (badges)
+    * Change password section with validation
+    * Separate forms with individual loading states
+
+- **Navigation & Routing**
+  - 6 routes added to router/index.js:
+    * /users - User list
+    * /users/create - Create user
+    * /users/:id/edit - Edit user
+    * /users/roles - Role management
+    * /users/permissions - Permission management
+    * /profile - User profile
+
+  - Sidebar updated with "PENGGUNA" menu group:
+    * Daftar Pengguna
+    * Role
+    * Permission
+    * Profil Saya
+    * Toggle function with localStorage persistence
+
+#### Features
+- Full CRUD operations for user management
+- Role and permission assignment interface with modal
+- User profile management with password change
+- Search and advanced filtering (name, email, NIP, NIDN, role, unit kerja, jabatan)
+- Statistics dashboards with metric cards
+- Responsive design with dark mode support
+- Indonesian labels and validation messages
+- Loading states and error handling
+- Confirmation dialogs for destructive actions
+- Real-time status toggle (active/inactive)
+
+#### Technical Details
+- **Total Files:** 8 (2 backend + 1 composable + 5 views)
+- **Total Lines of Code:** ~2,083 frontend + ~100 backend
+- **API Endpoints Added:** 4 (roles index/show, permissions index/show)
+- **Routes Added:** 6
+- **Architecture:** Vue 3 Composition API with `<script setup>`
+- **Dark Mode:** Full support throughout all views
+- **Follows Project Patterns:** Consistent with SPMI, Audit, Akreditasi modules
+- **Commit:** 935fba0
+- **Branch:** claude/check-project-progress-01EG4UmovLb79k128xEE3Xqy
+
+#### Deferred Features (Optional)
+- [ ] Activity log viewer
+- [ ] Password reset functionality
+- [ ] Email verification
+- [ ] User import/export (Excel/CSV)
+- [ ] Advanced role/permission CRUD
+- [ ] User activity tracking and analytics
 
 ### [2025-11-15] - SPMI Module - 100% COMPLETE 🎉
 
