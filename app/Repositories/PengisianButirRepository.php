@@ -73,7 +73,11 @@ class PengisianButirRepository
             });
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($perPage);
+        // Sorting
+        $sortBy = $filters['sort_by'] ?? 'created_at';
+        $sortOrder = $filters['sort_order'] ?? 'desc';
+
+        return $query->orderBy($sortBy, $sortOrder)->paginate($perPage);
     }
 
     /**

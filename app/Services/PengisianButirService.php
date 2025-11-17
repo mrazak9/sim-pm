@@ -38,6 +38,23 @@ class PengisianButirService
     }
 
     /**
+     * Get all pengisian butir with filters, pagination, and sorting
+     * Alias for backward compatibility with controller
+     */
+    public function getAllPengisianButir(
+        array $filters = [],
+        int $perPage = 15,
+        string $sortBy = 'created_at',
+        string $sortOrder = 'desc'
+    ): LengthAwarePaginator {
+        // Add sorting to filters
+        $filters['sort_by'] = $sortBy;
+        $filters['sort_order'] = $sortOrder;
+
+        return $this->repository->paginate($filters, $perPage);
+    }
+
+    /**
      * Get pengisian butir by ID
      */
     public function findById(int $id): ?PengisianButir
@@ -182,6 +199,30 @@ class PengisianButirService
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * Create pengisian butir (alias for backward compatibility)
+     */
+    public function createPengisianButir(array $data): PengisianButir
+    {
+        return $this->create($data);
+    }
+
+    /**
+     * Update pengisian butir (alias for backward compatibility)
+     */
+    public function updatePengisianButir(int $id, array $data): PengisianButir
+    {
+        return $this->update($id, $data);
+    }
+
+    /**
+     * Delete pengisian butir (alias for backward compatibility)
+     */
+    public function deletePengisianButir(int $id): bool
+    {
+        return $this->delete($id);
     }
 
     /**
