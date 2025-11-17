@@ -3,6 +3,7 @@ import axios from 'axios'
 
 export function useButirTemplateApi() {
   const loading = ref(false)
+  const saving = ref(false)
   const error = ref(null)
 
   /**
@@ -45,7 +46,7 @@ export function useButirTemplateApi() {
    * Create or update template
    */
   const saveTemplate = async (id, templateData) => {
-    loading.value = true
+    saving.value = true
     error.value = null
 
     try {
@@ -55,7 +56,7 @@ export function useButirTemplateApi() {
       error.value = err.response?.data?.message || 'Failed to save template'
       throw err
     } finally {
-      loading.value = false
+      saving.value = false
     }
   }
 
@@ -99,6 +100,7 @@ export function useButirTemplateApi() {
 
   return {
     loading,
+    saving,
     error,
     getButirTemplates,
     getTemplateById,
