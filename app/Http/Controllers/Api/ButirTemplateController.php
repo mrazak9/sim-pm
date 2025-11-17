@@ -113,18 +113,21 @@ class ButirTemplateController extends Controller
     {
         // Validate request
         $validator = Validator::make($request->all(), [
-            'type' => 'required|in:table,narrative,checklist,metric,mixed',
-            'label' => 'required|string|max:255',
-            'help_text' => 'nullable|string',
-            'columns' => 'required_if:type,table|array',
-            'columns.*.name' => 'required_with:columns|string',
-            'columns.*.label' => 'required_with:columns|string',
-            'columns.*.type' => 'required_with:columns|in:text,number,currency,decimal,percentage,select,date',
-            'columns.*.required' => 'required_with:columns|boolean',
-            'fields' => 'required_if:type,narrative|array',
-            'items' => 'required_if:type,checklist|array',
-            'metrics' => 'required_if:type,metric|array',
-            'sections' => 'required_if:type,mixed|array',
+            'form_config.type' => 'required|in:table,narrative,checklist,metric,mixed',
+            'form_config.label' => 'required|string|max:255',
+            'form_config.help_text' => 'nullable|string',
+            'form_config.columns' => 'required_if:form_config.type,table|array',
+            'form_config.columns.*.name' => 'required_with:form_config.columns|string',
+            'form_config.columns.*.label' => 'required_with:form_config.columns|string',
+            'form_config.columns.*.type' => 'required_with:form_config.columns|in:text,textarea,number,currency,decimal,percentage,select,date',
+            'form_config.columns.*.required' => 'required_with:form_config.columns|boolean',
+            'form_config.fields' => 'required_if:form_config.type,narrative|array',
+            'form_config.items' => 'required_if:form_config.type,checklist|array',
+            'form_config.metrics' => 'required_if:form_config.type,metric|array',
+            'form_config.sections' => 'required_if:form_config.type,mixed|array|min:1',
+            'form_config.sections.*.type' => 'required_with:form_config.sections|in:table,narrative,checklist,metric',
+            'form_config.sections.*.label' => 'required_with:form_config.sections|string',
+            'form_config.sections.*.config' => 'required_with:form_config.sections',
         ]);
 
         if ($validator->fails()) {
@@ -145,42 +148,8 @@ class ButirTemplateController extends Controller
             ], 404);
         }
 
-        // Build form config
-        $formConfig = [
-            'type' => $request->type,
-            'label' => $request->label,
-            'help_text' => $request->help_text,
-        ];
-
-        // Add type-specific config
-        switch ($request->type) {
-            case 'table':
-                $formConfig['columns'] = $request->columns;
-                $formConfig['validations'] = $request->validations ?? ['min_rows' => 1, 'max_rows' => 100];
-                $formConfig['options'] = $request->options ?? [
-                    'allow_add' => true,
-                    'allow_delete' => true,
-                    'show_summary' => false
-                ];
-                break;
-
-            case 'narrative':
-                $formConfig['fields'] = $request->fields;
-                $formConfig['validations'] = $request->validations ?? ['require_all' => true];
-                break;
-
-            case 'checklist':
-                $formConfig['items'] = $request->items;
-                break;
-
-            case 'metric':
-                $formConfig['metrics'] = $request->metrics;
-                break;
-
-            case 'mixed':
-                $formConfig['sections'] = $request->sections;
-                break;
-        }
+        // Build form config from request
+        $formConfig = $request->form_config;
 
         // Update metadata
         $metadata = $butir->metadata ? json_decode($butir->metadata, true) : [];
