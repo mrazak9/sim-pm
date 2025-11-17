@@ -42,18 +42,27 @@ class PengisianButirController extends Controller
                 $sortOrder
             );
 
+            // Handle pagination or all
+            if ($perPage !== 'all' && method_exists($pengisians, 'currentPage')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data pengisian butir berhasil diambil',
+                    'data' => PengisianButirResource::collection($pengisians)->response()->getData(true)['data'],
+                    'meta' => [
+                        'current_page' => $pengisians->currentPage(),
+                        'from' => $pengisians->firstItem(),
+                        'last_page' => $pengisians->lastPage(),
+                        'per_page' => $pengisians->perPage(),
+                        'to' => $pengisians->lastItem(),
+                        'total' => $pengisians->total(),
+                    ],
+                ]);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Data pengisian butir berhasil diambil',
-                'data' => PengisianButirResource::collection($pengisians)->response()->getData(true)['data'],
-                'meta' => [
-                    'current_page' => $pengisians->currentPage(),
-                    'from' => $pengisians->firstItem(),
-                    'last_page' => $pengisians->lastPage(),
-                    'per_page' => $pengisians->perPage(),
-                    'to' => $pengisians->lastItem(),
-                    'total' => $pengisians->total(),
-                ],
+                'data' => PengisianButirResource::collection($pengisians),
             ]);
         } catch (\Exception $e) {
             return response()->json([
