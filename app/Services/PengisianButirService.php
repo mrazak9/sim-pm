@@ -421,6 +421,14 @@ class PengisianButirService
     }
 
     /**
+     * Get summary for a periode (alias for backward compatibility)
+     */
+    public function getSummaryByPeriode(int $periodeId): array
+    {
+        return $this->getSummary($periodeId);
+    }
+
+    /**
      * Get pengisian by periode
      */
     public function getByPeriode(int $periodeId): Collection
