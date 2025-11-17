@@ -189,6 +189,16 @@ POST   /api/butir-templates/{id}/copy    - Copy template dari butir lain
    - Tambahkan help text
    - Ulangi untuk metrik lainnya
 
+   **Untuk Mixed (Campuran):**
+   - Klik **"+ Tambah Section"** untuk setiap bagian yang dibutuhkan
+   - Untuk setiap section:
+     - Pilih tipe section dari dropdown (Table/Narrative/Checklist/Metric)
+     - Isi label section dan help text
+     - Konfigurasi section sesuai tipenya (kolom untuk table, item untuk checklist, dll)
+   - Gunakan tombol ▲ ▼ untuk mengatur urutan section
+   - Klik ✕ untuk menghapus section
+   - Contoh struktur: Section 1 (Narasi umum) → Section 2 (Tabel data) → Section 3 (Metrik ringkasan)
+
 6. **Simpan Template**
    - Klik **"Simpan Template"**
    - Template akan tersimpan dan langsung bisa digunakan
@@ -269,6 +279,46 @@ Jika ada butir yang mirip, Anda bisa copy template:
 3. Label: "Data Mahasiswa 3 Tahun Terakhir", Required: Yes
 4. Label: "Data Dosen Tetap", Required: Yes
 
+### Contoh 4: Penelitian dan Publikasi (Mixed)
+
+**Basic Info:**
+- Label: "Penelitian dan Publikasi Dosen"
+- Help Text: "Isi data penelitian dan publikasi dosen secara komprehensif"
+
+**Sections:**
+
+**Section 1 - Narrative: Deskripsi Umum**
+- Label: "Deskripsi Umum Penelitian Program Studi"
+- Help Text: "Jelaskan fokus dan tema penelitian program studi"
+- Min Length: 100 karakter
+- Max Length: 2000 karakter
+- Required: Yes
+
+**Section 2 - Table: Data Penelitian**
+- Label: "Data Penelitian Dosen"
+- Help Text: "Isikan seluruh penelitian yang dilakukan dosen"
+- Columns:
+  1. Judul Penelitian (text, required)
+  2. Tahun (number, required)
+  3. Nama Ketua Peneliti (text, required)
+  4. Sumber Dana (select: internal/dikti/swasta, required)
+  5. Jumlah Dana (currency, optional)
+  6. Status (select: selesai/berjalan, required)
+
+**Section 3 - Metric: Ringkasan**
+- Label: "Ringkasan Statistik Penelitian"
+- Metrics:
+  1. Total Penelitian (number, required)
+  2. Total Dana (currency, required)
+  3. Rata-rata Dana per Penelitian (currency, optional)
+
+**Section 4 - Checklist: Kelengkapan Dokumen**
+- Label: "Kelengkapan Dokumen Penelitian"
+- Items:
+  1. Proposal Penelitian Lengkap
+  2. Laporan Akhir Penelitian
+  3. Bukti Publikasi
+
 ## Tips dan Best Practices
 
 1. **Penamaan Field**
@@ -325,9 +375,10 @@ Jika ada butir yang mirip, Anda bisa copy template:
 Untuk versi berikutnya, akan ditambahkan:
 
 1. **Drag & Drop Builder**
-   - Visual builder dengan drag & drop
+   - Visual builder dengan drag & drop untuk section reordering
    - Live preview real-time
    - Component library
+   - Collapsible sections
 
 2. **Template Library**
    - Template preset BAN-PT
@@ -335,14 +386,11 @@ Untuk versi berikutnya, akan ditambahkan:
    - Import/export template
 
 3. **Advanced Features**
-   - Conditional fields
+   - Conditional fields (show/hide based on other fields)
    - Formula/calculated fields
    - File upload fields
    - Lookup/relasi dengan data master
-
-4. **Mixed Template Builder**
-   - Kombinasi berbagai section
-   - Flexible layout
+   - Field dependencies dan validation rules
 
 ## Files yang Dimodifikasi/Dibuat
 
@@ -369,5 +417,20 @@ Jika mengalami kendala atau ada pertanyaan:
 
 ---
 
-**Version**: 1.0 (Hybrid - Simple Form Builder)
+**Version**: 1.1 (Hybrid - With Mixed Template Support)
 **Last Updated**: 2025-11-17
+
+## Changelog
+
+### v1.1 (2025-11-17)
+- ✅ Added Mixed template type support
+- ✅ Section management (add, remove, reorder)
+- ✅ Per-section type configuration
+- ✅ Complete validation for mixed templates
+- ✅ Documentation with examples
+
+### v1.0 (2025-11-17)
+- ✅ Initial release with 4 template types (Table, Narrative, Checklist, Metric)
+- ✅ Template Management page
+- ✅ Template Builder page
+- ✅ Copy template functionality
