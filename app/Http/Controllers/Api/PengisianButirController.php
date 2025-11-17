@@ -110,6 +110,9 @@ class PengisianButirController extends Controller
                 ], 404);
             }
 
+            // Load butir akreditasi relation to get template metadata
+            $pengisian->load('butirAkreditasi', 'periodeAkreditasi', 'picUser', 'reviewer');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Detail pengisian butir berhasil diambil',

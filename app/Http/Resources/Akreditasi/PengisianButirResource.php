@@ -32,6 +32,7 @@ class PengisianButirResource extends JsonResource
             }),
             'konten' => $this->konten,
             'konten_plain' => $this->konten_plain,
+            'form_data' => $this->form_data,
             'files' => $this->files,
             'files_info' => $this->getFilesInfo(),
             'has_files' => !empty($this->files),
