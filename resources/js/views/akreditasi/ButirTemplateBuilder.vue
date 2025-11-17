@@ -417,9 +417,237 @@
 
           <!-- Mixed Type -->
           <div v-if="formConfig.type === 'mixed'">
-            <div class="rounded-lg border-2 border-dashed border-gray-300 p-8 text-center">
-              <p class="text-gray-500">Mixed template builder akan ditambahkan di versi berikutnya.</p>
-              <p class="mt-2 text-sm text-gray-400">Untuk sementara gunakan tipe lain atau edit manual via migration.</p>
+            <div class="mb-4 flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Sections</h3>
+                <p class="text-xs text-gray-500">Tambahkan berbagai tipe form dalam satu template</p>
+              </div>
+              <button
+                @click="addSection"
+                class="rounded-lg bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
+              >
+                + Tambah Section
+              </button>
+            </div>
+
+            <div v-if="formConfig.sections.length === 0" class="rounded-lg border-2 border-dashed border-gray-300 p-8 text-center">
+              <p class="text-gray-500">Belum ada section. Klik "Tambah Section" untuk mulai.</p>
+            </div>
+
+            <div v-else class="space-y-6">
+              <div
+                v-for="(section, sectionIndex) in formConfig.sections"
+                :key="section.id"
+                class="rounded-lg border-2 border-gray-300 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-900"
+              >
+                <!-- Section Header -->
+                <div class="mb-4 flex items-start justify-between">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                      <h4 class="font-semibold text-gray-900 dark:text-white">Section {{ sectionIndex + 1 }}</h4>
+                      <select
+                        v-model="section.type"
+                        @change="handleSectionTypeChange(section)"
+                        class="rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="table">📊 Tabel</option>
+                        <option value="narrative">📝 Narasi</option>
+                        <option value="checklist">✓ Checklist</option>
+                        <option value="metric">📈 Metrik</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button
+                      @click="moveSectionUp(sectionIndex)"
+                      :disabled="sectionIndex === 0"
+                      class="rounded p-1 text-gray-600 hover:bg-gray-200 disabled:opacity-30 dark:text-gray-400 dark:hover:bg-gray-700"
+                      title="Move up"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      @click="moveSectionDown(sectionIndex)"
+                      :disabled="sectionIndex === formConfig.sections.length - 1"
+                      class="rounded p-1 text-gray-600 hover:bg-gray-200 disabled:opacity-30 dark:text-gray-400 dark:hover:bg-gray-700"
+                      title="Move down"
+                    >
+                      ▼
+                    </button>
+                    <button
+                      @click="removeSection(sectionIndex)"
+                      class="rounded p-1 text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900"
+                      title="Hapus section"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Section Basic Info -->
+                <div class="mb-4 space-y-3">
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Label Section</label>
+                    <input
+                      v-model="section.label"
+                      type="text"
+                      placeholder="Contoh: Data Penelitian Dosen"
+                      class="block w-full rounded-lg border border-gray-300 bg-white p-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Help Text</label>
+                    <input
+                      v-model="section.help_text"
+                      type="text"
+                      placeholder="Bantuan untuk user"
+                      class="block w-full rounded-lg border border-gray-300 bg-white p-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <!-- Section Configuration based on type -->
+                <div class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                  <h5 class="mb-3 text-xs font-semibold uppercase text-gray-600 dark:text-gray-400">Konfigurasi {{ section.type }}</h5>
+
+                  <!-- Table Config -->
+                  <div v-if="section.type === 'table'" class="space-y-3">
+                    <div class="flex justify-between">
+                      <span class="text-xs text-gray-600 dark:text-gray-400">Kolom ({{ section.config.columns?.length || 0 }})</span>
+                      <button
+                        @click="addSectionColumn(section)"
+                        class="rounded bg-blue-500 px-2 py-1 text-xs text-white hover:bg-blue-600"
+                      >
+                        + Kolom
+                      </button>
+                    </div>
+                    <div v-if="section.config.columns?.length > 0" class="space-y-2">
+                      <div
+                        v-for="(col, colIndex) in section.config.columns"
+                        :key="colIndex"
+                        class="rounded border border-gray-200 bg-gray-50 p-2 text-xs dark:border-gray-600 dark:bg-gray-700"
+                      >
+                        <div class="mb-2 flex justify-between">
+                          <strong>Kolom {{ colIndex + 1 }}</strong>
+                          <button @click="removeSectionColumn(section, colIndex)" class="text-red-500 hover:text-red-700">✕</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                          <input v-model="col.name" placeholder="nama_field" class="rounded border p-1 text-xs dark:bg-gray-800" />
+                          <input v-model="col.label" placeholder="Label" class="rounded border p-1 text-xs dark:bg-gray-800" />
+                          <select v-model="col.type" class="rounded border p-1 text-xs dark:bg-gray-800">
+                            <option value="text">Text</option>
+                            <option value="number">Number</option>
+                            <option value="date">Date</option>
+                            <option value="select">Select</option>
+                          </select>
+                          <div class="flex items-center gap-1">
+                            <input v-model="col.required" type="checkbox" class="h-3 w-3" />
+                            <span class="text-xs">Required</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Narrative Config -->
+                  <div v-if="section.type === 'narrative'" class="space-y-2">
+                    <div class="grid grid-cols-2 gap-2">
+                      <div>
+                        <label class="mb-1 block text-xs text-gray-600 dark:text-gray-400">Min Length</label>
+                        <input
+                          v-model.number="section.config.min_length"
+                          type="number"
+                          class="w-full rounded border p-1 text-xs dark:bg-gray-800"
+                        />
+                      </div>
+                      <div>
+                        <label class="mb-1 block text-xs text-gray-600 dark:text-gray-400">Max Length</label>
+                        <input
+                          v-model.number="section.config.max_length"
+                          type="number"
+                          class="w-full rounded border p-1 text-xs dark:bg-gray-800"
+                        />
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <input v-model="section.config.required" type="checkbox" class="h-3 w-3" />
+                      <span class="text-xs">Required</span>
+                    </div>
+                  </div>
+
+                  <!-- Checklist Config -->
+                  <div v-if="section.type === 'checklist'" class="space-y-3">
+                    <div class="flex justify-between">
+                      <span class="text-xs text-gray-600 dark:text-gray-400">Items ({{ section.config.items?.length || 0 }})</span>
+                      <button
+                        @click="addSectionChecklistItem(section)"
+                        class="rounded bg-blue-500 px-2 py-1 text-xs text-white hover:bg-blue-600"
+                      >
+                        + Item
+                      </button>
+                    </div>
+                    <div v-if="section.config.items?.length > 0" class="space-y-2">
+                      <div
+                        v-for="(item, itemIndex) in section.config.items"
+                        :key="item.id"
+                        class="rounded border border-gray-200 bg-gray-50 p-2 dark:border-gray-600 dark:bg-gray-700"
+                      >
+                        <div class="mb-1 flex justify-between">
+                          <strong class="text-xs">Item {{ itemIndex + 1 }}</strong>
+                          <button @click="removeSectionChecklistItem(section, itemIndex)" class="text-red-500 hover:text-red-700">✕</button>
+                        </div>
+                        <input
+                          v-model="item.label"
+                          placeholder="Label item"
+                          class="mb-1 w-full rounded border p-1 text-xs dark:bg-gray-800"
+                        />
+                        <div class="flex items-center gap-1">
+                          <input v-model="item.required" type="checkbox" class="h-3 w-3" />
+                          <span class="text-xs">Required</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Metric Config -->
+                  <div v-if="section.type === 'metric'" class="space-y-3">
+                    <div class="flex justify-between">
+                      <span class="text-xs text-gray-600 dark:text-gray-400">Metrics ({{ section.config.metrics?.length || 0 }})</span>
+                      <button
+                        @click="addSectionMetric(section)"
+                        class="rounded bg-blue-500 px-2 py-1 text-xs text-white hover:bg-blue-600"
+                      >
+                        + Metric
+                      </button>
+                    </div>
+                    <div v-if="section.config.metrics?.length > 0" class="space-y-2">
+                      <div
+                        v-for="(metric, metricIndex) in section.config.metrics"
+                        :key="metricIndex"
+                        class="rounded border border-gray-200 bg-gray-50 p-2 dark:border-gray-600 dark:bg-gray-700"
+                      >
+                        <div class="mb-1 flex justify-between">
+                          <strong class="text-xs">Metric {{ metricIndex + 1 }}</strong>
+                          <button @click="removeSectionMetric(section, metricIndex)" class="text-red-500 hover:text-red-700">✕</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                          <input v-model="metric.name" placeholder="nama_field" class="rounded border p-1 text-xs dark:bg-gray-800" />
+                          <input v-model="metric.label" placeholder="Label" class="rounded border p-1 text-xs dark:bg-gray-800" />
+                          <select v-model="metric.type" class="rounded border p-1 text-xs dark:bg-gray-800">
+                            <option value="number">Number</option>
+                            <option value="percentage">Percentage</option>
+                            <option value="currency">Currency</option>
+                          </select>
+                          <div class="flex items-center gap-1">
+                            <input v-model="metric.required" type="checkbox" class="h-3 w-3" />
+                            <span class="text-xs">Required</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -475,6 +703,7 @@ const formConfig = ref({
   fields: [],
   items: [],
   metrics: [],
+  sections: [],
   validations: {
     min_rows: 1,
     max_rows: 100
@@ -510,6 +739,8 @@ const selectTemplateType = (type) => {
     formConfig.value.items = []
   } else if (type === 'metric') {
     formConfig.value.metrics = []
+  } else if (type === 'mixed') {
+    formConfig.value.sections = []
   }
 }
 
@@ -585,6 +816,97 @@ const removeMetric = (index) => {
   formConfig.value.metrics.splice(index, 1)
 }
 
+// Mixed Template - Section Management
+let sectionIdCounter = 1
+
+const addSection = () => {
+  formConfig.value.sections.push({
+    id: sectionIdCounter++,
+    type: 'table',
+    label: '',
+    help_text: '',
+    config: {
+      columns: []
+    }
+  })
+}
+
+const removeSection = (index) => {
+  formConfig.value.sections.splice(index, 1)
+}
+
+const moveSectionUp = (index) => {
+  if (index === 0) return
+  const sections = formConfig.value.sections
+  ;[sections[index - 1], sections[index]] = [sections[index], sections[index - 1]]
+}
+
+const moveSectionDown = (index) => {
+  const sections = formConfig.value.sections
+  if (index === sections.length - 1) return
+  ;[sections[index], sections[index + 1]] = [sections[index + 1], sections[index]]
+}
+
+const handleSectionTypeChange = (section) => {
+  // Reset config when type changes
+  if (section.type === 'table') {
+    section.config = { columns: [] }
+  } else if (section.type === 'narrative') {
+    section.config = { min_length: 100, max_length: 5000, required: false }
+  } else if (section.type === 'checklist') {
+    section.config = { items: [] }
+  } else if (section.type === 'metric') {
+    section.config = { metrics: [] }
+  }
+}
+
+// Section - Table Columns
+const addSectionColumn = (section) => {
+  if (!section.config.columns) section.config.columns = []
+  section.config.columns.push({
+    name: '',
+    label: '',
+    type: 'text',
+    required: false
+  })
+}
+
+const removeSectionColumn = (section, index) => {
+  section.config.columns.splice(index, 1)
+}
+
+// Section - Checklist Items
+const addSectionChecklistItem = (section) => {
+  if (!section.config.items) section.config.items = []
+  const newId = section.config.items.length > 0
+    ? Math.max(...section.config.items.map(i => i.id)) + 1
+    : 1
+  section.config.items.push({
+    id: newId,
+    label: '',
+    required: false
+  })
+}
+
+const removeSectionChecklistItem = (section, index) => {
+  section.config.items.splice(index, 1)
+}
+
+// Section - Metrics
+const addSectionMetric = (section) => {
+  if (!section.config.metrics) section.config.metrics = []
+  section.config.metrics.push({
+    name: '',
+    label: '',
+    type: 'number',
+    required: false
+  })
+}
+
+const removeSectionMetric = (section, index) => {
+  section.config.metrics.splice(index, 1)
+}
+
 // Save Template
 const saveTemplate = async () => {
   try {
@@ -609,6 +931,34 @@ const saveTemplate = async () => {
       return
     }
 
+    if (formConfig.value.type === 'mixed' && formConfig.value.sections.length === 0) {
+      alert('Tambahkan minimal 1 section untuk tipe mixed!')
+      return
+    }
+
+    // Validate mixed sections
+    if (formConfig.value.type === 'mixed') {
+      for (let i = 0; i < formConfig.value.sections.length; i++) {
+        const section = formConfig.value.sections[i]
+        if (!section.label) {
+          alert(`Section ${i + 1}: Label wajib diisi!`)
+          return
+        }
+        if (section.type === 'table' && (!section.config.columns || section.config.columns.length === 0)) {
+          alert(`Section ${i + 1} (${section.label}): Tambahkan minimal 1 kolom!`)
+          return
+        }
+        if (section.type === 'checklist' && (!section.config.items || section.config.items.length === 0)) {
+          alert(`Section ${i + 1} (${section.label}): Tambahkan minimal 1 item!`)
+          return
+        }
+        if (section.type === 'metric' && (!section.config.metrics || section.config.metrics.length === 0)) {
+          alert(`Section ${i + 1} (${section.label}): Tambahkan minimal 1 metrik!`)
+          return
+        }
+      }
+    }
+
     // Clean up optionsText before saving
     if (formConfig.value.type === 'table') {
       formConfig.value.columns.forEach(col => {
@@ -620,7 +970,22 @@ const saveTemplate = async () => {
     alert('Template berhasil disimpan!')
     router.push('/akreditasi/butir-templates')
   } catch (error) {
-    alert('Gagal menyimpan template: ' + (error.response?.data?.message || error.message))
+    console.error('Save template error:', error.response?.data)
+
+    let errorMessage = 'Gagal menyimpan template: '
+
+    // Check if there are validation errors
+    if (error.response?.data?.errors) {
+      const errors = error.response.data.errors
+      const errorList = Object.keys(errors).map(key => {
+        return `- ${key}: ${errors[key].join(', ')}`
+      }).join('\n')
+      errorMessage += '\n\nDetail errors:\n' + errorList
+    } else {
+      errorMessage += (error.response?.data?.message || error.message)
+    }
+
+    alert(errorMessage)
   }
 }
 
