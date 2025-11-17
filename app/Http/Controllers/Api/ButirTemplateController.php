@@ -95,14 +95,14 @@ class ButirTemplateController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => [
+            'butir' => [
                 'id' => $butir->id,
                 'kode' => $butir->kode,
                 'nama' => $butir->nama,
                 'deskripsi' => $butir->deskripsi,
-                'form_config' => $formConfig,
-                'has_template' => $formConfig !== null,
-            ]
+            ],
+            'template' => $formConfig,
+            'has_template' => $formConfig !== null,
         ]);
     }
 
