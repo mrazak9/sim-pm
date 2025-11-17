@@ -111,24 +111,36 @@ class ButirTemplateController extends Controller
      */
     public function store(Request $request, $id)
     {
-        // Validate request
-        $validator = Validator::make($request->all(), [
+        // Basic validation
+        $rules = [
             'form_config.type' => 'required|in:table,narrative,checklist,metric,mixed',
             'form_config.label' => 'required|string|max:255',
             'form_config.help_text' => 'nullable|string',
-            'form_config.columns' => 'required_if:form_config.type,table|array',
-            'form_config.columns.*.name' => 'required_with:form_config.columns|string',
-            'form_config.columns.*.label' => 'required_with:form_config.columns|string',
-            'form_config.columns.*.type' => 'required_with:form_config.columns|in:text,textarea,number,currency,decimal,percentage,select,date',
-            'form_config.columns.*.required' => 'required_with:form_config.columns|boolean',
-            'form_config.fields' => 'required_if:form_config.type,narrative|array',
-            'form_config.items' => 'required_if:form_config.type,checklist|array',
-            'form_config.metrics' => 'required_if:form_config.type,metric|array',
-            'form_config.sections' => 'required_if:form_config.type,mixed|array|min:1',
-            'form_config.sections.*.type' => 'required_with:form_config.sections|in:table,narrative,checklist,metric',
-            'form_config.sections.*.label' => 'required_with:form_config.sections|string',
-            'form_config.sections.*.config' => 'required_with:form_config.sections',
-        ]);
+        ];
+
+        // Type-specific validation
+        $type = $request->input('form_config.type');
+
+        if ($type === 'table') {
+            $rules['form_config.columns'] = 'required|array|min:1';
+            $rules['form_config.columns.*.name'] = 'required|string';
+            $rules['form_config.columns.*.label'] = 'required|string';
+            $rules['form_config.columns.*.type'] = 'required|in:text,textarea,number,currency,decimal,percentage,select,date';
+            $rules['form_config.columns.*.required'] = 'boolean';
+        } elseif ($type === 'narrative') {
+            $rules['form_config.fields'] = 'required|array|min:1';
+        } elseif ($type === 'checklist') {
+            $rules['form_config.items'] = 'required|array|min:1';
+        } elseif ($type === 'metric') {
+            $rules['form_config.metrics'] = 'required|array|min:1';
+        } elseif ($type === 'mixed') {
+            $rules['form_config.sections'] = 'required|array|min:1';
+            $rules['form_config.sections.*.type'] = 'required|in:table,narrative,checklist,metric';
+            $rules['form_config.sections.*.label'] = 'required|string';
+            $rules['form_config.sections.*.config'] = 'required';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json([
