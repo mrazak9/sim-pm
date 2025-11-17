@@ -14,6 +14,43 @@ const routes = [
     component: () => import('@/views/auth/Login.vue'),
     meta: { guest: true },
   },
+  // User Management Routes
+  {
+    path: '/users',
+    name: 'user-list',
+    component: () => import('@/views/users/UserList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/users/create',
+    name: 'user-create',
+    component: () => import('@/views/users/UserForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/users/:id/edit',
+    name: 'user-edit',
+    component: () => import('@/views/users/UserForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/users/roles',
+    name: 'role-management',
+    component: () => import('@/views/users/RoleManagement.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/users/permissions',
+    name: 'permission-management',
+    component: () => import('@/views/users/PermissionManagement.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/profile',
+    name: 'user-profile',
+    component: () => import('@/views/users/UserProfile.vue'),
+    meta: { requiresAuth: true },
+  },
   // IKU Routes
   {
     path: '/iku',

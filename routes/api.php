@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\ProgramStudiController;
 use App\Http\Controllers\Api\JabatanController;
 use App\Http\Controllers\Api\TahunAkademikController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\IKUController;
 use App\Http\Controllers\Api\IKUTargetController;
 use App\Http\Controllers\Api\IKUProgressController;
@@ -94,6 +96,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('users', UserController::class);
     Route::post('users/{id}/assign-roles', [UserController::class, 'assignRoles']);
     Route::post('users/{id}/assign-permissions', [UserController::class, 'assignPermissions']);
+
+    // Role & Permission Routes
+    Route::get('roles', [RoleController::class, 'index']);
+    Route::get('roles/{id}', [RoleController::class, 'show']);
+    Route::get('permissions', [PermissionController::class, 'index']);
+    Route::get('permissions/{id}', [PermissionController::class, 'show']);
 
     // IKU Management Routes
     Route::get('iku/statistics', [IKUController::class, 'statistics']);

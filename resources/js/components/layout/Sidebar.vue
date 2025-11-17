@@ -447,6 +447,113 @@
         </transition>
       </div>
 
+      <!-- Menu Group: User Management -->
+      <div class="mb-6">
+        <button
+          @click="toggleUsers"
+          class="mb-2 flex w-full items-center justify-between rounded-lg px-2 py-2 text-xs font-semibold uppercase text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
+          <span v-if="sidebarExpanded || sidebarMobileOpen">PENGGUNA</span>
+          <span v-else class="flex w-full justify-center">•••</span>
+          <svg
+            v-if="sidebarExpanded || sidebarMobileOpen"
+            :class="['h-4 w-4 transition-transform', usersOpen ? 'rotate-180' : '']"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        <transition
+          enter-active-class="transition-all duration-200 ease-out"
+          enter-from-class="max-h-0 opacity-0"
+          enter-to-class="max-h-96 opacity-100"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="max-h-96 opacity-100"
+          leave-to-class="max-h-0 opacity-0"
+        >
+          <ul v-show="usersOpen" class="space-y-2 overflow-hidden">
+          <!-- Daftar Pengguna -->
+          <li>
+            <router-link
+              to="/users"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.includes('/users') && !$route.path.includes('/roles') && !$route.path.includes('/permissions')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Daftar Pengguna</span>
+            </router-link>
+          </li>
+
+          <!-- Role Management -->
+          <li>
+            <router-link
+              to="/users/roles"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.includes('/users/roles')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Role</span>
+            </router-link>
+          </li>
+
+          <!-- Permission Management -->
+          <li>
+            <router-link
+              to="/users/permissions"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.includes('/users/permissions')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Permission</span>
+            </router-link>
+          </li>
+
+          <!-- Profile -->
+          <li>
+            <router-link
+              to="/profile"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path === '/profile'
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Profil Saya</span>
+            </router-link>
+          </li>
+          </ul>
+        </transition>
+      </div>
+
       <!-- Menu Group: IKU -->
       <div class="mb-6">
         <button
@@ -696,6 +803,7 @@ const userInitials = computed(() => {
 const masterDataOpen = ref(true);
 const auditOpen = ref(true);
 const spmiOpen = ref(true);
+const usersOpen = ref(true);
 const ikuOpen = ref(true);
 const akreditasiOpen = ref(true);
 
@@ -715,6 +823,11 @@ const toggleSPMI = () => {
   localStorage.setItem('sidebar_spmi', spmiOpen.value);
 };
 
+const toggleUsers = () => {
+  usersOpen.value = !usersOpen.value;
+  localStorage.setItem('sidebar_users', usersOpen.value);
+};
+
 const toggleIKU = () => {
   ikuOpen.value = !ikuOpen.value;
   localStorage.setItem('sidebar_iku', ikuOpen.value);
@@ -732,11 +845,13 @@ onMounted(() => {
   const savedIKU = localStorage.getItem('sidebar_iku');
   const savedAkreditasi = localStorage.getItem('sidebar_akreditasi');
   const savedSPMI = localStorage.getItem('sidebar_spmi');
+  const savedUsers = localStorage.getItem('sidebar_users');
 
   if (savedMasterData !== null) masterDataOpen.value = savedMasterData === 'true';
   if (savedAudit !== null) auditOpen.value = savedAudit === 'true';
   if (savedIKU !== null) ikuOpen.value = savedIKU === 'true';
   if (savedAkreditasi !== null) akreditasiOpen.value = savedAkreditasi === 'true';
   if (savedSPMI !== null) spmiOpen.value = savedSPMI === 'true';
+  if (savedUsers !== null) usersOpen.value = savedUsers === 'true';
 });
 </script>
