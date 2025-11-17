@@ -211,7 +211,7 @@
               <h2 class="mb-4 text-lg font-bold text-gray-900 dark:text-white">Aksi Cepat</h2>
               <div class="space-y-2">
                 <router-link
-                  :to="`/akreditasi/pengisian?periode_id=${periode.id}`"
+                  :to="`/akreditasi/periode/${periode.id}/pengisian`"
                   class="flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                 >
                   <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
