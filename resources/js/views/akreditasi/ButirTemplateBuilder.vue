@@ -970,7 +970,22 @@ const saveTemplate = async () => {
     alert('Template berhasil disimpan!')
     router.push('/akreditasi/butir-templates')
   } catch (error) {
-    alert('Gagal menyimpan template: ' + (error.response?.data?.message || error.message))
+    console.error('Save template error:', error.response?.data)
+
+    let errorMessage = 'Gagal menyimpan template: '
+
+    // Check if there are validation errors
+    if (error.response?.data?.errors) {
+      const errors = error.response.data.errors
+      const errorList = Object.keys(errors).map(key => {
+        return `- ${key}: ${errors[key].join(', ')}`
+      }).join('\n')
+      errorMessage += '\n\nDetail errors:\n' + errorList
+    } else {
+      errorMessage += (error.response?.data?.message || error.message)
+    }
+
+    alert(errorMessage)
   }
 }
 
