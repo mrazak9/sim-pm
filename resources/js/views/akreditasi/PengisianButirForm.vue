@@ -460,15 +460,23 @@ const getStatusClass = (status) => {
 
 // Dynamic form handlers
 const handleFormValidation = (validationResult) => {
+  console.log('=== Form Validation Event ===')
+  console.log('validationResult:', validationResult)
+  console.log('isValid:', validationResult.isValid)
+  console.log('errors:', validationResult.errors)
+
   formIsValid.value = validationResult.isValid
   if (!validationResult.isValid) {
+    console.log('Setting localError for validation failure')
     localError.value = {
-      message: 'Form validation failed',
+      message: 'Validasi form gagal. Harap periksa field yang ditandai merah.',
       errors: { form_data: validationResult.errors }
     }
   } else {
+    console.log('Validation passed, clearing localError')
     localError.value = null
   }
+  console.log('===========================')
 }
 
 const handleCompletionChange = (completionPercentage) => {
@@ -476,15 +484,23 @@ const handleCompletionChange = (completionPercentage) => {
 }
 
 const handleSubmit = async () => {
+  console.log('=== Handle Submit (Save Draft) ===')
+  console.log('hasDynamicForm:', hasDynamicForm.value)
+  console.log('formIsValid:', formIsValid.value)
+  console.log('form.form_data:', form.value.form_data)
+
   localError.value = null
   successMessage.value = null
 
   // Validate dynamic form if applicable
   if (hasDynamicForm.value && !formIsValid.value) {
-    localError.value = 'Please fix form validation errors before saving'
+    console.log('Validation failed! Stopping save.')
+    localError.value = 'Harap perbaiki error validasi form sebelum menyimpan'
     window.scrollTo({ top: 0, behavior: 'smooth' })
     return
   }
+
+  console.log('Validation passed, proceeding with save...')
 
   try {
     // Prepare data
@@ -629,6 +645,11 @@ onMounted(async () => {
       const response = await axios.get(`/api/pengisian-butir/${route.params.id}`)
       const data = response.data.data
 
+      console.log('=== Loading Edit Data ===')
+      console.log('API Response Data:', data)
+      console.log('form_data from API:', data.form_data)
+      console.log('butir_akreditasi:', data.butir_akreditasi)
+
       Object.assign(form.value, {
         periode_akreditasi_id: data.periode_akreditasi_id,
         butir_akreditasi_id: data.butir_akreditasi_id,
@@ -641,9 +662,16 @@ onMounted(async () => {
         review_notes: data.review_notes || '',
       })
 
+      console.log('form.value after assign:', form.value)
+      console.log('form.form_data:', form.value.form_data)
+
       // Load butir info
       await fetchButirs()
       handleButirChange()
+
+      console.log('=== After fetchButirs ===')
+      console.log('selectedButir:', selectedButir.value)
+      console.log('===========================')
     } catch (err) {
       console.error('Error loading pengisian:', err)
       localError.value = 'Gagal memuat data pengisian'
