@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\IKUTargetController;
 use App\Http\Controllers\Api\IKUProgressController;
 use App\Http\Controllers\Api\PeriodeAkreditasiController;
 use App\Http\Controllers\Api\ButirAkreditasiController;
+use App\Http\Controllers\Api\ButirTemplateController;
 use App\Http\Controllers\Api\PengisianButirController;
 use App\Http\Controllers\Api\ButirCommentController;
 use App\Http\Controllers\Api\DokumenAkreditasiController;
@@ -136,6 +137,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('butir-akreditasi/instrumen', [ButirAkreditasiController::class, 'instrumen']);
     Route::get('butir-akreditasi/kategori', [ButirAkreditasiController::class, 'kategori']);
     Route::apiResource('butir-akreditasi', ButirAkreditasiController::class);
+
+    // Butir Template Management Routes
+    Route::get('butir-templates', [ButirTemplateController::class, 'index']);
+    Route::get('butir-templates/{id}', [ButirTemplateController::class, 'show']);
+    Route::post('butir-templates/{id}', [ButirTemplateController::class, 'store']);
+    Route::delete('butir-templates/{id}', [ButirTemplateController::class, 'destroy']);
+    Route::post('butir-templates/{id}/copy', [ButirTemplateController::class, 'copy']);
 
     // Pengisian Butir Routes
     Route::post('pengisian-butir/{id}/submit', [PengisianButirController::class, 'submit']);
