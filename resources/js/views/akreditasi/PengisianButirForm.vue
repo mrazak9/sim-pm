@@ -102,6 +102,7 @@
             <!-- Dynamic Form (if butir has form_config) -->
             <div v-if="hasDynamicForm">
               <DynamicFormRenderer
+                :key="`dynamic-form-${form.butir_akreditasi_id}`"
                 :form-config="selectedButir.metadata?.form_config"
                 v-model="form.form_data"
                 :readonly="isLocked"
@@ -249,6 +250,7 @@
             <button
               type="submit"
               :disabled="loading"
+              @click="console.log('🔵 Simpan Draft button clicked')"
               class="rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
               <span v-if="loading">Menyimpan...</span>
@@ -460,15 +462,23 @@ const getStatusClass = (status) => {
 
 // Dynamic form handlers
 const handleFormValidation = (validationResult) => {
+  console.log('=== Form Validation Event ===')
+  console.log('validationResult:', validationResult)
+  console.log('isValid:', validationResult.isValid)
+  console.log('errors:', validationResult.errors)
+
   formIsValid.value = validationResult.isValid
   if (!validationResult.isValid) {
+    console.log('Setting localError for validation failure')
     localError.value = {
-      message: 'Form validation failed',
+      message: 'Validasi form gagal. Harap periksa field yang ditandai merah.',
       errors: { form_data: validationResult.errors }
     }
   } else {
+    console.log('Validation passed, clearing localError')
     localError.value = null
   }
+  console.log('===========================')
 }
 
 const handleCompletionChange = (completionPercentage) => {
@@ -476,25 +486,40 @@ const handleCompletionChange = (completionPercentage) => {
 }
 
 const handleSubmit = async () => {
-  localError.value = null
-  successMessage.value = null
-
-  // Validate dynamic form if applicable
-  if (hasDynamicForm.value && !formIsValid.value) {
-    localError.value = 'Please fix form validation errors before saving'
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    return
-  }
+  console.log('=== Handle Submit (Save Draft) - START ===')
+  console.log('Timestamp:', new Date().toISOString())
+  console.log('isEdit:', isEdit.value)
+  console.log('hasDynamicForm:', hasDynamicForm.value)
+  console.log('formIsValid:', formIsValid.value)
+  console.log('form.form_data:', form.value.form_data)
+  console.log('form.butir_akreditasi_id:', form.value.butir_akreditasi_id)
+  console.log('form.periode_akreditasi_id:', form.value.periode_akreditasi_id)
 
   try {
+    localError.value = null
+    successMessage.value = null
+
+    // Validate dynamic form if applicable
+    if (hasDynamicForm.value && !formIsValid.value) {
+      console.log('❌ Validation failed! Stopping save.')
+      localError.value = 'Harap perbaiki error validasi form sebelum menyimpan'
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    console.log('✅ Validation passed, proceeding with save...')
+
     // Prepare data
     const data = { ...form.value }
+    console.log('Data before processing:', JSON.stringify(data, null, 2))
 
     // For dynamic forms, clear konten since we use form_data
     if (hasDynamicForm.value) {
+      console.log('Using dynamic form data')
       data.konten = ''
       data.konten_plain = ''
     } else {
+      console.log('Using legacy rich text editor')
       // Generate plain text from HTML for legacy forms
       const temp = document.createElement('div')
       temp.innerHTML = data.konten
@@ -507,21 +532,35 @@ const handleSubmit = async () => {
     if (data.notes === '') data.notes = null
     if (data.completion_percentage === '') data.completion_percentage = 0
 
+    console.log('Data after processing:', JSON.stringify(data, null, 2))
+    console.log('Calling API...')
+
     let response
     if (isEdit.value) {
+      console.log('Updating existing pengisian:', route.params.id)
       response = await updatePengisian(route.params.id, data)
       successMessage.value = 'Pengisian berhasil diupdate!'
     } else {
+      console.log('Creating new pengisian')
       response = await savePengisian(data)
       successMessage.value = 'Pengisian berhasil disimpan!'
     }
+
+    console.log('✅ Save successful!', response)
+    console.log('=== Handle Submit - END (SUCCESS) ===')
 
     // Show success message briefly then redirect
     setTimeout(() => {
       handleCancel()
     }, 1500)
   } catch (err) {
-    console.error('Error saving pengisian:', err)
+    console.error('❌ Error in handleSubmit:', err)
+    console.error('Error details:', {
+      message: err.message,
+      response: err.response?.data,
+      stack: err.stack
+    })
+    console.log('=== Handle Submit - END (ERROR) ===')
     handleError(err)
   }
 }
@@ -629,6 +668,11 @@ onMounted(async () => {
       const response = await axios.get(`/api/pengisian-butir/${route.params.id}`)
       const data = response.data.data
 
+      console.log('=== Loading Edit Data ===')
+      console.log('API Response Data:', data)
+      console.log('form_data from API:', data.form_data)
+      console.log('butir_akreditasi:', data.butir_akreditasi)
+
       Object.assign(form.value, {
         periode_akreditasi_id: data.periode_akreditasi_id,
         butir_akreditasi_id: data.butir_akreditasi_id,
@@ -641,9 +685,16 @@ onMounted(async () => {
         review_notes: data.review_notes || '',
       })
 
+      console.log('form.value after assign:', form.value)
+      console.log('form.form_data:', form.value.form_data)
+
       // Load butir info
       await fetchButirs()
       handleButirChange()
+
+      console.log('=== After fetchButirs ===')
+      console.log('selectedButir:', selectedButir.value)
+      console.log('===========================')
     } catch (err) {
       console.error('Error loading pengisian:', err)
       localError.value = 'Gagal memuat data pengisian'
