@@ -159,7 +159,11 @@ const validationErrors = ref([])
 const cellErrors = ref({})
 
 // Computed - directly from props (no internal state)
-const rows = computed(() => props.modelValue?.rows || [])
+const rows = computed(() => {
+  const rowsData = props.modelValue?.rows || []
+  console.log('🟡 TableFormRenderer - rows computed triggered, length:', rowsData.length)
+  return rowsData
+})
 const rowCount = computed(() => rows.value.length)
 
 const columnCount = computed(() => {
@@ -197,13 +201,22 @@ const getFieldComponent = (type) => {
 
 // Row operations - emit to parent instead of mutating local state
 const handleAddRow = () => {
+  console.log('🟢 TableFormRenderer - handleAddRow called')
+  console.log('  Current rows.value length:', rows.value.length)
+  console.log('  Current rows.value:', rows.value)
+
   const newRow = {}
   props.config.columns.forEach(column => {
     newRow[column.name] = column.default || null
   })
 
+  console.log('  New row created:', newRow)
+
   // Create new array with added row
   const newRows = [...rows.value, newRow]
+  console.log('  New rows array length:', newRows.length)
+  console.log('  Emitting update:modelValue with:', { rows: newRows })
+
   emit('update:modelValue', { rows: newRows })
 }
 

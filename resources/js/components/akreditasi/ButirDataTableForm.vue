@@ -140,9 +140,13 @@ const showSuccessMessage = ref(false)
 const formConfig = computed(() => getFormConfigFromMappings.value)
 
 // Transform localData (array) to format expected by TableFormRenderer (object with rows)
-const formData = computed(() => ({
-  rows: localData.value
-}))
+const formData = computed(() => {
+  console.log('🟠 ButirDataTableForm - formData computed triggered')
+  console.log('  localData.value length:', localData.value.length)
+  const data = { rows: localData.value }
+  console.log('  Returning formData:', data)
+  return data
+})
 
 // Check if data has changes
 const hasChanges = computed(() => {
@@ -179,7 +183,15 @@ const loadData = async () => {
  * TableFormRenderer emits { rows: [] } format
  */
 const handleDataChange = (newData) => {
+  console.log('🔵 ButirDataTableForm - handleDataChange called')
+  console.log('  newData:', newData)
+  console.log('  newData.rows length:', newData?.rows?.length)
+  console.log('  localData BEFORE:', localData.value.length, 'rows')
+
   localData.value = newData?.rows || []
+
+  console.log('  localData AFTER:', localData.value.length, 'rows')
+  console.log('  formData computed:', formData.value)
 }
 
 /**
