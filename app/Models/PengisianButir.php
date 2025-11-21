@@ -75,6 +75,11 @@ class PengisianButir extends Model
         return $this->hasOne(PengisianButirLock::class);
     }
 
+    public function butirData()
+    {
+        return $this->hasMany(ButirData::class, 'pengisian_butir_id');
+    }
+
     /**
      * Scopes
      */
