@@ -73,6 +73,21 @@ class ButirAkreditasi extends Model
             ->orderBy('urutan');
     }
 
+    public function columnMappings()
+    {
+        return $this->hasMany(ButirColumnMapping::class)->orderBy('display_order');
+    }
+
+    public function butirData()
+    {
+        return $this->hasManyThrough(
+            ButirData::class,
+            PengisianButir::class,
+            'butir_akreditasi_id',
+            'pengisian_butir_id'
+        );
+    }
+
     /**
      * Scopes
      */
