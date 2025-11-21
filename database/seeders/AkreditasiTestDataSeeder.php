@@ -58,12 +58,9 @@ class AkreditasiTestDataSeeder extends Seeder
             ]);
         }
 
-        // Copy butir templates to periode and setup data
-        $this->command->info('Step 1: Copying butir templates to periode...');
-        $this->copyButirsToPeriode($periode);
+        $this->command->info('Setting up test butir with column mappings and sample data...');
         $this->command->newLine();
 
-        $this->command->info('Step 2: Setting up column mappings and sample data...');
         $this->setupButirDosen($periode, $pic);
         $this->setupButirPublikasi($periode, $pic);
         $this->setupButirPKM($periode, $pic);
@@ -74,32 +71,6 @@ class AkreditasiTestDataSeeder extends Seeder
         $this->command->info('   Total Butir in Periode: ' . ButirAkreditasi::where('periode_akreditasi_id', $periode->id)->count());
         $this->command->info('   Total Pengisian: ' . PengisianButir::where('periode_akreditasi_id', $periode->id)->count());
         $this->command->newLine();
-    }
-
-    /**
-     * Copy template butirs to periode
-     */
-    protected function copyButirsToPeriode($periode)
-    {
-        // Get template butirs (first 10 for testing)
-        $templateButirs = ButirAkreditasi::whereNull('periode_akreditasi_id')
-            ->whereNull('parent_id')
-            ->take(10)
-            ->get();
-
-        foreach ($templateButirs as $template) {
-            try {
-                $this->butirService->copyFromTemplate($template->id, $periode->id);
-                $this->command->info("  ✓ Copied: {$template->kode} - {$template->nama}");
-            } catch (\Exception $e) {
-                // Skip if already exists
-                if (strpos($e->getMessage(), 'sudah ada') !== false) {
-                    $this->command->comment("  - Skipped (exists): {$template->kode}");
-                } else {
-                    $this->command->warn("  ! Error copying {$template->kode}: {$e->getMessage()}");
-                }
-            }
-        }
     }
 
     /**
