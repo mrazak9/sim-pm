@@ -158,14 +158,19 @@ const emit = defineEmits(['update:modelValue', 'validate'])
 const rows = ref([...(props.modelValue?.rows || [])])
 const validationErrors = ref([])
 const cellErrors = ref({})
+const isInternalUpdate = ref(false)
 
-// Watch for external changes
+// Watch for external changes (only sync if not from internal update)
 watch(() => props.modelValue, (newValue) => {
-  rows.value = [...(newValue?.rows || [])]
+  if (!isInternalUpdate.value) {
+    rows.value = [...(newValue?.rows || [])]
+  }
+  isInternalUpdate.value = false
 }, { deep: true })
 
 // Watch for internal changes and emit
 watch(rows, (newRows) => {
+  isInternalUpdate.value = true
   const formData = { rows: newRows }
   emit('update:modelValue', formData)
   validateForm()
