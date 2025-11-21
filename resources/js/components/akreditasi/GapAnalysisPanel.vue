@@ -200,6 +200,40 @@
           </div>
         </div>
 
+        <!-- In Review Butir -->
+        <div v-if="gapData.in_review_butir && gapData.in_review_butir.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Menunggu Review/Approval ({{ gapData.in_review_butir.length }})
+          </h3>
+          <div class="space-y-2 max-h-96 overflow-y-auto">
+            <div
+              v-for="butir in gapData.in_review_butir"
+              :key="butir.id"
+              class="border border-blue-200 dark:border-blue-800 rounded-lg p-3 bg-blue-50 dark:bg-blue-900/20"
+            >
+              <div class="flex-1">
+                <div class="font-medium text-gray-900 dark:text-white">{{ butir.kode }}</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ butir.nama }}</div>
+                <div class="flex items-center gap-2 mt-2">
+                  <span class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">{{ butir.kategori }}</span>
+                  <span class="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 rounded">
+                    {{ butir.reason }}
+                  </span>
+                  <span
+                    v-if="butir.is_mandatory"
+                    class="text-xs px-2 py-1 bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200 rounded font-medium"
+                  >
+                    Mandatory
+                  </span>
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  PIC: {{ butir.pic_name }} • {{ butir.completion_percentage }}% complete
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Incomplete Butir -->
         <div v-if="gapData.incomplete_butir.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">

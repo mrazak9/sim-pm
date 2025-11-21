@@ -481,12 +481,48 @@ class PeriodeAkreditasiService
             ];
         })->values()->toArray();
 
-        // 2. Incomplete Butir (ada pengisian tapi belum approved, exclude yang revision)
+        // 2. Incomplete Butir (masih draft, belum disubmit)
         $incompleteButir = $pengisianButirs->filter(function ($pengisian) {
-            return in_array($pengisian->status, ['draft', 'submitted', 'review']) ||
-                   ($pengisian->status !== 'approved' && $pengisian->status !== 'revision');
+            // Hanya draft yang dianggap incomplete
+            // submitted/review sudah lengkap, hanya menunggu approval
+            return $pengisian->status === 'draft';
         })->map(function ($pengisian) {
             $isMandatory = $pengisian->butirAkreditasi->is_mandatory ?? false;
+            $completion = $pengisian->completion_percentage ?? 0;
+
+            // Tentukan reason berdasarkan completion
+            if ($completion === 0) {
+                $reason = 'Belum dimulai';
+            } elseif ($completion < 50) {
+                $reason = 'Baru dimulai (' . $completion . '%)';
+            } elseif ($completion < 100) {
+                $reason = 'Hampir selesai (' . $completion . '%)';
+            } else {
+                $reason = 'Lengkap, siap disubmit';
+            }
+
+            return [
+                'id' => $pengisian->butir_akreditasi_id,
+                'kode' => $pengisian->butirAkreditasi->kode ?? '-',
+                'nama' => $pengisian->butirAkreditasi->nama ?? '-',
+                'kategori' => $pengisian->butirAkreditasi->kategori ?? 'Tanpa Kategori',
+                'is_mandatory' => $isMandatory,
+                'bobot' => $pengisian->butirAkreditasi->bobot ?? 0,
+                'status' => $pengisian->status,
+                'completion_percentage' => $completion,
+                'pic_name' => $pengisian->picUser->name ?? '-',
+                'reason' => $reason,
+                'severity' => $isMandatory ? 'critical' : 'medium',
+            ];
+        })->values()->toArray();
+
+        // 3. Butir Menunggu Review/Approval (submitted atau review)
+        $inReviewButir = $pengisianButirs->filter(function ($pengisian) {
+            return in_array($pengisian->status, ['submitted', 'review']);
+        })->map(function ($pengisian) {
+            $isMandatory = $pengisian->butirAkreditasi->is_mandatory ?? false;
+            $statusLabel = $pengisian->status === 'submitted' ? 'Menunggu Review' : 'Sedang Direview';
+
             return [
                 'id' => $pengisian->butir_akreditasi_id,
                 'kode' => $pengisian->butirAkreditasi->kode ?? '-',
@@ -497,12 +533,12 @@ class PeriodeAkreditasiService
                 'status' => $pengisian->status,
                 'completion_percentage' => $pengisian->completion_percentage ?? 0,
                 'pic_name' => $pengisian->picUser->name ?? '-',
-                'reason' => 'Pengisian belum lengkap',
-                'severity' => $isMandatory ? 'critical' : 'medium',
+                'reason' => $statusLabel,
+                'severity' => 'info', // Bukan gap, hanya status
             ];
         })->values()->toArray();
 
-        // 3. Butir Perlu Revisi
+        // 4. Butir Perlu Revisi
         $needsRevisionButir = $pengisianButirs->filter(function ($pengisian) {
             return $pengisian->status === 'revision';
         })->map(function ($pengisian) {
@@ -523,7 +559,7 @@ class PeriodeAkreditasiService
             ];
         })->values()->toArray();
 
-        // 4. Mandatory Butir yang belum approved
+        // 5. Mandatory Butir yang belum approved
         $mandatoryNotApproved = $allButir->filter(function ($butir) use ($pengisianButirs) {
             if (!($butir->is_mandatory ?? false)) {
                 return false;
@@ -547,7 +583,7 @@ class PeriodeAkreditasiService
             ];
         })->values()->toArray();
 
-        // 5. Gap Analysis per Kategori
+        // 6. Gap Analysis per Kategori
         $kategoriGaps = $allButir->groupBy(function ($butir) {
             return $butir->kategori ?? 'Tanpa Kategori';
         })->map(function ($butirs, $kategori) use ($pengisianButirs) {
@@ -581,7 +617,7 @@ class PeriodeAkreditasiService
             ];
         })->values()->toArray();
 
-        // 6. Overall Summary
+        // 7. Overall Summary
         $totalButir = $allButir->count();
         $totalMandatory = $allButir->where('is_mandatory', true)->count();
         $completedButir = $pengisianButirs->where('status', 'approved')->count();
@@ -593,7 +629,7 @@ class PeriodeAkreditasiService
         $criticalGapIds = array_unique(array_merge($missingButirIds, $mandatoryNotApprovedIds));
         $criticalGap = count($criticalGapIds);
 
-        // 7. Recommendations
+        // 8. Recommendations
         $recommendations = [];
 
         if (count($missingButir) > 0) {
@@ -655,6 +691,7 @@ class PeriodeAkreditasiService
             ],
             'missing_butir' => $missingButir,
             'incomplete_butir' => $incompleteButir,
+            'in_review_butir' => $inReviewButir,
             'needs_revision' => $needsRevisionButir,
             'mandatory_not_approved' => $mandatoryNotApproved,
             'kategori_gaps' => $kategoriGaps,
