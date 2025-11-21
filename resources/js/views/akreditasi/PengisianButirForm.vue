@@ -1,6 +1,23 @@
 <template>
   <MainLayout>
     <div>
+      <!-- Breadcrumb Navigation -->
+      <nav class="mb-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
+        <button
+          @click="handleCancel"
+          class="flex items-center hover:text-blue-600 dark:hover:text-blue-400 transition"
+        >
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Pengisian Butir
+        </button>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900 dark:text-white">
+          {{ isEdit ? 'Edit' : 'Tambah' }}
+        </span>
+      </nav>
+
       <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
           {{ isEdit ? 'Edit Pengisian Butir' : 'Tambah Pengisian Butir' }}
@@ -312,6 +329,23 @@
             >
               <span v-if="loading">Menyimpan...</span>
               <span v-else>Simpan Catatan & Status</span>
+            </button>
+            <button
+              v-if="form.status === 'draft'"
+              type="button"
+              @click="handleSubmitForReview"
+              :disabled="loading"
+              class="rounded-lg bg-green-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:opacity-50"
+            >
+              <span v-if="loading">Mengajukan...</span>
+              <span v-else>Ajukan untuk Review</span>
+            </button>
+            <button
+              type="button"
+              @click="handleCancel"
+              class="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-center text-sm font-medium text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+            >
+              Kembali
             </button>
           </div>
 
