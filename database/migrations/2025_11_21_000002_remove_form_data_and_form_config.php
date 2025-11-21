@@ -20,10 +20,11 @@ return new class extends Migration
         // Remove form_config from butir_akreditasis metadata
         // This is optional - we keep metadata for other purposes
         // but clear out form_config
+        // Note: The '-' operator is safe even if the key doesn't exist
         DB::statement("
             UPDATE butir_akreditasis
             SET metadata = metadata - 'form_config'
-            WHERE metadata ? 'form_config'
+            WHERE metadata IS NOT NULL
         ");
     }
 
