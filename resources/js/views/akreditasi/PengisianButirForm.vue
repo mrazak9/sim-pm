@@ -588,11 +588,19 @@ const handleSubmit = async () => {
   console.log('=== Handle Submit (Save Draft) - START ===')
   console.log('Timestamp:', new Date().toISOString())
   console.log('isEdit:', isEdit.value)
+  console.log('hasColumnMapping:', hasColumnMapping.value)
   console.log('hasDynamicForm:', hasDynamicForm.value)
   console.log('formIsValid:', formIsValid.value)
   console.log('form.form_data:', form.value.form_data)
   console.log('form.butir_akreditasi_id:', form.value.butir_akreditasi_id)
   console.log('form.periode_akreditasi_id:', form.value.periode_akreditasi_id)
+
+  // IMPORTANT: Block save for column mapping - data is saved via ButirDataTableForm
+  if (hasColumnMapping.value) {
+    console.log('🛑 BLOCKED: Column mapping detected. Use table save button instead.')
+    console.log('=== Handle Submit - END (BLOCKED) ===')
+    return
+  }
 
   try {
     localError.value = null
