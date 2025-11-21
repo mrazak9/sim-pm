@@ -21,6 +21,7 @@
           <h4 class="text-sm font-medium text-red-800 mb-1">Gagal memuat data</h4>
           <p class="text-sm text-red-700">{{ error }}</p>
           <button
+            type="button"
             @click="loadData"
             class="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"
           >
@@ -63,6 +64,7 @@
         </div>
         <div class="flex gap-2">
           <button
+            type="button"
             @click="handleDiscard"
             :disabled="saving"
             class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 text-sm font-medium"
@@ -70,6 +72,7 @@
             Batalkan
           </button>
           <button
+            type="button"
             @click="handleSave"
             :disabled="saving || !isValid"
             class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-medium flex items-center gap-2"

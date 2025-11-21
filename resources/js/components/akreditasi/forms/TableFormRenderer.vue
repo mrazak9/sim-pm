@@ -14,6 +14,7 @@
 
       <!-- Add Row Button -->
       <button
+        type="button"
         v-if="!readonly && config.options?.allow_add !== false"
         @click="handleAddRow"
         :disabled="isMaxRowsReached"
@@ -99,6 +100,7 @@
               class="px-4 py-3 text-center"
             >
               <button
+                type="button"
                 @click="handleDeleteRow(rowIndex)"
                 class="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 transition"
                 title="Hapus baris"
