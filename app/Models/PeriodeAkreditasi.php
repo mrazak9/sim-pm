@@ -15,6 +15,7 @@ class PeriodeAkreditasi extends Model
         'jenis_akreditasi',
         'lembaga',
         'instrumen',
+        'instrumen_id',
         'jenjang',
         'unit_kerja_id',
         'program_studi_id',
@@ -38,6 +39,11 @@ class PeriodeAkreditasi extends Model
     /**
      * Relationships
      */
+    public function instrumenAkreditasi()
+    {
+        return $this->belongsTo(InstrumenAkreditasi::class, 'instrumen_id');
+    }
+
     public function unitKerja()
     {
         return $this->belongsTo(UnitKerja::class);
