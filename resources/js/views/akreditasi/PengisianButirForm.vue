@@ -250,6 +250,17 @@
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Status akan berubah saat Anda mengajukan atau mereview pengisian
             </p>
+            <!-- Debug Info for Approval Buttons -->
+            <div v-if="form.status === 'draft'" class="mt-2 rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
+              <p class="text-xs text-blue-800 dark:text-blue-300">
+                💡 Tombol "Approve" dan "Minta Revisi" akan muncul setelah butir ini diajukan untuk review (status: submitted/review)
+              </p>
+            </div>
+            <div v-if="form.status === 'approved'" class="mt-2 rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
+              <p class="text-xs text-green-800 dark:text-green-300">
+                ✓ Butir ini sudah disetujui (approved). Tidak ada aksi lebih lanjut yang diperlukan.
+              </p>
+            </div>
           </div>
 
           <!-- Review Notes (if status is revision) -->
