@@ -16,12 +16,18 @@
           <h3 class="font-semibold text-blue-900 dark:text-blue-300">Butir Akreditasi</h3>
           <!-- Template Badge -->
           <span
-            v-if="hasDynamicForm"
+            v-if="hasColumnMapping"
             class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
           >
-            📋 {{ selectedButir.metadata?.form_config?.type === 'table' ? 'Form Tabel' :
-                 selectedButir.metadata?.form_config?.type === 'narrative' ? 'Form Narasi' :
-                 'Form Template' }}
+            ✨ Form Tabel (Column Mapping)
+          </span>
+          <span
+            v-else-if="hasDynamicForm"
+            class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+          >
+            📋 {{ selectedButir.metadata?.form_config?.type === 'table' ? 'Form Tabel (Legacy)' :
+                 selectedButir.metadata?.form_config?.type === 'narrative' ? 'Form Narasi (Legacy)' :
+                 'Form Template (Legacy)' }}
           </span>
           <span
             v-else
@@ -34,10 +40,14 @@
           <p><span class="font-medium">Kode:</span> {{ selectedButir.kode }}</p>
           <p><span class="font-medium">Nama:</span> {{ selectedButir.nama }}</p>
           <p v-if="selectedButir.deskripsi"><span class="font-medium">Deskripsi:</span> {{ selectedButir.deskripsi }}</p>
-          <!-- Debug info (akan kita hapus nanti) -->
-          <p v-if="hasDynamicForm" class="pt-2 border-t border-blue-200">
-            <span class="font-medium text-green-600">✓ Template aktif:</span>
-            {{ selectedButir.metadata?.form_config?.label }}
+          <!-- Debug info -->
+          <p v-if="hasColumnMapping" class="pt-2 border-t border-blue-200">
+            <span class="font-medium text-green-600">✓ Column Mapping aktif</span>
+            - Data tersimpan di c1-c30 dengan performa optimal
+          </p>
+          <p v-else-if="hasDynamicForm" class="pt-2 border-t border-yellow-200">
+            <span class="font-medium text-yellow-600">⚠ Legacy Template:</span>
+            {{ selectedButir.metadata?.form_config?.label }} (akan diupgrade)
           </p>
         </div>
       </div>
@@ -99,8 +109,28 @@
 
           <!-- Dynamic Form or Rich Text Editor -->
           <div>
-            <!-- Dynamic Form (if butir has form_config) -->
-            <div v-if="hasDynamicForm">
+            <!-- NEW: Column Mapping Form (c1-c30 system) -->
+            <div v-if="hasColumnMapping && isEdit">
+              <ButirDataTableForm
+                :key="`butir-data-form-${form.butir_akreditasi_id}`"
+                :butir-id="form.butir_akreditasi_id"
+                :pengisian-butir-id="parseInt(route.params.id)"
+                :readonly="isLocked"
+                @saved="handleButirDataSaved"
+                @error="handleButirDataError"
+              />
+            </div>
+
+            <!-- DEPRECATED: Old Dynamic Form (form_config - will be removed) -->
+            <div v-else-if="hasDynamicForm">
+              <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+                <div class="flex items-center gap-2 text-yellow-800">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span class="font-medium">Form ini menggunakan sistem lama (form_config). Akan diupgrade ke column mapping.</span>
+                </div>
+              </div>
               <DynamicFormRenderer
                 :key="`dynamic-form-${form.butir_akreditasi_id}`"
                 :form-config="selectedButir.metadata?.form_config"
@@ -111,7 +141,7 @@
               />
             </div>
 
-            <!-- Legacy Rich Text Editor (default) -->
+            <!-- Legacy Rich Text Editor (default for narrative/free-text butirs) -->
             <div v-else>
               <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
                 Konten <span class="text-red-500">*</span>
@@ -308,9 +338,11 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAkreditasiApi } from '@/composables/useAkreditasiApi'
+import { useButirData } from '@/composables/useButirData'
 import MainLayout from '@/layouts/MainLayout.vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import DynamicFormRenderer from '@/components/akreditasi/DynamicFormRenderer.vue'
+import ButirDataTableForm from '@/components/akreditasi/ButirDataTableForm.vue'
 import LockStatusIndicator from '@/components/akreditasi/LockStatusIndicator.vue'
 import VersionHistoryTimeline from '@/components/akreditasi/VersionHistoryTimeline.vue'
 import EditLockIndicator from '@/components/akreditasi/EditLockIndicator.vue'
@@ -320,6 +352,7 @@ import axios from 'axios'
 const route = useRoute()
 const router = useRouter()
 const { loading, getPeriodeList, getButirList, savePengisian, updatePengisian, submitPengisian } = useAkreditasiApi()
+const { fetchMappings } = useButirData()
 
 const isEdit = computed(() => !!route.params.id)
 const localError = ref(null)
@@ -327,6 +360,7 @@ const successMessage = ref(null)
 const loadingButirs = ref(false)
 const isLocked = ref(false)
 const formIsValid = ref(true)
+const hasColumnMapping = ref(false)
 
 const form = ref({
   periode_akreditasi_id: '',
@@ -402,19 +436,30 @@ const handlePeriodeChange = () => {
   fetchButirs()
 }
 
-const handleButirChange = () => {
+const handleButirChange = async () => {
   const butir = butirList.value.find(b => b.id === form.value.butir_akreditasi_id)
   selectedButir.value = butir || null
 
-  // Debug logging
-  console.log('=== Butir Changed ===')
-  console.log('Selected Butir:', butir)
-  console.log('Has metadata:', !!butir?.metadata)
-  console.log('Metadata:', butir?.metadata)
-  console.log('Has form_config:', !!butir?.metadata?.form_config)
-  console.log('Form config:', butir?.metadata?.form_config)
-  console.log('hasDynamicForm computed:', hasDynamicForm.value)
-  console.log('===================')
+  // Check for column mapping (NEW system)
+  if (butir?.id) {
+    try {
+      const mappings = await fetchMappings(butir.id)
+      hasColumnMapping.value = mappings && mappings.length > 0
+
+      console.log('=== Butir Changed ===')
+      console.log('Selected Butir:', butir)
+      console.log('Has Column Mapping:', hasColumnMapping.value)
+      console.log('Mappings count:', mappings?.length || 0)
+      console.log('Has form_config (old):', !!butir?.metadata?.form_config)
+      console.log('hasDynamicForm computed:', hasDynamicForm.value)
+      console.log('===================')
+    } catch (err) {
+      console.error('Failed to check column mapping:', err)
+      hasColumnMapping.value = false
+    }
+  } else {
+    hasColumnMapping.value = false
+  }
 }
 
 const formatFieldName = (field) => {
@@ -483,6 +528,29 @@ const handleFormValidation = (validationResult) => {
 
 const handleCompletionChange = (completionPercentage) => {
   form.value.completion_percentage = completionPercentage
+}
+
+// NEW: Handlers for ButirDataTableForm
+const handleButirDataSaved = (data) => {
+  console.log('Butir data saved:', data)
+  successMessage.value = 'Data berhasil disimpan!'
+
+  // Update completion percentage
+  form.value.completion_percentage = 100
+  form.value.is_complete = true
+
+  // Clear after 3 seconds
+  setTimeout(() => {
+    successMessage.value = null
+  }, 3000)
+}
+
+const handleButirDataError = (error) => {
+  console.error('Butir data error:', error)
+  localError.value = error || 'Gagal menyimpan data butir'
+
+  // Scroll to top to show error
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 const handleSubmit = async () => {
