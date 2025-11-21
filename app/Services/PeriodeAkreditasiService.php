@@ -454,14 +454,15 @@ class PeriodeAkreditasiService
             throw new \Exception('Periode Akreditasi tidak ditemukan');
         }
 
-        // Load relationships
+        // Get ALL butir for this instrumen (not just the ones with pengisian)
+        $allButir = \App\Models\ButirAkreditasi::where('instrumen', $periode->instrumen)->get();
+
+        // Load pengisian with relationships
         $periode->load([
-            'butirAkreditasis',
             'pengisianButirs.butirAkreditasi',
             'pengisianButirs.picUser'
         ]);
 
-        $allButir = $periode->butirAkreditasis;
         $pengisianButirs = $periode->pengisianButirs->keyBy('butir_akreditasi_id');
 
         // 1. Missing Butir (belum ada pengisian sama sekali)
@@ -480,9 +481,10 @@ class PeriodeAkreditasiService
             ];
         })->values()->toArray();
 
-        // 2. Incomplete Butir (draft atau completion < 100%)
+        // 2. Incomplete Butir (ada pengisian tapi belum approved, exclude yang revision)
         $incompleteButir = $pengisianButirs->filter(function ($pengisian) {
-            return $pengisian->status === 'draft' || ($pengisian->completion_percentage ?? 0) < 100;
+            return in_array($pengisian->status, ['draft', 'submitted', 'review']) ||
+                   ($pengisian->status !== 'approved' && $pengisian->status !== 'revision');
         })->map(function ($pengisian) {
             $isMandatory = $pengisian->butirAkreditasi->is_mandatory ?? false;
             return [
@@ -493,7 +495,7 @@ class PeriodeAkreditasiService
                 'is_mandatory' => $isMandatory,
                 'bobot' => $pengisian->butirAkreditasi->bobot ?? 0,
                 'status' => $pengisian->status,
-                'completion' => $pengisian->completion_percentage ?? 0,
+                'completion_percentage' => $pengisian->completion_percentage ?? 0,
                 'pic_name' => $pengisian->picUser->name ?? '-',
                 'reason' => 'Pengisian belum lengkap',
                 'severity' => $isMandatory ? 'critical' : 'medium',
@@ -513,7 +515,7 @@ class PeriodeAkreditasiService
                 'is_mandatory' => $isMandatory,
                 'bobot' => $pengisian->butirAkreditasi->bobot ?? 0,
                 'status' => $pengisian->status,
-                'completion' => $pengisian->completion_percentage ?? 0,
+                'completion_percentage' => $pengisian->completion_percentage ?? 0,
                 'pic_name' => $pengisian->picUser->name ?? '-',
                 'review_notes' => $pengisian->review_notes,
                 'reason' => 'Memerlukan perbaikan',
@@ -538,7 +540,7 @@ class PeriodeAkreditasiService
                 'is_mandatory' => true,
                 'bobot' => $butir->bobot ?? 0,
                 'status' => $pengisian ? $pengisian->status : 'not_started',
-                'completion' => $pengisian ? ($pengisian->completion_percentage ?? 0) : 0,
+                'completion_percentage' => $pengisian ? ($pengisian->completion_percentage ?? 0) : 0,
                 'pic_name' => $pengisian ? ($pengisian->picUser->name ?? '-') : '-',
                 'reason' => $pengisian ? 'Butir wajib belum disetujui' : 'Butir wajib belum dikerjakan',
                 'severity' => 'critical',
@@ -584,7 +586,12 @@ class PeriodeAkreditasiService
         $totalMandatory = $allButir->where('is_mandatory', true)->count();
         $completedButir = $pengisianButirs->where('status', 'approved')->count();
         $totalGap = $totalButir - $completedButir;
-        $criticalGap = count($missingButir) + count($mandatoryNotApproved);
+
+        // Critical gap: mandatory not approved + non-mandatory missing (no double counting)
+        $missingButirIds = collect($missingButir)->pluck('id')->toArray();
+        $mandatoryNotApprovedIds = collect($mandatoryNotApproved)->pluck('id')->toArray();
+        $criticalGapIds = array_unique(array_merge($missingButirIds, $mandatoryNotApprovedIds));
+        $criticalGap = count($criticalGapIds);
 
         // 7. Recommendations
         $recommendations = [];
