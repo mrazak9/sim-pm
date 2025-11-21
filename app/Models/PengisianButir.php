@@ -16,7 +16,6 @@ class PengisianButir extends Model
         'pic_user_id',
         'konten',
         'konten_plain',
-        'form_data', // ← NEW: Structured form data
         'files',
         'status',
         'version',
@@ -30,7 +29,6 @@ class PengisianButir extends Model
 
     protected $casts = [
         'files' => 'array',
-        'form_data' => 'array', // ← NEW: JSON cast for dynamic form data
         'reviewed_at' => 'datetime',
         'completion_percentage' => 'decimal:2',
         'is_complete' => 'boolean',
@@ -148,49 +146,5 @@ class PengisianButir extends Model
     public function getCharCountAttribute()
     {
         return strlen(strip_tags($this->konten ?? ''));
-    }
-
-    /**
-     * Dynamic Form Helper Methods
-     */
-
-    /**
-     * Check if this pengisian uses dynamic form (has form_data)
-     */
-    public function hasDynamicForm(): bool
-    {
-        return !empty($this->form_data) || $this->hasFormConfig();
-    }
-
-    /**
-     * Check if butir has form configuration in metadata
-     */
-    public function hasFormConfig(): bool
-    {
-        return !empty($this->butirAkreditasi?->metadata['form_config']);
-    }
-
-    /**
-     * Get form type from butir configuration
-     */
-    public function getFormType(): ?string
-    {
-        return $this->butirAkreditasi?->metadata['form_config']['type'] ?? null;
-    }
-
-    /**
-     * Get form configuration from butir
-     */
-    public function getFormConfig(): ?array
-    {
-        return $this->butirAkreditasi?->metadata['form_config'] ?? null;
-    }
-
-    /**
-     * Check if uses legacy rich text input (konten field)
-     */
-    public function usesLegacyInput(): bool
-    {
-        return !$this->hasDynamicForm() && !empty($this->konten);
     }
 }
