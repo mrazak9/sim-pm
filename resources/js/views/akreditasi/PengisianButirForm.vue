@@ -166,7 +166,7 @@
           </div>
 
           <!-- Notes -->
-          <div>
+          <div v-if="!hasColumnMapping || isEdit">
             <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
               Catatan
             </label>
@@ -179,7 +179,7 @@
           </div>
 
           <!-- Completion Status -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div v-if="!hasColumnMapping || isEdit" class="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
                 Persentase Penyelesaian (%)
@@ -300,6 +300,19 @@
                 </p>
               </div>
             </div>
+          </div>
+
+          <!-- Metadata Save Button (for column mapping mode) -->
+          <div v-if="hasColumnMapping && isEdit" class="flex items-center gap-3">
+            <button
+              type="button"
+              @click="handleSaveMetadata"
+              :disabled="loading"
+              class="rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+            >
+              <span v-if="loading">Menyimpan...</span>
+              <span v-else>Simpan Catatan & Status</span>
+            </button>
           </div>
 
           <!-- Actions -->
@@ -582,6 +595,44 @@ const handleButirDataError = (error) => {
 
   // Scroll to top to show error
   window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+/**
+ * Save only metadata (notes, completion_percentage, is_complete, status)
+ * Used for column mapping mode where data is saved separately
+ */
+const handleSaveMetadata = async () => {
+  console.log('=== Handle Save Metadata - START ===')
+
+  try {
+    localError.value = null
+    successMessage.value = null
+
+    // Prepare metadata only
+    const data = {
+      notes: form.value.notes || null,
+      completion_percentage: form.value.completion_percentage || 0,
+      is_complete: form.value.is_complete || false,
+      status: form.value.status,
+    }
+
+    console.log('Saving metadata:', data)
+
+    if (isEdit.value) {
+      const response = await updatePengisian(route.params.id, data)
+      successMessage.value = 'Catatan dan status berhasil disimpan!'
+      console.log('✅ Metadata saved!', response)
+    }
+
+    // Show success message briefly
+    setTimeout(() => {
+      successMessage.value = null
+    }, 3000)
+
+  } catch (err) {
+    console.error('❌ Error saving metadata:', err)
+    handleError(err)
+  }
 }
 
 const handleSubmit = async () => {
