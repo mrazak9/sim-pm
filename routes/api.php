@@ -138,6 +138,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Akreditasi Module Routes
 
+    // Instrumen Akreditasi Routes
+    Route::get('instrumen-akreditasi', [InstrumenAkreditasiController::class, 'index']);
+
     // Periode Akreditasi Routes
     Route::get('periode-akreditasi/{id}/dashboard', [PeriodeAkreditasiController::class, 'dashboard']);
     Route::get('periode-akreditasi/{id}/statistics', [PeriodeAkreditasiController::class, 'statistics']);
