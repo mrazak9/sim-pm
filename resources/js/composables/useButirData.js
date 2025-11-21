@@ -139,6 +139,30 @@ export function useButirData() {
   }
 
   /**
+   * Sync data (replace all existing data with new data)
+   */
+  const syncData = async (pengisianButirId, rows) => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await axios.put(`/api/pengisian-butirs/${pengisianButirId}/data/sync`, {
+        rows
+      })
+
+      // Replace local data
+      data.value = response.data.data
+
+      return response.data.data
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Failed to sync data'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
    * Export data
    */
   const exportData = async (pengisianButirId) => {
@@ -227,6 +251,7 @@ export function useButirData() {
     updateRow,
     deleteRow,
     bulkCreateRows,
+    syncData,
     exportData,
     queryData,
 

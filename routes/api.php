@@ -181,6 +181,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/data', [ButirDataController::class, 'index']);
         Route::post('/data', [ButirDataController::class, 'store']);
         Route::post('/data/bulk', [ButirDataController::class, 'bulkStore']);
+        Route::put('/data/sync', [ButirDataController::class, 'sync']);
         Route::get('/data/export', [ButirDataController::class, 'export']);
     });
 

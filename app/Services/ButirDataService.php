@@ -77,6 +77,39 @@ class ButirDataService
     }
 
     /**
+     * Sync data (replace all existing data with new data)
+     * This will delete all existing rows and create new ones
+     *
+     * @param int $pengisianButirId
+     * @param array $rows Array of named fields
+     * @return array Created ButirData instances
+     */
+    public function syncData(int $pengisianButirId, array $rows): array
+    {
+        DB::beginTransaction();
+
+        try {
+            // Delete all existing data for this pengisian butir
+            ButirData::byPengisian($pengisianButirId)->delete();
+
+            // Create new rows
+            $created = [];
+            foreach ($rows as $index => $row) {
+                $row['row_number'] = $row['row_number'] ?? ($index + 1);
+                $created[] = $this->create($pengisianButirId, $row);
+            }
+
+            DB::commit();
+
+            return $created;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
      * Get all data for a pengisian butir
      *
      * @param int $pengisianButirId

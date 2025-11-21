@@ -125,7 +125,7 @@ const {
   error,
   fetchMappings,
   fetchData,
-  bulkCreateRows,
+  syncData,
   getFormConfigFromMappings
 } = useButirData()
 
@@ -190,7 +190,7 @@ const handleValidation = (validationResult) => {
 }
 
 /**
- * Save data to API
+ * Save data to API using sync (delete all + recreate)
  */
 const handleSave = async () => {
   if (!isValid.value) {
@@ -201,8 +201,8 @@ const handleSave = async () => {
   showSuccessMessage.value = false
 
   try {
-    // Save using bulk create (replace all data)
-    await bulkCreateRows(props.pengisianButirId, localData.value)
+    // Sync data (delete all existing + create new)
+    await syncData(props.pengisianButirId, localData.value)
 
     // Update original data
     originalData.value = JSON.parse(JSON.stringify(localData.value))

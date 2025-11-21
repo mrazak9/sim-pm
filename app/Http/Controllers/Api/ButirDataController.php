@@ -94,6 +94,26 @@ class ButirDataController extends Controller
     }
 
     /**
+     * Sync data (replace all with new data)
+     * PUT /api/pengisian-butirs/{pengisianButirId}/data/sync
+     */
+    public function sync(Request $request, int $pengisianButirId)
+    {
+        $request->validate([
+            'rows' => 'required|array',
+            'rows.*' => 'required|array',
+        ]);
+
+        $data = $this->service->syncData($pengisianButirId, $request->rows);
+
+        return response()->json([
+            'success' => true,
+            'message' => count($data) . ' data berhasil disinkronkan',
+            'data' => collect($data)->map->toNamedFields(),
+        ]);
+    }
+
+    /**
      * Export to array
      * GET /api/pengisian-butirs/{pengisianButirId}/data/export
      */
