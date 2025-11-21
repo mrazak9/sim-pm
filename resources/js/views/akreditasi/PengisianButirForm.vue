@@ -14,9 +14,20 @@
       <div v-if="selectedButir" class="mb-6 rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
         <div class="flex items-start justify-between mb-2">
           <h3 class="font-semibold text-blue-900 dark:text-blue-300">Butir Akreditasi</h3>
+          <!-- Loading Mapping State -->
+          <span
+            v-if="loadingMapping"
+            class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 flex items-center gap-2"
+          >
+            <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Mengecek mapping...
+          </span>
           <!-- Template Badge -->
           <span
-            v-if="hasColumnMapping"
+            v-else-if="hasColumnMapping"
             class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
           >
             ✨ Form Tabel (Column Mapping)
@@ -358,6 +369,7 @@ const isEdit = computed(() => !!route.params.id)
 const localError = ref(null)
 const successMessage = ref(null)
 const loadingButirs = ref(false)
+const loadingMapping = ref(false)
 const isLocked = ref(false)
 const formIsValid = ref(true)
 const hasColumnMapping = ref(false)
@@ -442,6 +454,7 @@ const handleButirChange = async () => {
 
   // Check for column mapping (NEW system)
   if (butir?.id) {
+    loadingMapping.value = true
     try {
       const mappings = await fetchMappings(butir.id)
       hasColumnMapping.value = mappings && mappings.length > 0
@@ -456,6 +469,8 @@ const handleButirChange = async () => {
     } catch (err) {
       console.error('Failed to check column mapping:', err)
       hasColumnMapping.value = false
+    } finally {
+      loadingMapping.value = false
     }
   } else {
     hasColumnMapping.value = false

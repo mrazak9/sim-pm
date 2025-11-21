@@ -47,7 +47,7 @@
     <div v-else>
       <TableFormRenderer
         :config="formConfig"
-        :modelValue="localData"
+        :modelValue="formData"
         @update:modelValue="handleDataChange"
         :readonly="readonly"
         @validate="handleValidation"
@@ -139,6 +139,11 @@ const showSuccessMessage = ref(false)
 // Form config generated from mappings
 const formConfig = computed(() => getFormConfigFromMappings.value)
 
+// Transform localData (array) to format expected by TableFormRenderer (object with rows)
+const formData = computed(() => ({
+  rows: localData.value
+}))
+
 // Check if data has changes
 const hasChanges = computed(() => {
   return JSON.stringify(localData.value) !== JSON.stringify(originalData.value)
@@ -171,9 +176,10 @@ const loadData = async () => {
 
 /**
  * Handle data change from TableFormRenderer
+ * TableFormRenderer emits { rows: [] } format
  */
 const handleDataChange = (newData) => {
-  localData.value = newData
+  localData.value = newData?.rows || []
 }
 
 /**
