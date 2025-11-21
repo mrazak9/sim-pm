@@ -286,8 +286,24 @@
             </div>
           </div>
 
+          <!-- Column Mapping Info (no main save button needed) -->
+          <div v-if="hasColumnMapping && isEdit" class="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div class="flex-1">
+                <h4 class="text-sm font-medium text-green-800 mb-1">Data Column Mapping</h4>
+                <p class="text-sm text-green-700">
+                  Data untuk butir ini disimpan secara otomatis menggunakan sistem column mapping.
+                  Gunakan tombol "Simpan" di dalam tabel data untuk menyimpan perubahan.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <!-- Actions -->
-          <div class="flex items-center gap-3">
+          <div v-if="!hasColumnMapping" class="flex items-center gap-3">
             <button
               type="submit"
               :disabled="loading"
