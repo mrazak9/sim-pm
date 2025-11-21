@@ -243,8 +243,10 @@ class PeriodeAkreditasiService
             throw new \Exception('Periode Akreditasi tidak ditemukan');
         }
 
-        // Get total butir from pengisian butir (unique butir_akreditasi_id)
-        $totalButir = $periode->pengisianButirs()->distinct('butir_akreditasi_id')->count('butir_akreditasi_id');
+        // Get total butir from butir_akreditasis based on instrumen
+        $totalButir = \App\Models\ButirAkreditasi::where('instrumen', $periode->instrumen)->count();
+
+        // Get pengisian count
         $totalPengisian = $periode->pengisianButirs()->count();
 
         // Count by status
@@ -254,14 +256,17 @@ class PeriodeAkreditasiService
             ->pluck('count', 'status')
             ->toArray();
 
-        // Calculate completion percentage
+        // Calculate completion percentage based on total butir vs filled butir
+        $filledButir = $periode->pengisianButirs()->distinct('butir_akreditasi_id')->count('butir_akreditasi_id');
         $approvedCount = $statusCounts['approved'] ?? 0;
         $completionPercentage = $totalButir > 0
-            ? round(($approvedCount / $totalButir) * 100, 2)
+            ? round(($filledButir / $totalButir) * 100, 2)
             : 0;
 
         return [
             'total_butir' => $totalButir,
+            'total_filled' => $filledButir,
+            'total_unfilled' => $totalButir - $filledButir,
             'total_pengisian' => $totalPengisian,
             'pengisian_approved' => $approvedCount,
             'pengisian_draft' => $statusCounts['draft'] ?? 0,
@@ -294,24 +299,40 @@ class PeriodeAkreditasiService
         $basicStats = $this->getStatistics($id);
 
         // Progress by kategori
-        $kategoriProgress = $periode->pengisianButirs()
+        // Get all butir for this instrumen grouped by kategori
+        $allButirByKategori = \App\Models\ButirAkreditasi::where('instrumen', $periode->instrumen)
+            ->select('kategori', DB::raw('COUNT(*) as total'))
+            ->groupBy('kategori')
+            ->get()
+            ->keyBy('kategori');
+
+        // Get pengisian count by kategori
+        $pengisianByKategori = $periode->pengisianButirs()
             ->join('butir_akreditasis', 'pengisian_butirs.butir_akreditasi_id', '=', 'butir_akreditasis.id')
             ->select(
                 'butir_akreditasis.kategori',
-                DB::raw('COUNT(*) as total'),
+                DB::raw('COUNT(DISTINCT pengisian_butirs.butir_akreditasi_id) as filled'),
                 DB::raw("SUM(CASE WHEN pengisian_butirs.status = 'approved' THEN 1 ELSE 0 END) as approved")
             )
             ->groupBy('butir_akreditasis.kategori')
             ->get()
-            ->map(function ($item) {
-                return [
-                    'kategori' => $item->kategori ?? 'Tanpa Kategori',
-                    'total' => $item->total,
-                    'approved' => $item->approved,
-                    'percentage' => $item->total > 0 ? round(($item->approved / $item->total) * 100, 2) : 0
-                ];
-            })
-            ->toArray();
+            ->keyBy('kategori');
+
+        // Merge: show all categories with their totals and progress
+        $kategoriProgress = $allButirByKategori->map(function ($butirData, $kategori) use ($pengisianByKategori) {
+            $pengisianData = $pengisianByKategori->get($kategori);
+            $total = $butirData->total;
+            $filled = $pengisianData ? $pengisianData->filled : 0;
+            $approved = $pengisianData ? $pengisianData->approved : 0;
+
+            return [
+                'kategori' => $kategori ?? 'Tanpa Kategori',
+                'total' => $total,
+                'filled' => $filled,
+                'approved' => $approved,
+                'percentage' => $total > 0 ? round(($filled / $total) * 100, 2) : 0
+            ];
+        })->values()->toArray();
 
         // Recent activities (last 10 updates)
         $recentActivities = $periode->pengisianButirs()
@@ -387,20 +408,20 @@ class PeriodeAkreditasiService
         }
 
         // Progress trend (last 30 days)
+        $totalButir = \App\Models\ButirAkreditasi::where('instrumen', $periode->instrumen)->count();
         $trendData = [];
         for ($i = 29; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i)->startOfDay();
-            $approvedCount = $periode->pengisianButirs()
-                ->where('status', 'approved')
+            $filledCount = $periode->pengisianButirs()
                 ->where('updated_at', '<=', $date->endOfDay())
-                ->count();
+                ->distinct('butir_akreditasi_id')
+                ->count('butir_akreditasi_id');
 
-            $totalButir = $periode->pengisianButirs()->distinct('butir_akreditasi_id')->count('butir_akreditasi_id');
-            $percentage = $totalButir > 0 ? round(($approvedCount / $totalButir) * 100, 2) : 0;
+            $percentage = $totalButir > 0 ? round(($filledCount / $totalButir) * 100, 2) : 0;
 
             $trendData[] = [
                 'date' => $date->format('Y-m-d'),
-                'approved_count' => $approvedCount,
+                'filled_count' => $filledCount,
                 'percentage' => $percentage,
             ];
         }
