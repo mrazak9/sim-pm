@@ -157,10 +157,36 @@ class PengisianButirRepository
      */
     public function getSummary(int $periodeId): array
     {
+        // Get periode to know the instrumen
+        $periode = \App\Models\PeriodeAkreditasi::find($periodeId);
+        if (!$periode) {
+            return [
+                'total_butir' => 0,
+                'total_filled' => 0,
+                'total_unfilled' => 0,
+                'completion_percentage' => 0,
+            ];
+        }
+
+        // Get all butir for this instrumen
+        $totalButir = \App\Models\ButirAkreditasi::where('instrumen', $periode->instrumen)
+            ->count();
+
+        // Get pengisian for this periode
         $query = $this->model->where('periode_akreditasi_id', $periodeId);
+        $totalFilled = $query->count();
+        $totalUnfilled = $totalButir - $totalFilled;
+        $completionPercentage = $totalButir > 0
+            ? round(($totalFilled / $totalButir) * 100, 2)
+            : 0;
 
         return [
-            'total' => $query->count(),
+            'total_butir' => $totalButir,
+            'total_filled' => $totalFilled,
+            'total_unfilled' => $totalUnfilled,
+            'completion_percentage' => $completionPercentage,
+            // Legacy fields for backward compatibility
+            'total' => $totalFilled,
             'complete' => $query->clone()->where('is_complete', true)->count(),
             'incomplete' => $query->clone()->where('is_complete', false)->count(),
             'by_status' => $query->clone()

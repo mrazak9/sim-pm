@@ -770,7 +770,12 @@ const handleSubmitForReview = async () => {
     successMessage.value = 'Pengisian berhasil diajukan untuk review!'
 
     setTimeout(() => {
-      router.push('/akreditasi/pengisian')
+      const periodeId = route.query.periode_id || form.value.periode_akreditasi_id
+      if (periodeId) {
+        router.push(`/akreditasi/periode/${periodeId}/pengisian`)
+      } else {
+        router.push('/akreditasi/pengisian')
+      }
     }, 1500)
   } catch (err) {
     console.error('Error submitting pengisian:', err)
@@ -817,9 +822,12 @@ const handleContactAdmin = () => {
 
 // Cancel Handler - Navigate back to appropriate page
 const handleCancel = () => {
-  // If came from periode detail (has periode_id in query), go back to list
-  if (route.query.periode_id) {
-    router.push(`/akreditasi/periode/${route.query.periode_id}/pengisian`)
+  // Priority 1: periode_id from query params (for create mode)
+  // Priority 2: periode_id from form data (for edit mode)
+  const periodeId = route.query.periode_id || form.value.periode_akreditasi_id
+
+  if (periodeId) {
+    router.push(`/akreditasi/periode/${periodeId}/pengisian`)
   } else {
     router.push('/akreditasi/pengisian')
   }
