@@ -226,7 +226,7 @@ class PengisianButirController extends Controller
     public function approve(Request $request, string $id): JsonResponse
     {
         try {
-            $pengisian = $this->pengisianButirService->approvePengisianButir(
+            $pengisian = $this->pengisianButirService->approve(
                 $id,
                 $request->get('review_notes')
             );
@@ -260,7 +260,7 @@ class PengisianButirController extends Controller
                 ], 400);
             }
 
-            $pengisian = $this->pengisianButirService->requestRevisionPengisianButir($id, $reviewNotes);
+            $pengisian = $this->pengisianButirService->reject($id, $reviewNotes);
 
             return response()->json([
                 'success' => true,
