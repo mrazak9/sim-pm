@@ -340,6 +340,27 @@
               <span v-if="loading">Mengajukan...</span>
               <span v-else>Ajukan untuk Review</span>
             </button>
+            <!-- Reviewer Actions (Approve/Revision) -->
+            <button
+              v-if="isEdit && (form.status === 'submitted' || form.status === 'review')"
+              type="button"
+              @click="handleApprove"
+              :disabled="loading"
+              class="rounded-lg bg-green-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:opacity-50"
+            >
+              <span v-if="loading">Menyetujui...</span>
+              <span v-else>✓ Approve</span>
+            </button>
+            <button
+              v-if="isEdit && (form.status === 'submitted' || form.status === 'review')"
+              type="button"
+              @click="handleRequestRevision"
+              :disabled="loading"
+              class="rounded-lg bg-orange-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-300 disabled:opacity-50"
+            >
+              <span v-if="loading">Memproses...</span>
+              <span v-else">✎ Minta Revisi</span>
+            </button>
             <button
               type="button"
               @click="handleCancel"
@@ -369,6 +390,27 @@
             >
               <span v-if="loading">Mengajukan...</span>
               <span v-else>Ajukan untuk Review</span>
+            </button>
+            <!-- Reviewer Actions (Approve/Revision) -->
+            <button
+              v-if="isEdit && (form.status === 'submitted' || form.status === 'review')"
+              type="button"
+              @click="handleApprove"
+              :disabled="loading"
+              class="rounded-lg bg-green-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:opacity-50"
+            >
+              <span v-if="loading">Menyetujui...</span>
+              <span v-else>✓ Approve</span>
+            </button>
+            <button
+              v-if="isEdit && (form.status === 'submitted' || form.status === 'review')"
+              type="button"
+              @click="handleRequestRevision"
+              :disabled="loading"
+              class="rounded-lg bg-orange-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-300 disabled:opacity-50"
+            >
+              <span v-if="loading">Memproses...</span>
+              <span v-else>✎ Minta Revisi</span>
             </button>
             <button
               type="button"
@@ -425,7 +467,7 @@ import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
-const { loading, getPeriodeList, getButirList, savePengisian, updatePengisian, submitPengisian } = useAkreditasiApi()
+const { loading, getPeriodeList, getButirList, savePengisian, updatePengisian, submitPengisian, approvePengisian, revisionPengisian } = useAkreditasiApi()
 const { fetchMappings } = useButirData()
 
 const isEdit = computed(() => !!route.params.id)
@@ -779,6 +821,68 @@ const handleSubmitForReview = async () => {
     }, 1500)
   } catch (err) {
     console.error('Error submitting pengisian:', err)
+    handleError(err)
+  }
+}
+
+const handleApprove = async () => {
+  if (!confirm('Apakah Anda yakin ingin menyetujui pengisian butir ini?')) {
+    return
+  }
+
+  localError.value = null
+  successMessage.value = null
+
+  try {
+    const response = await approvePengisian(route.params.id)
+    successMessage.value = 'Pengisian butir berhasil disetujui!'
+
+    // Update form status
+    form.value.status = 'approved'
+
+    setTimeout(() => {
+      const periodeId = route.query.periode_id || form.value.periode_akreditasi_id
+      if (periodeId) {
+        router.push(`/akreditasi/periode/${periodeId}/pengisian`)
+      } else {
+        router.push('/akreditasi/pengisian')
+      }
+    }, 1500)
+  } catch (err) {
+    console.error('Error approving pengisian:', err)
+    handleError(err)
+  }
+}
+
+const handleRequestRevision = async () => {
+  const reviewNotes = prompt('Masukkan catatan revisi untuk PIC:')
+
+  if (!reviewNotes || reviewNotes.trim() === '') {
+    alert('Catatan revisi wajib diisi')
+    return
+  }
+
+  localError.value = null
+  successMessage.value = null
+
+  try {
+    const response = await revisionPengisian(route.params.id, reviewNotes)
+    successMessage.value = 'Permintaan revisi berhasil dikirim!'
+
+    // Update form status and notes
+    form.value.status = 'revision'
+    form.value.review_notes = reviewNotes
+
+    setTimeout(() => {
+      const periodeId = route.query.periode_id || form.value.periode_akreditasi_id
+      if (periodeId) {
+        router.push(`/akreditasi/periode/${periodeId}/pengisian`)
+      } else {
+        router.push('/akreditasi/pengisian')
+      }
+    }, 1500)
+  } catch (err) {
+    console.error('Error requesting revision:', err)
     handleError(err)
   }
 }
