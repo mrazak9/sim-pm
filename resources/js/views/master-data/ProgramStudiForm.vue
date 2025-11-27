@@ -107,16 +107,16 @@
               <select
                 v-model="form.akreditasi"
                 class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                :class="{ 'border-red-600': errors.akreditasi }"
               >
                 <option value="">Pilih Akreditasi</option>
                 <option value="Unggul">Unggul</option>
-                <option value="Baik Sekali">Baik Sekali</option>
-                <option value="Baik">Baik</option>
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-                <option value="Belum Terakreditasi">Belum Terakreditasi</option>
+                <option value="A">A (Sangat Baik)</option>
+                <option value="B">B (Baik)</option>
+                <option value="C">C (Cukup)</option>
+                <option value="TT">Belum Terakreditasi</option>
               </select>
+              <p v-if="errors.akreditasi" class="mt-1 text-sm text-red-600">{{ errors.akreditasi[0] }}</p>
             </div>
             <div>
               <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
