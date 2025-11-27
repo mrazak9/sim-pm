@@ -21,7 +21,8 @@ class UpdateUnitKerjaRequest extends FormRequest
      */
     public function rules(): array
     {
-        $id = $this->route('id');
+        // Get ID from route parameter (apiResource uses singular form with underscore)
+        $id = $this->route('unit_kerja');
 
         return [
             'kode_unit' => 'required|string|max:20|unique:unit_kerjas,kode_unit,' . $id,

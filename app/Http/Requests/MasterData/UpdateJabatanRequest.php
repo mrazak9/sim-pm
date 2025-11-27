@@ -21,7 +21,8 @@ class UpdateJabatanRequest extends FormRequest
      */
     public function rules(): array
     {
-        $id = $this->route('id');
+        // Get ID from route parameter (apiResource uses singular form)
+        $id = $this->route('jabatan');
 
         return [
             'kode_jabatan' => 'required|string|max:20|unique:jabatans,kode_jabatan,' . $id,
