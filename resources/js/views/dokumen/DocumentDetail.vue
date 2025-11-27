@@ -28,16 +28,15 @@
         </div>
 
         <div class="flex items-center space-x-2">
-          <a
-            :href="document.download_url"
-            target="_blank"
+          <button
+            @click="handleDownload"
             class="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
           >
             <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
             Download
-          </a>
+          </button>
           <button
             v-if="canEdit"
             @click="showEditModal = true"
@@ -48,42 +47,6 @@
             </svg>
             Edit
           </button>
-        </div>
-      </div>
-
-      <!-- Document Preview -->
-      <div v-if="canPreview" class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
-        <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Preview Dokumen</h2>
-
-        <!-- PDF Preview -->
-        <div v-if="document.file_type === 'pdf'" class="w-full" style="height: 600px;">
-          <iframe
-            :src="document.view_url"
-            class="h-full w-full rounded border border-gray-300 dark:border-gray-600"
-            frameborder="0"
-          ></iframe>
-        </div>
-
-        <!-- Image Preview -->
-        <div v-else-if="isImageType" class="flex justify-center">
-          <img
-            :src="document.view_url"
-            :alt="document.title"
-            class="max-h-96 rounded border border-gray-300 dark:border-gray-600"
-          />
-        </div>
-
-        <!-- Other file types - show download option -->
-        <div v-else class="rounded-lg border-2 border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
-          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Preview tidak tersedia untuk tipe file ini
-          </p>
-          <p class="mt-1 text-xs text-gray-400">
-            Silakan download untuk melihat file
-          </p>
         </div>
       </div>
 
@@ -137,7 +100,12 @@
               <div class="grid grid-cols-2 gap-4">
                 <div>
                   <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Nama File</p>
-                  <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ document.file_name }}</p>
+                  <button
+                    @click="showPreviewModal = true"
+                    class="mt-1 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
+                  >
+                    {{ document.file_name }}
+                  </button>
                 </div>
                 <div>
                   <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Ukuran File</p>
@@ -338,6 +306,90 @@
       @close="showShareModal = false"
       @shared="handleDocumentShared"
     />
+
+    <!-- Preview Modal -->
+    <div
+      v-if="showPreviewModal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4"
+      @click.self="showPreviewModal = false"
+    >
+      <div class="relative max-h-[90vh] w-full max-w-6xl overflow-hidden rounded-lg bg-white dark:bg-gray-800">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ document.file_name }}</h3>
+          <button
+            @click="showPreviewModal = false"
+            class="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-white"
+          >
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="overflow-y-auto p-6" style="max-height: calc(90vh - 140px)">
+          <!-- PDF Preview -->
+          <div v-if="document.file_type === 'pdf'" class="w-full" style="height: 70vh;">
+            <iframe
+              :src="document.view_url"
+              class="h-full w-full rounded border border-gray-300 dark:border-gray-600"
+              frameborder="0"
+            ></iframe>
+          </div>
+
+          <!-- Image Preview -->
+          <div v-else-if="isImageType" class="flex justify-center">
+            <img
+              :src="document.view_url"
+              :alt="document.title"
+              class="max-h-[70vh] rounded"
+            />
+          </div>
+
+          <!-- Other file types - show download option -->
+          <div v-else class="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center dark:border-gray-600">
+            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            <p class="mt-4 text-lg font-medium text-gray-500 dark:text-gray-400">
+              Preview tidak tersedia untuk tipe file ini
+            </p>
+            <p class="mt-2 text-sm text-gray-400">
+              Tipe file: {{ document.file_type.toUpperCase() }}
+            </p>
+            <button
+              @click="handleDownload"
+              class="mt-6 inline-flex items-center rounded-lg bg-green-600 px-6 py-3 text-sm font-medium text-white hover:bg-green-700"
+            >
+              <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download File
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex justify-end space-x-2 border-t border-gray-200 p-4 dark:border-gray-700">
+          <button
+            @click="handleDownload"
+            class="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+          >
+            <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download
+          </button>
+          <button
+            @click="showPreviewModal = false"
+            class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            Tutup
+          </button>
+        </div>
+      </div>
+    </div>
   </MainLayout>
 </template>
 
@@ -359,15 +411,10 @@ const updatingStatus = ref(false);
 const showEditModal = ref(false);
 const showUploadVersionModal = ref(false);
 const showShareModal = ref(false);
+const showPreviewModal = ref(false);
 
 const canEdit = computed(() => {
   return document.value?.user_permission === 'edit';
-});
-
-const canPreview = computed(() => {
-  if (!document.value) return false;
-  const previewableTypes = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
-  return previewableTypes.includes(document.value.file_type?.toLowerCase());
 });
 
 const isImageType = computed(() => {
@@ -452,6 +499,10 @@ const revokeShare = async (shareId) => {
   } catch (error) {
     alert('Gagal mencabut akses: ' + (error.response?.data?.message || error.message));
   }
+};
+
+const handleDownload = () => {
+  window.open(document.value.download_url, '_blank');
 };
 
 const confirmDelete = async () => {
