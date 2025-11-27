@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DocumentController extends Controller
 {
@@ -488,7 +489,7 @@ class DocumentController extends Controller
     /**
      * View/preview document file
      */
-    public function view(int $id): StreamedResponse|JsonResponse
+    public function view(int $id): BinaryFileResponse|JsonResponse
     {
         try {
             $document = $this->documentService->findById($id);
