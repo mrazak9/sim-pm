@@ -7,10 +7,8 @@
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
             {{ isEditMode ? 'Edit Jadwal Audit' : 'Tambah Jadwal Audit' }}
           </h3>
-          <button
-            @click="$router.push('/audit/schedules')"
-            class="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-          >
+          <button @click="$router.push('/audit/schedules')"
+            class="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -26,11 +24,8 @@
             <label class="block text-sm font-medium text-gray-900 dark:text-white">
               Rencana Audit <span class="text-red-600">*</span>
             </label>
-            <select
-              v-model="form.audit_plan_id"
-              required
-              class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            >
+            <select v-model="form.audit_plan_id" required
+              class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
               <option value="">Pilih Rencana Audit</option>
               <option v-for="plan in auditPlans" :key="plan.id" :value="plan.id">
                 {{ plan.title }}
@@ -43,14 +38,11 @@
             <label class="block text-sm font-medium text-gray-900 dark:text-white">
               Unit Kerja <span class="text-red-600">*</span>
             </label>
-            <select
-              v-model="form.unit_kerja_id"
-              required
-              class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            >
+            <select v-model="form.unit_kerja_id" required
+              class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
               <option value="">Pilih Unit Kerja</option>
               <option v-for="unit in unitKerjas" :key="unit.id" :value="unit.id">
-                {{ unit.nama }}
+                {{ unit.nama_unit || unit.nama }}
               </option>
             </select>
           </div>
@@ -60,13 +52,11 @@
             <label class="block text-sm font-medium text-gray-900 dark:text-white">
               Auditor Lead <span class="text-red-600">*</span>
             </label>
-            <input
-              v-model="form.auditor_lead_id"
-              type="text"
+            <input v-model="form.auditor_lead_id" type="text"
               placeholder="ID Auditor (TODO: gunakan user select component)"
-              class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            />
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">TODO: Implementasikan user select component yang proper</p>
+              class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">TODO: Implementasikan user select component yang
+              proper</p>
           </div>
 
           <!-- Scheduled Date -->
@@ -74,12 +64,8 @@
             <label class="block text-sm font-medium text-gray-900 dark:text-white">
               Tanggal & Waktu Jadwal <span class="text-red-600">*</span>
             </label>
-            <input
-              v-model="form.scheduled_date"
-              type="datetime-local"
-              required
-              class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            />
+            <input v-model="form.scheduled_date" type="datetime-local" required
+              class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
           </div>
 
           <!-- Estimated Duration -->
@@ -87,15 +73,10 @@
             <label class="block text-sm font-medium text-gray-900 dark:text-white">
               Durasi Perkiraan (menit) <span class="text-red-600">*</span>
             </label>
-            <input
-              v-model.number="form.estimated_duration"
-              type="number"
-              required
-              min="30"
-              :value="form.estimated_duration"
+            <input v-model.number="form.estimated_duration" type="number" required min="30"
               class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              placeholder="120"
-            />
+              placeholder="120" />
+
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Default: 120 menit</p>
           </div>
 
@@ -104,39 +85,33 @@
             <label class="block text-sm font-medium text-gray-900 dark:text-white">
               Catatan
             </label>
-            <textarea
-              v-model="form.notes"
-              rows="4"
+            <textarea v-model="form.notes" rows="4"
               class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              placeholder="Masukkan catatan jadwal audit"
-            ></textarea>
+              placeholder="Masukkan catatan jadwal audit"></textarea>
           </div>
 
           <!-- Auditors (TODO) -->
           <div class="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
             <p class="text-sm text-yellow-800 dark:text-yellow-300">
-              <span class="font-medium">TODO:</span> Tambahkan fitur untuk memilih auditor tambahan (array dari user IDs)
+              <span class="font-medium">TODO:</span> Tambahkan fitur untuk memilih auditor tambahan (array dari user
+              IDs)
             </p>
           </div>
         </div>
 
         <!-- Actions -->
         <div class="mt-6 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            @click="$router.push('/audit/schedules')"
-            class="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-          >
+          <button type="button" @click="$router.push('/audit/schedules')"
+            class="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700">
             Batal
           </button>
-          <button
-            type="submit"
-            :disabled="loading"
-            class="inline-flex items-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          <button type="submit" :disabled="loading"
+            class="inline-flex items-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-50">
             <svg v-if="loading" class="mr-2 h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+              </path>
             </svg>
             {{ isEditMode ? 'Simpan Perubahan' : 'Buat Jadwal Audit' }}
           </button>
@@ -176,8 +151,10 @@ const form = ref({
 const fetchAuditPlans = async () => {
   try {
     const response = await getActiveAuditPlans();
+    console.log('Audit Plans Response:', response);
     if (response.success) {
       auditPlans.value = response.data;
+      console.log('Audit Plans:', auditPlans.value);
     }
   } catch (error) {
     console.error('Failed to fetch audit plans:', error);
@@ -187,8 +164,10 @@ const fetchAuditPlans = async () => {
 const fetchUnitKerjas = async () => {
   try {
     const response = await getUnitKerjas({ per_page: 100 });
+    console.log('Unit Kerjas Response:', response);
     if (response.success) {
       unitKerjas.value = response.data;
+      console.log('Unit Kerjas:', unitKerjas.value);
     }
   } catch (error) {
     console.error('Failed to fetch unit kerjas:', error);
