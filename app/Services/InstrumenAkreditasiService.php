@@ -3,46 +3,31 @@
 namespace App\Services;
 
 use App\Models\InstrumenAkreditasi;
+use App\Repositories\InstrumenAkreditasiRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class InstrumenAkreditasiService
 {
+    protected InstrumenAkreditasiRepository $repository;
+
+    public function __construct(InstrumenAkreditasiRepository $repository)
+    {
+        $this->repository = $repository;
+    }
+
     /**
      * Get all instrumen with filters and pagination
      */
-    public function getAllInstrumen(array $filters = [], int $perPage = 15): LengthAwarePaginator
-    {
-        $query = InstrumenAkreditasi::query();
-
-        // Filter by jenis
-        if (!empty($filters['jenis'])) {
-            $query->byJenis($filters['jenis']);
-        }
-
-        // Filter by lembaga
-        if (!empty($filters['lembaga'])) {
-            $query->byLembaga($filters['lembaga']);
-        }
-
-        // Filter by active status
-        if (isset($filters['is_active'])) {
-            $query->where('is_active', $filters['is_active']);
-        }
-
-        // Search
-        if (!empty($filters['search'])) {
-            $search = $filters['search'];
-            $query->where(function ($q) use ($search) {
-                $q->where('kode', 'ilike', "%{$search}%")
-                  ->orWhere('nama', 'ilike', "%{$search}%")
-                  ->orWhere('deskripsi', 'ilike', "%{$search}%");
-            });
-        }
-
-        return $query->orderBy('tahun_berlaku', 'desc')
-                     ->orderBy('kode', 'asc')
-                     ->paginate($perPage);
+    public function getAllInstrumen(
+        array $filters = [],
+        int $perPage = 15,
+        string $sortBy = 'tahun_berlaku',
+        string $sortOrder = 'desc'
+    ): LengthAwarePaginator {
+        return $this->repository->paginate($filters, $perPage, $sortBy, $sortOrder);
     }
 
     /**
@@ -50,10 +35,23 @@ class InstrumenAkreditasiService
      */
     public function getActiveInstrumen(): Collection
     {
-        return InstrumenAkreditasi::active()
-            ->orderBy('tahun_berlaku', 'desc')
-            ->orderBy('kode', 'asc')
-            ->get();
+        return $this->repository->getActive();
+    }
+
+    /**
+     * Get instrumen by jenis
+     */
+    public function getByJenis(string $jenis): Collection
+    {
+        return $this->repository->getByJenis($jenis);
+    }
+
+    /**
+     * Get instrumen by lembaga
+     */
+    public function getByLembaga(string $lembaga): Collection
+    {
+        return $this->repository->getByLembaga($lembaga);
     }
 
     /**
@@ -61,7 +59,7 @@ class InstrumenAkreditasiService
      */
     public function getInstrumenById(int $id): ?InstrumenAkreditasi
     {
-        return InstrumenAkreditasi::find($id);
+        return $this->repository->findById($id);
     }
 
     /**
@@ -69,7 +67,34 @@ class InstrumenAkreditasiService
      */
     public function createInstrumen(array $data): InstrumenAkreditasi
     {
-        return InstrumenAkreditasi::create($data);
+        DB::beginTransaction();
+        try {
+            // Validate unique kode
+            if ($this->repository->kodeExists($data['kode'])) {
+                throw new \Exception('Kode instrumen sudah digunakan');
+            }
+
+            $instrumen = $this->repository->create($data);
+
+            DB::commit();
+
+            Log::info('Instrumen akreditasi created', [
+                'instrumen_id' => $instrumen->id,
+                'kode' => $instrumen->kode,
+                'nama' => $instrumen->nama,
+            ]);
+
+            return $instrumen;
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Failed to create instrumen akreditasi', [
+                'error' => $e->getMessage(),
+                'data' => $data,
+            ]);
+
+            throw $e;
+        }
     }
 
     /**
@@ -77,14 +102,35 @@ class InstrumenAkreditasiService
      */
     public function updateInstrumen(int $id, array $data): InstrumenAkreditasi
     {
-        $instrumen = $this->getInstrumenById($id);
+        DB::beginTransaction();
+        try {
+            // Validate unique kode (excluding current record)
+            if (isset($data['kode']) && $this->repository->kodeExists($data['kode'], $id)) {
+                throw new \Exception('Kode instrumen sudah digunakan');
+            }
 
-        if (!$instrumen) {
-            throw new \Exception('Instrumen not found');
+            $instrumen = $this->repository->update($id, $data);
+
+            DB::commit();
+
+            Log::info('Instrumen akreditasi updated', [
+                'instrumen_id' => $instrumen->id,
+                'kode' => $instrumen->kode,
+                'changes' => $data,
+            ]);
+
+            return $instrumen;
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Failed to update instrumen akreditasi', [
+                'instrumen_id' => $id,
+                'error' => $e->getMessage(),
+                'data' => $data,
+            ]);
+
+            throw $e;
         }
-
-        $instrumen->update($data);
-        return $instrumen->fresh();
     }
 
     /**
@@ -92,13 +138,39 @@ class InstrumenAkreditasiService
      */
     public function deleteInstrumen(int $id): bool
     {
-        $instrumen = $this->getInstrumenById($id);
+        DB::beginTransaction();
+        try {
+            $instrumen = $this->repository->findById($id);
 
-        if (!$instrumen) {
-            throw new \Exception('Instrumen not found');
+            if (!$instrumen) {
+                throw new \Exception('Instrumen akreditasi tidak ditemukan');
+            }
+
+            // Check if instrumen is used in any periode akreditasi
+            if ($instrumen->periodeAkreditasi()->exists()) {
+                throw new \Exception('Instrumen tidak dapat dihapus karena sudah digunakan di periode akreditasi');
+            }
+
+            $deleted = $this->repository->delete($id);
+
+            DB::commit();
+
+            Log::info('Instrumen akreditasi deleted', [
+                'instrumen_id' => $id,
+                'kode' => $instrumen->kode,
+            ]);
+
+            return $deleted;
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Failed to delete instrumen akreditasi', [
+                'instrumen_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
         }
-
-        return $instrumen->delete();
     }
 
     /**
@@ -106,17 +178,28 @@ class InstrumenAkreditasiService
      */
     public function toggleActive(int $id): InstrumenAkreditasi
     {
-        $instrumen = $this->getInstrumenById($id);
+        DB::beginTransaction();
+        try {
+            $instrumen = $this->repository->toggleActive($id);
 
-        if (!$instrumen) {
-            throw new \Exception('Instrumen not found');
+            DB::commit();
+
+            Log::info('Instrumen akreditasi active status toggled', [
+                'instrumen_id' => $instrumen->id,
+                'is_active' => $instrumen->is_active,
+            ]);
+
+            return $instrumen;
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Failed to toggle instrumen akreditasi active status', [
+                'instrumen_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
         }
-
-        $instrumen->update([
-            'is_active' => !$instrumen->is_active
-        ]);
-
-        return $instrumen->fresh();
     }
 
     /**
@@ -124,19 +207,14 @@ class InstrumenAkreditasiService
      */
     public function getStatistics(): array
     {
-        return [
-            'total' => InstrumenAkreditasi::count(),
-            'active' => InstrumenAkreditasi::where('is_active', true)->count(),
-            'inactive' => InstrumenAkreditasi::where('is_active', false)->count(),
-            'by_jenis' => [
-                'program_studi' => InstrumenAkreditasi::where('jenis', 'program_studi')->count(),
-                'institusi' => InstrumenAkreditasi::where('jenis', 'institusi')->count(),
-            ],
-            'by_lembaga' => [
-                'BAN-PT' => InstrumenAkreditasi::where('lembaga', 'BAN-PT')->count(),
-                'LAM' => InstrumenAkreditasi::where('lembaga', 'LAM')->count(),
-                'Internasional' => InstrumenAkreditasi::where('lembaga', 'Internasional')->count(),
-            ],
-        ];
+        try {
+            return $this->repository->getStatistics();
+        } catch (\Exception $e) {
+            Log::error('Failed to get instrumen akreditasi statistics', [
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
     }
 }
