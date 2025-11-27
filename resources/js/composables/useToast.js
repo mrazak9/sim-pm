@@ -1,6 +1,10 @@
-import { ref } from 'vue';
+import { reactive } from 'vue';
 
-const toasts = ref([]);
+// Shared state across all instances
+const state = reactive({
+  toasts: []
+});
+
 let toastId = 0;
 
 export function useToast() {
@@ -13,7 +17,7 @@ export function useToast() {
       visible: true
     };
 
-    toasts.value.push(toast);
+    state.toasts.push(toast);
 
     if (duration > 0) {
       setTimeout(() => {
@@ -25,9 +29,9 @@ export function useToast() {
   };
 
   const remove = (id) => {
-    const index = toasts.value.findIndex(t => t.id === id);
+    const index = state.toasts.findIndex(t => t.id === id);
     if (index > -1) {
-      toasts.value.splice(index, 1);
+      state.toasts.splice(index, 1);
     }
   };
 
@@ -48,7 +52,7 @@ export function useToast() {
   };
 
   return {
-    toasts,
+    toasts: state.toasts,
     show,
     remove,
     success,
