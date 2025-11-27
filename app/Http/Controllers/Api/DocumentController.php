@@ -464,7 +464,7 @@ class DocumentController extends Controller
             }
 
             // Check if file exists
-            if (!Storage::exists($document->file_path)) {
+            if (!Storage::disk('public')->exists($document->file_path)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'File tidak ditemukan di storage',
@@ -475,7 +475,7 @@ class DocumentController extends Controller
             $this->documentService->logActivity($document, 'downloaded');
 
             // Return file download
-            return Storage::download($document->file_path, $document->file_name);
+            return Storage::disk('public')->download($document->file_path, $document->file_name);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -510,7 +510,7 @@ class DocumentController extends Controller
             }
 
             // Check if file exists
-            if (!Storage::exists($document->file_path)) {
+            if (!Storage::disk('public')->exists($document->file_path)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'File tidak ditemukan di storage',
@@ -521,7 +521,7 @@ class DocumentController extends Controller
             $this->documentService->logActivity($document, 'viewed');
 
             // Return file for inline viewing
-            return response()->file(Storage::path($document->file_path), [
+            return response()->file(Storage::disk('public')->path($document->file_path), [
                 'Content-Type' => $document->mime_type,
                 'Content-Disposition' => 'inline; filename="' . $document->file_name . '"',
             ]);
