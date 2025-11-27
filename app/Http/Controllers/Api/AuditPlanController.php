@@ -194,10 +194,13 @@ class AuditPlanController extends Controller
     /**
      * Get active audit plans.
      */
-    public function active(): AnonymousResourceCollection
+    public function active(): JsonResponse
     {
         $auditPlans = $this->service->getActive();
-        return AuditPlanResource::collection($auditPlans);
+        return response()->json([
+            'success' => true,
+            'data' => AuditPlanResource::collection($auditPlans),
+        ]);
     }
 
     /**
