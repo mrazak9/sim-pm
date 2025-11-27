@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\UploadedFile;
 use Carbon\Carbon;
 
@@ -560,5 +561,20 @@ class DocumentService
             ->with(['category', 'approver'])
             ->latest()
             ->paginate($perPage);
+    }
+
+    /**
+     * Log document activity
+     */
+    public function logActivity(Document $document, string $action): void
+    {
+        // Log document activity
+        // You can implement this later with DocumentActivity model or logs
+        Log::info("Document {$action}", [
+            'document_id' => $document->id,
+            'document_title' => $document->title,
+            'user_id' => Auth::id(),
+            'action' => $action,
+        ]);
     }
 }
