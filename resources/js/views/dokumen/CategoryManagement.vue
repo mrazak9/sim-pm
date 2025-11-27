@@ -302,6 +302,7 @@ const cancelEdit = (category) => {
 const saveCategory = async (category) => {
   // Validation
   if (!category.name || !category.code) {
+    console.log('Calling error toast...');
     error('Nama dan Kode harus diisi');
     return;
   }
@@ -327,11 +328,14 @@ const saveCategory = async (category) => {
     }
 
     if (response.data.success) {
-      success(category.isNew ? 'Kategori berhasil ditambahkan' : 'Kategori berhasil diupdate');
+      const message = category.isNew ? 'Kategori berhasil ditambahkan' : 'Kategori berhasil diupdate';
+      console.log('Calling success toast:', message);
+      success(message);
       await fetchCategories();
     }
   } catch (err) {
     console.error('Save error:', err);
+    console.log('Calling error toast...');
     error('Gagal menyimpan kategori: ' + (err.response?.data?.message || err.message));
   } finally {
     saving.value = false;

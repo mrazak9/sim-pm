@@ -92,9 +92,18 @@
 </template>
 
 <script setup>
+import { computed, watch } from 'vue';
 import { useToast } from '@/composables/useToast';
 
-const { toasts, remove } = useToast();
+const toast = useToast();
+
+// Use computed to ensure reactivity
+const toasts = computed(() => toast.toasts);
+
+// Debug: watch toasts changes
+watch(toasts, (newVal) => {
+  console.log('Toasts updated:', newVal);
+}, { deep: true });
 
 const getToastClass = (type) => {
   const classes = {
@@ -104,6 +113,10 @@ const getToastClass = (type) => {
     info: 'bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-900 dark:text-blue-100 dark:border-blue-700',
   };
   return classes[type] || classes.info;
+};
+
+const remove = (id) => {
+  toast.remove(id);
 };
 </script>
 
