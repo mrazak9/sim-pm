@@ -101,7 +101,7 @@
                 <div>
                   <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Nama File</p>
                   <button
-                    @click="showPreviewModal = true"
+                    @click="openPreview"
                     class="mt-1 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
                   >
                     {{ document.file_name }}
@@ -329,19 +329,27 @@
 
         <!-- Modal Body -->
         <div class="overflow-y-auto p-6" style="max-height: calc(90vh - 140px)">
+          <!-- Loading -->
+          <div v-if="loadingPreview" class="flex items-center justify-center py-12">
+            <svg class="h-12 w-12 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+
           <!-- PDF Preview -->
-          <div v-if="document.file_type === 'pdf'" class="w-full" style="height: 70vh;">
+          <div v-else-if="document.file_type === 'pdf' && previewBlobUrl" class="w-full" style="height: 70vh;">
             <iframe
-              :src="document.view_url"
+              :src="previewBlobUrl"
               class="h-full w-full rounded border border-gray-300 dark:border-gray-600"
               frameborder="0"
             ></iframe>
           </div>
 
           <!-- Image Preview -->
-          <div v-else-if="isImageType" class="flex justify-center">
+          <div v-else-if="isImageType && previewBlobUrl" class="flex justify-center">
             <img
-              :src="document.view_url"
+              :src="previewBlobUrl"
               :alt="document.title"
               class="max-h-[70vh] rounded"
             />
@@ -394,7 +402,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MainLayout from '@/layouts/MainLayout.vue';
 import DocumentEditModal from '@/components/dokumen/DocumentEditModal.vue';
@@ -412,6 +420,8 @@ const showEditModal = ref(false);
 const showUploadVersionModal = ref(false);
 const showShareModal = ref(false);
 const showPreviewModal = ref(false);
+const loadingPreview = ref(false);
+const previewBlobUrl = ref(null);
 
 const canEdit = computed(() => {
   return document.value?.user_permission === 'edit';
@@ -501,8 +511,48 @@ const revokeShare = async (shareId) => {
   }
 };
 
-const handleDownload = () => {
-  window.open(document.value.download_url, '_blank');
+const openPreview = async () => {
+  showPreviewModal.value = true;
+  loadingPreview.value = true;
+
+  try {
+    const response = await axios.get(`/api/documents/${document.value.id}/view`, {
+      responseType: 'blob'
+    });
+
+    // Create blob URL for preview
+    if (previewBlobUrl.value) {
+      window.URL.revokeObjectURL(previewBlobUrl.value);
+    }
+    previewBlobUrl.value = window.URL.createObjectURL(new Blob([response.data], { type: document.value.mime_type }));
+  } catch (error) {
+    console.error('Preview error:', error);
+    alert('Gagal memuat preview: ' + (error.response?.data?.message || error.message));
+    showPreviewModal.value = false;
+  } finally {
+    loadingPreview.value = false;
+  }
+};
+
+const handleDownload = async () => {
+  try {
+    const response = await axios.get(`/api/documents/${document.value.id}/download`, {
+      responseType: 'blob'
+    });
+
+    // Create blob link to download
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', document.value.file_name);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Download error:', error);
+    alert('Gagal mengunduh dokumen: ' + (error.response?.data?.message || error.message));
+  }
 };
 
 const confirmDelete = async () => {
@@ -583,7 +633,22 @@ const formatDate = (dateString) => {
   });
 };
 
+// Cleanup blob URL when modal closes
+watch(showPreviewModal, (newValue) => {
+  if (!newValue && previewBlobUrl.value) {
+    window.URL.revokeObjectURL(previewBlobUrl.value);
+    previewBlobUrl.value = null;
+  }
+});
+
 onMounted(() => {
   fetchDocument();
+});
+
+// Cleanup on component unmount
+onBeforeUnmount(() => {
+  if (previewBlobUrl.value) {
+    window.URL.revokeObjectURL(previewBlobUrl.value);
+  }
 });
 </script>
