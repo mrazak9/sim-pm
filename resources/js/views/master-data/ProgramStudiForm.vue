@@ -111,10 +111,9 @@
               >
                 <option value="">Pilih Akreditasi</option>
                 <option value="Unggul">Unggul</option>
-                <option value="A">A (Sangat Baik)</option>
-                <option value="B">B (Baik)</option>
-                <option value="C">C (Cukup)</option>
-                <option value="TT">Belum Terakreditasi</option>
+                <option value="Baik Sekali">Baik Sekali</option>
+                <option value="Baik">Baik</option>
+                <option value="Tidak Terakreditasi">Tidak Terakreditasi</option>
               </select>
               <p v-if="errors.akreditasi" class="mt-1 text-sm text-red-600">{{ errors.akreditasi[0] }}</p>
             </div>
