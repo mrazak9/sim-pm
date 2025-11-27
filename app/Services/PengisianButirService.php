@@ -278,11 +278,21 @@ class PengisianButirService
             }
 
             // Validate required fields based on form type
-            // Load butir akreditasi to check if it uses dynamic form
+            // Load butir akreditasi to check if it uses dynamic form or column mapping
             $pengisianButir->load('butirAkreditasi');
             $hasDynamicForm = !empty($pengisianButir->butirAkreditasi->metadata['form_config']);
 
-            if ($hasDynamicForm) {
+            // Check if butir uses column mapping (c1-c30 system)
+            $hasColumnMapping = \App\Models\ButirColumnMapping::where('butir_akreditasi_id', $pengisianButir->butir_akreditasi_id)
+                ->exists();
+
+            if ($hasColumnMapping) {
+                // For column mapping, validate that butir_data exists
+                $dataCount = \App\Models\ButirData::where('pengisian_butir_id', $pengisianButir->id)->count();
+                if ($dataCount === 0) {
+                    throw new \Exception('Data butir tidak boleh kosong. Harap tambahkan minimal 1 baris data');
+                }
+            } elseif ($hasDynamicForm) {
                 // For dynamic forms, validate form_data
                 if (empty($pengisianButir->form_data)) {
                     throw new \Exception('Data form tidak boleh kosong');

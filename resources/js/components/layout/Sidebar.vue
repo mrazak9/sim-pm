@@ -188,30 +188,71 @@
 
       <!-- Menu Group: Dokumen -->
       <div class="mb-6">
-        <h3 class="mb-4 text-xs uppercase text-gray-400 font-semibold">
+        <button
+          @click="toggleDokumen"
+          class="mb-2 flex w-full items-center justify-between rounded-lg px-2 py-2 text-xs font-semibold uppercase text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
           <span v-if="sidebarExpanded || sidebarMobileOpen">DOKUMEN</span>
-          <span v-else class="flex justify-center">•••</span>
-        </h3>
+          <span v-else class="flex w-full justify-center">•••</span>
+          <svg
+            v-if="sidebarExpanded || sidebarMobileOpen"
+            :class="['h-4 w-4 transition-transform', dokumenOpen ? 'rotate-180' : '']"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-        <ul class="space-y-2">
-          <li>
-            <router-link
-              to="/dokumen"
-              @click="closeMobileSidebar"
-              :class="[
-                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
-                $route.path.startsWith('/dokumen')
-                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-              ]"
-            >
-              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span v-if="sidebarExpanded || sidebarMobileOpen">Dokumen Mutu</span>
-            </router-link>
-          </li>
-        </ul>
+        <transition
+          enter-active-class="transition-all duration-200 ease-out"
+          enter-from-class="max-h-0 opacity-0"
+          enter-to-class="max-h-48 opacity-100"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="max-h-48 opacity-100"
+          leave-to-class="max-h-0 opacity-0"
+        >
+          <ul v-show="dokumenOpen" class="space-y-2 overflow-hidden">
+            <!-- Dokumen Mutu -->
+            <li>
+              <router-link
+                to="/dokumen"
+                @click="closeMobileSidebar"
+                :class="[
+                  'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                  $route.path === '/dokumen'
+                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                ]"
+              >
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span v-if="sidebarExpanded || sidebarMobileOpen">Dokumen Mutu</span>
+              </router-link>
+            </li>
+
+            <!-- Kategori Dokumen -->
+            <li>
+              <router-link
+                to="/dokumen/categories"
+                @click="closeMobileSidebar"
+                :class="[
+                  'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                  $route.path === '/dokumen/categories'
+                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                ]"
+              >
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+                <span v-if="sidebarExpanded || sidebarMobileOpen">Kategori Dokumen</span>
+              </router-link>
+            </li>
+          </ul>
+        </transition>
       </div>
 
       <!-- Menu Group: Audit -->
@@ -693,6 +734,25 @@
             </router-link>
           </li>
 
+          <!-- Instrumen Akreditasi -->
+          <li>
+            <router-link
+              to="/akreditasi/instrumen"
+              @click="closeMobileSidebar"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path.startsWith('/akreditasi/instrumen')
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ]"
+            >
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <span v-if="sidebarExpanded || sidebarMobileOpen">Instrumen Akreditasi</span>
+            </router-link>
+          </li>
+
           <!-- Periode Akreditasi -->
           <li>
             <router-link
@@ -824,6 +884,7 @@ const userInitials = computed(() => {
 
 // Collapsible menu states
 const masterDataOpen = ref(true);
+const dokumenOpen = ref(true);
 const auditOpen = ref(true);
 const spmiOpen = ref(true);
 const usersOpen = ref(true);
@@ -834,6 +895,11 @@ const akreditasiOpen = ref(true);
 const toggleMasterData = () => {
   masterDataOpen.value = !masterDataOpen.value;
   localStorage.setItem('sidebar_masterData', masterDataOpen.value);
+};
+
+const toggleDokumen = () => {
+  dokumenOpen.value = !dokumenOpen.value;
+  localStorage.setItem('sidebar_dokumen', dokumenOpen.value);
 };
 
 const toggleAudit = () => {
@@ -864,6 +930,7 @@ const toggleAkreditasi = () => {
 // Load saved states from localStorage
 onMounted(() => {
   const savedMasterData = localStorage.getItem('sidebar_masterData');
+  const savedDokumen = localStorage.getItem('sidebar_dokumen');
   const savedAudit = localStorage.getItem('sidebar_audit');
   const savedIKU = localStorage.getItem('sidebar_iku');
   const savedAkreditasi = localStorage.getItem('sidebar_akreditasi');
@@ -871,6 +938,7 @@ onMounted(() => {
   const savedUsers = localStorage.getItem('sidebar_users');
 
   if (savedMasterData !== null) masterDataOpen.value = savedMasterData === 'true';
+  if (savedDokumen !== null) dokumenOpen.value = savedDokumen === 'true';
   if (savedAudit !== null) auditOpen.value = savedAudit === 'true';
   if (savedIKU !== null) ikuOpen.value = savedIKU === 'true';
   if (savedAkreditasi !== null) akreditasiOpen.value = savedAkreditasi === 'true';

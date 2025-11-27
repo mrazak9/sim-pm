@@ -31,7 +31,12 @@
       "Bash(findstr:*)",
       "Bash(powershell:*)",
       "Bash(php:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git mv:*)",
+      "Bash(mv:*)",
+      "Bash(if exist nul del nul)",
+      "Bash(del nul)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

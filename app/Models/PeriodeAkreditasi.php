@@ -15,6 +15,7 @@ class PeriodeAkreditasi extends Model
         'jenis_akreditasi',
         'lembaga',
         'instrumen',
+        'instrumen_id',
         'jenjang',
         'unit_kerja_id',
         'program_studi_id',
@@ -38,6 +39,11 @@ class PeriodeAkreditasi extends Model
     /**
      * Relationships
      */
+    public function instrumenAkreditasi()
+    {
+        return $this->belongsTo(InstrumenAkreditasi::class, 'instrumen_id');
+    }
+
     public function unitKerja()
     {
         return $this->belongsTo(UnitKerja::class);
@@ -101,11 +107,13 @@ class PeriodeAkreditasi extends Model
      */
     public function getProgressPersentaseAttribute()
     {
-        $totalButir = $this->pengisianButirs()->count();
+        // Get total butir based on instrumen
+        $totalButir = \App\Models\ButirAkreditasi::where('instrumen', $this->instrumen)->count();
         if ($totalButir == 0) return 0;
 
-        $butirSelesai = $this->pengisianButirs()->where('is_complete', true)->count();
-        return round(($butirSelesai / $totalButir) * 100, 2);
+        // Count filled butir (distinct)
+        $butirFilled = $this->pengisianButirs()->distinct('butir_akreditasi_id')->count('butir_akreditasi_id');
+        return round(($butirFilled / $totalButir) * 100, 2);
     }
 
     public function getIsExpiredAttribute()

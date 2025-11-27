@@ -47,9 +47,16 @@ class PeriodeAkreditasiRepository
             $query->where('instrumen', $filters['instrumen']);
         }
 
-        // Filter by status
+        // Filter by status (support single or multiple comma-separated values)
         if (isset($filters['status'])) {
-            $query->where('status', $filters['status']);
+            if (is_array($filters['status'])) {
+                $query->whereIn('status', $filters['status']);
+            } elseif (str_contains($filters['status'], ',')) {
+                $statuses = array_map('trim', explode(',', $filters['status']));
+                $query->whereIn('status', $statuses);
+            } else {
+                $query->where('status', $filters['status']);
+            }
         }
 
         // Filter by unit_kerja_id

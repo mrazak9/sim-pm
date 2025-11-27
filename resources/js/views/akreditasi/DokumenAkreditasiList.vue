@@ -62,9 +62,16 @@
               @change="fetchDokumens"
             >
               <option value="">Semua Jenis</option>
-              <option value="pendukung">Pendukung</option>
-              <option value="bukti">Bukti</option>
-              <option value="lampiran">Lampiran</option>
+              <option value="kebijakan">Kebijakan</option>
+              <option value="pedoman">Pedoman</option>
+              <option value="manual">Manual</option>
+              <option value="sop">SOP</option>
+              <option value="formulir">Formulir</option>
+              <option value="instruksi_kerja">Instruksi Kerja</option>
+              <option value="laporan">Laporan</option>
+              <option value="sertifikat">Sertifikat</option>
+              <option value="sk">SK</option>
+              <option value="lainnya">Lainnya</option>
             </select>
           </div>
         </div>
@@ -239,9 +246,16 @@
                 class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               >
                 <option value="">Pilih Jenis</option>
-                <option value="pendukung">Pendukung</option>
-                <option value="bukti">Bukti</option>
-                <option value="lampiran">Lampiran</option>
+                <option value="kebijakan">Kebijakan</option>
+                <option value="pedoman">Pedoman</option>
+                <option value="manual">Manual</option>
+                <option value="sop">SOP</option>
+                <option value="formulir">Formulir</option>
+                <option value="instruksi_kerja">Instruksi Kerja</option>
+                <option value="laporan">Laporan</option>
+                <option value="sertifikat">Sertifikat</option>
+                <option value="sk">SK</option>
+                <option value="lainnya">Lainnya</option>
               </select>
             </div>
           </div>

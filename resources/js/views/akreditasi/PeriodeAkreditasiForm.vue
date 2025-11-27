@@ -68,31 +68,81 @@
           </div>
         </div>
 
-        <!-- Instrumen & Jenjang -->
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div>
-            <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              Instrumen
-            </label>
-            <input
-              v-model="form.instrumen"
-              type="text"
-              class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              placeholder="Contoh: 4.0"
-            />
-          </div>
+        <!-- Instrumen -->
+        <div>
+          <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+            Instrumen <span class="text-red-500">*</span>
+          </label>
+          <select
+            v-model="form.instrumen_id"
+            required
+            :disabled="loadingInstrumen"
+            class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          >
+            <option value="">{{ loadingInstrumen ? 'Memuat...' : 'Pilih Instrumen' }}</option>
+            <option v-for="ins in filteredInstrumen" :key="ins.id" :value="ins.id">
+              {{ ins.nama }} ({{ ins.kode }})
+            </option>
+          </select>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Instrumen akan difilter otomatis berdasarkan jenis akreditasi dan lembaga yang dipilih
+          </p>
+        </div>
 
-          <div>
-            <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              Jenjang
-            </label>
-            <input
-              v-model="form.jenjang"
-              type="text"
-              class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              placeholder="Contoh: S1, S2, S3, D3"
-            />
-          </div>
+        <!-- Program Studi (Only for jenis=program_studi) -->
+        <div v-if="form.jenis_akreditasi === 'program_studi'">
+          <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+            Program Studi <span class="text-red-500">*</span>
+          </label>
+          <select
+            v-model="form.program_studi_id"
+            required
+            :disabled="loadingProdi"
+            @change="handleProdiChange"
+            class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          >
+            <option value="">{{ loadingProdi ? 'Memuat...' : 'Pilih Program Studi' }}</option>
+            <option v-for="prodi in prodiList" :key="prodi.id" :value="prodi.id">
+              {{ prodi.nama_prodi }} ({{ prodi.jenjang }})
+            </option>
+          </select>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Jenjang akan otomatis terisi dari program studi yang dipilih
+          </p>
+        </div>
+
+        <!-- Jenjang (Read-only for program_studi, manual for institusi) -->
+        <div v-if="form.jenis_akreditasi === 'institusi'">
+          <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+            Jenjang
+          </label>
+          <select
+            v-model="form.jenjang"
+            class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          >
+            <option value="">Semua Jenjang</option>
+            <option value="D3">D3</option>
+            <option value="S1">S1</option>
+            <option value="S2">S2</option>
+            <option value="S3">S3</option>
+          </select>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Untuk institusi, jenjang bersifat opsional
+          </p>
+        </div>
+        <div v-else-if="form.jenis_akreditasi === 'program_studi' && form.jenjang">
+          <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+            Jenjang
+          </label>
+          <input
+            :value="form.jenjang"
+            type="text"
+            disabled
+            class="block w-full rounded-lg border border-gray-300 bg-gray-100 p-2.5 text-sm text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
+          />
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Jenjang otomatis dari program studi yang dipilih
+          </p>
         </div>
 
         <!-- Timeline -->
@@ -240,6 +290,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAkreditasiApi } from '@/composables/useAkreditasiApi'
 import MainLayout from '@/layouts/MainLayout.vue'
+import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
@@ -249,18 +300,103 @@ const isEdit = computed(() => !!route.params.id)
 const localError = ref(null)
 const successMessage = ref(null)
 
+// Master data
+const instrumenList = ref([])
+const prodiList = ref([])
+const loadingInstrumen = ref(false)
+const loadingProdi = ref(false)
+
 const form = ref({
   nama: '',
   jenis_akreditasi: '',
   lembaga: '',
-  instrumen: '4.0',
+  instrumen: null, // Keep for backward compatibility
+  instrumen_id: null, // New field for instrumen FK
   jenjang: '',
+  program_studi_id: null,
   tanggal_mulai: '',
   deadline_pengumpulan: '',
   jadwal_visitasi: '',
   tanggal_berakhir: '',
   status: 'persiapan',
   keterangan: '',
+})
+
+// Filtered instrumen based on jenis and lembaga
+const filteredInstrumen = computed(() => {
+  if (!form.value.jenis_akreditasi || !form.value.lembaga) {
+    return instrumenList.value
+  }
+
+  return instrumenList.value.filter(ins => {
+    const jenisMatch = ins.jenis === form.value.jenis_akreditasi || ins.jenis === 'both'
+    const lembagaMatch = !ins.lembaga || ins.lembaga === form.value.lembaga
+    return jenisMatch && lembagaMatch
+  })
+})
+
+// Load instrumen from API
+const loadInstrumen = async () => {
+  loadingInstrumen.value = true
+  try {
+    const response = await axios.get('/api/instrumen-akreditasi')
+    if (response.data.success) {
+      instrumenList.value = response.data.data
+    }
+  } catch (err) {
+    console.error('Failed to load instrumen:', err)
+  } finally {
+    loadingInstrumen.value = false
+  }
+}
+
+// Load program studi from API
+const loadProdi = async () => {
+  loadingProdi.value = true
+  try {
+    const response = await axios.get('/api/program-studi/active')
+    if (response.data.success) {
+      prodiList.value = response.data.data
+    }
+  } catch (err) {
+    console.error('Failed to load program studi:', err)
+  } finally {
+    loadingProdi.value = false
+  }
+}
+
+// Handle prodi change - auto fill jenjang
+const handleProdiChange = () => {
+  if (form.value.program_studi_id) {
+    const selectedProdi = prodiList.value.find(p => p.id === parseInt(form.value.program_studi_id))
+    if (selectedProdi) {
+      form.value.jenjang = selectedProdi.jenjang
+    }
+  } else {
+    form.value.jenjang = ''
+  }
+}
+
+// Watch jenis_akreditasi change
+watch(() => form.value.jenis_akreditasi, (newVal) => {
+  // Clear program_studi_id when switching to institusi
+  if (newVal === 'institusi') {
+    form.value.program_studi_id = null
+  }
+  // Clear jenjang when switching
+  if (newVal === 'program_studi') {
+    form.value.jenjang = ''
+  }
+})
+
+// Watch jenis or lembaga change - reset instrumen selection if no longer valid
+watch([() => form.value.jenis_akreditasi, () => form.value.lembaga], () => {
+  if (form.value.instrumen_id) {
+    const stillValid = filteredInstrumen.value.find(ins => ins.id === form.value.instrumen_id)
+    if (!stillValid) {
+      form.value.instrumen_id = null
+    }
+  }
 })
 
 // Clear messages when form changes
@@ -314,10 +450,18 @@ const handleSubmit = async () => {
       }
     })
 
-    // Also clean up empty strings for other optional fields
-    if (data.instrumen === '') data.instrumen = null
+    // Set instrumen kode from selected instrumen_id
+    if (data.instrumen_id) {
+      const selectedInstrumen = instrumenList.value.find(ins => ins.id === parseInt(data.instrumen_id))
+      data.instrumen = selectedInstrumen ? selectedInstrumen.kode : null
+    } else {
+      data.instrumen = null
+    }
+
+    // Clean up empty strings for other optional fields
     if (data.jenjang === '') data.jenjang = null
     if (data.keterangan === '') data.keterangan = null
+    if (data.program_studi_id === '' || data.program_studi_id === null) data.program_studi_id = null
 
     let response
     if (isEdit.value) {
@@ -370,11 +514,22 @@ const handleSubmit = async () => {
 }
 
 onMounted(async () => {
+  // Load master data first
+  await Promise.all([loadInstrumen(), loadProdi()])
+
   if (isEdit.value) {
     localError.value = null
     try {
       const response = await getPeriodeDetail(route.params.id)
       Object.assign(form.value, response.data)
+
+      // Set instrumen_id from instrumen kode for edit mode
+      if (form.value.instrumen) {
+        const foundInstrumen = instrumenList.value.find(ins => ins.kode === form.value.instrumen)
+        if (foundInstrumen) {
+          form.value.instrumen_id = foundInstrumen.id
+        }
+      }
     } catch (err) {
       console.error('Error loading periode:', err)
       localError.value = 'Gagal memuat data periode akreditasi'

@@ -25,21 +25,26 @@ class DatabaseSeeder extends Seeder
         $this->call(MasterDataSeeder::class);
         $this->command->newLine();
 
-        // 3. Seed IKU Data
-        $this->command->info('📋 Step 3: Seeding IKU Data');
+        // 3. Seed Instrumen Akreditasi
+        $this->command->info('📋 Step 3: Seeding Instrumen Akreditasi');
+        $this->call(InstrumenAkreditasiSeeder::class);
+        $this->command->newLine();
+
+        // 4. Seed IKU Data
+        $this->command->info('📋 Step 4: Seeding IKU Data');
         $this->call(IKUSeeder::class);
         $this->command->newLine();
 
-        // 4. Seed Template Butir Akreditasi
-        $this->command->info('📋 Step 4: Seeding Template Butir Akreditasi');
+        // 5. Seed Template Butir Akreditasi
+        $this->command->info('📋 Step 5: Seeding Template Butir Akreditasi');
         $this->call([
             ButirAkreditasiSeeder::class,     // Template BANPT 4.0 & 9.0
             ButirAkreditasiLAMSeeder::class,  // Template LAMEMBA & LAMINFOKOM
         ]);
         $this->command->newLine();
 
-        // 5. Seed Periode Akreditasi (Sample Data)
-        $this->command->info('📋 Step 5: Seeding Periode Akreditasi');
+        // 6. Seed Periode Akreditasi (Sample Data)
+        $this->command->info('📋 Step 6: Seeding Periode Akreditasi');
         $this->call(PeriodeAkreditasiSeeder::class);
         $this->command->newLine();
 

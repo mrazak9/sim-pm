@@ -14,8 +14,9 @@
 
       <!-- Add Row Button -->
       <button
+        type="button"
         v-if="!readonly && config.options?.allow_add !== false"
-        @click="addRow"
+        @click="handleAddRow"
         :disabled="isMaxRowsReached"
         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium transition"
       >
@@ -87,7 +88,7 @@
                 :is="getFieldComponent(column.type)"
                 :config="column"
                 :modelValue="row[column.name]"
-                @update:modelValue="(value) => updateCell(rowIndex, column.name, value)"
+                @update:modelValue="(value) => handleUpdateCell(rowIndex, column.name, value)"
                 :readonly="readonly"
                 :error="getCellError(rowIndex, column.name)"
               />
@@ -99,7 +100,8 @@
               class="px-4 py-3 text-center"
             >
               <button
-                @click="deleteRow(rowIndex)"
+                type="button"
+                @click="handleDeleteRow(rowIndex)"
                 class="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 transition"
                 title="Hapus baris"
               >
@@ -155,23 +157,15 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'validate'])
 
-const rows = ref([...(props.modelValue?.rows || [])])
 const validationErrors = ref([])
 const cellErrors = ref({})
 
-// Watch for external changes
-watch(() => props.modelValue, (newValue) => {
-  rows.value = [...(newValue?.rows || [])]
-}, { deep: true })
-
-// Watch for internal changes and emit
-watch(rows, (newRows) => {
-  const formData = { rows: newRows }
-  emit('update:modelValue', formData)
-  validateForm()
-}, { deep: true })
-
-// Computed properties
+// Computed - directly from props (no internal state)
+const rows = computed(() => {
+  const rowsData = props.modelValue?.rows || []
+  console.log('🟡 TableFormRenderer - rows computed triggered, length:', rowsData.length)
+  return rowsData
+})
 const rowCount = computed(() => rows.value.length)
 
 const columnCount = computed(() => {
@@ -207,23 +201,44 @@ const getFieldComponent = (type) => {
   return components[type] || TextField
 }
 
-// Row operations
-const addRow = () => {
+// Row operations - emit to parent instead of mutating local state
+const handleAddRow = () => {
+  console.log('🟢 TableFormRenderer - handleAddRow called')
+  console.log('  Current rows.value length:', rows.value.length)
+  console.log('  Current rows.value:', rows.value)
+
   const newRow = {}
   props.config.columns.forEach(column => {
     newRow[column.name] = column.default || null
   })
-  rows.value.push(newRow)
+
+  console.log('  New row created:', newRow)
+
+  // Create new array with added row
+  const newRows = [...rows.value, newRow]
+  console.log('  New rows array length:', newRows.length)
+  console.log('  Emitting update:modelValue with:', { rows: newRows })
+
+  emit('update:modelValue', { rows: newRows })
 }
 
-const deleteRow = (index) => {
+const handleDeleteRow = (index) => {
   if (confirm('Apakah Anda yakin ingin menghapus baris ini?')) {
-    rows.value.splice(index, 1)
+    // Create new array without deleted row
+    const newRows = rows.value.filter((_, i) => i !== index)
+    emit('update:modelValue', { rows: newRows })
   }
 }
 
-const updateCell = (rowIndex, columnName, value) => {
-  rows.value[rowIndex][columnName] = value
+const handleUpdateCell = (rowIndex, columnName, value) => {
+  // Create new array with updated cell
+  const newRows = rows.value.map((row, index) => {
+    if (index === rowIndex) {
+      return { ...row, [columnName]: value }
+    }
+    return row
+  })
+  emit('update:modelValue', { rows: newRows })
 }
 
 // Validation
@@ -261,6 +276,11 @@ const validateForm = () => {
 
   return isValid
 }
+
+// Watch for changes and validate
+watch(() => props.modelValue, () => {
+  validateForm()
+}, { deep: true })
 
 const getCellError = (rowIndex, columnName) => {
   return cellErrors.value[`${rowIndex}.${columnName}`] || null

@@ -21,7 +21,8 @@ class UpdateTahunAkademikRequest extends FormRequest
      */
     public function rules(): array
     {
-        $id = $this->route('id');
+        // apiResource uses the parameter name from the route, which is 'tahun_akademik'
+        $id = $this->route('tahun_akademik');
 
         return [
             'kode_tahun' => 'required|string|max:20|unique:tahun_akademiks,kode_tahun,' . $id,

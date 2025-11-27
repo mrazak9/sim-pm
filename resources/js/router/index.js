@@ -166,6 +166,27 @@ const routes = [
     component: () => import('@/views/akreditasi/AkreditasiDashboard.vue'),
     meta: { requiresAuth: true },
   },
+  // Instrumen Akreditasi Routes
+  {
+    path: '/akreditasi/instrumen',
+    name: 'instrumen-akreditasi-list',
+    component: () => import('@/views/akreditasi/InstrumenAkreditasiList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/akreditasi/instrumen/create',
+    name: 'instrumen-akreditasi-create',
+    component: () => import('@/views/akreditasi/InstrumenAkreditasiForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/akreditasi/instrumen/:id/edit',
+    name: 'instrumen-akreditasi-edit',
+    component: () => import('@/views/akreditasi/InstrumenAkreditasiForm.vue'),
+    meta: { requiresAuth: true },
+  },
+
+  // Periode Akreditasi Routes
   {
     path: '/akreditasi/periode',
     name: 'periode-akreditasi-list',

@@ -12,10 +12,13 @@ use App\Http\Controllers\Api\IKUController;
 use App\Http\Controllers\Api\IKUTargetController;
 use App\Http\Controllers\Api\IKUProgressController;
 use App\Http\Controllers\Api\PeriodeAkreditasiController;
+use App\Http\Controllers\Api\InstrumenAkreditasiController;
 use App\Http\Controllers\Api\ButirAkreditasiController;
 use App\Http\Controllers\Api\ButirTemplateController;
 use App\Http\Controllers\Api\PengisianButirController;
 use App\Http\Controllers\Api\ButirCommentController;
+use App\Http\Controllers\Api\ButirDataController;
+use App\Http\Controllers\Api\ButirMappingController;
 use App\Http\Controllers\Api\DokumenAkreditasiController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\DocumentController;
@@ -136,6 +139,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Akreditasi Module Routes
 
+    // Instrumen Akreditasi Routes
+    Route::get('instrumen-akreditasi/active', [InstrumenAkreditasiController::class, 'active']);
+    Route::get('instrumen-akreditasi/statistics', [InstrumenAkreditasiController::class, 'statistics']);
+    Route::post('instrumen-akreditasi/{id}/toggle-active', [InstrumenAkreditasiController::class, 'toggleActive']);
+    Route::apiResource('instrumen-akreditasi', InstrumenAkreditasiController::class);
+
     // Periode Akreditasi Routes
     Route::get('periode-akreditasi/{id}/dashboard', [PeriodeAkreditasiController::class, 'dashboard']);
     Route::get('periode-akreditasi/{id}/statistics', [PeriodeAkreditasiController::class, 'statistics']);
@@ -173,6 +182,28 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('pengisian-butir/{id}/check-edit-lock', [PengisianButirController::class, 'checkEditLock']);
     Route::get('pengisian-butir/periode/{periodeId}/summary', [PengisianButirController::class, 'summary']);
     Route::apiResource('pengisian-butir', PengisianButirController::class);
+
+    // Butir Data Routes (c1-c30 Column Mapping)
+    Route::prefix('pengisian-butirs/{pengisianButirId}')->group(function () {
+        Route::get('/data', [ButirDataController::class, 'index']);
+        Route::post('/data', [ButirDataController::class, 'store']);
+        Route::post('/data/bulk', [ButirDataController::class, 'bulkStore']);
+        Route::put('/data/sync', [ButirDataController::class, 'sync']);
+        Route::get('/data/export', [ButirDataController::class, 'export']);
+    });
+
+    Route::prefix('butir-data')->group(function () {
+        Route::put('/{id}', [ButirDataController::class, 'update']);
+        Route::delete('/{id}', [ButirDataController::class, 'destroy']);
+        Route::post('/query', [ButirDataController::class, 'query']);
+    });
+
+    // Butir Column Mapping Routes
+    Route::prefix('butir-akreditasis/{butirId}')->group(function () {
+        Route::get('/mappings', [ButirMappingController::class, 'index']);
+        Route::post('/mappings/setup', [ButirMappingController::class, 'setupFromFormConfig']);
+        Route::put('/mappings', [ButirMappingController::class, 'update']);
+    });
 
     // Butir Comments Routes (Collaboration Feature)
     Route::get('pengisian-butir/{pengisianButirId}/comments', [ButirCommentController::class, 'index']);

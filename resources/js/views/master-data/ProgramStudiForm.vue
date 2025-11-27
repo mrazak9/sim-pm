@@ -91,7 +91,7 @@
               >
                 <option :value="null">Pilih Unit Kerja</option>
                 <option v-for="uk in unitKerjaOptions" :key="uk.id" :value="uk.id">
-                  {{ uk.nama }}
+                  {{ uk.nama_unit }}
                 </option>
               </select>
               <p v-if="errors.unit_kerja_id" class="mt-1 text-sm text-red-600">{{ errors.unit_kerja_id[0] }}</p>

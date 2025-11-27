@@ -1,6 +1,23 @@
 <template>
   <MainLayout>
     <div>
+      <!-- Breadcrumb Navigation -->
+      <nav class="mb-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
+        <button
+          @click="handleCancel"
+          class="flex items-center hover:text-blue-600 dark:hover:text-blue-400 transition"
+        >
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Pengisian Butir
+        </button>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900 dark:text-white">
+          {{ isEdit ? 'Edit' : 'Tambah' }}
+        </span>
+      </nav>
+
       <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
           {{ isEdit ? 'Edit Pengisian Butir' : 'Tambah Pengisian Butir' }}
@@ -14,14 +31,31 @@
       <div v-if="selectedButir" class="mb-6 rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
         <div class="flex items-start justify-between mb-2">
           <h3 class="font-semibold text-blue-900 dark:text-blue-300">Butir Akreditasi</h3>
+          <!-- Loading Mapping State -->
+          <span
+            v-if="loadingMapping"
+            class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 flex items-center gap-2"
+          >
+            <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Mengecek mapping...
+          </span>
           <!-- Template Badge -->
           <span
-            v-if="hasDynamicForm"
+            v-else-if="hasColumnMapping"
             class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
           >
-            📋 {{ selectedButir.metadata?.form_config?.type === 'table' ? 'Form Tabel' :
-                 selectedButir.metadata?.form_config?.type === 'narrative' ? 'Form Narasi' :
-                 'Form Template' }}
+            ✨ Form Tabel (Column Mapping)
+          </span>
+          <span
+            v-else-if="hasDynamicForm"
+            class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+          >
+            📋 {{ selectedButir.metadata?.form_config?.type === 'table' ? 'Form Tabel (Legacy)' :
+                 selectedButir.metadata?.form_config?.type === 'narrative' ? 'Form Narasi (Legacy)' :
+                 'Form Template (Legacy)' }}
           </span>
           <span
             v-else
@@ -34,10 +68,14 @@
           <p><span class="font-medium">Kode:</span> {{ selectedButir.kode }}</p>
           <p><span class="font-medium">Nama:</span> {{ selectedButir.nama }}</p>
           <p v-if="selectedButir.deskripsi"><span class="font-medium">Deskripsi:</span> {{ selectedButir.deskripsi }}</p>
-          <!-- Debug info (akan kita hapus nanti) -->
-          <p v-if="hasDynamicForm" class="pt-2 border-t border-blue-200">
-            <span class="font-medium text-green-600">✓ Template aktif:</span>
-            {{ selectedButir.metadata?.form_config?.label }}
+          <!-- Debug info -->
+          <p v-if="hasColumnMapping" class="pt-2 border-t border-blue-200">
+            <span class="font-medium text-green-600">✓ Column Mapping aktif</span>
+            - Data tersimpan di c1-c30 dengan performa optimal
+          </p>
+          <p v-else-if="hasDynamicForm" class="pt-2 border-t border-yellow-200">
+            <span class="font-medium text-yellow-600">⚠ Legacy Template:</span>
+            {{ selectedButir.metadata?.form_config?.label }} (akan diupgrade)
           </p>
         </div>
       </div>
@@ -99,8 +137,28 @@
 
           <!-- Dynamic Form or Rich Text Editor -->
           <div>
-            <!-- Dynamic Form (if butir has form_config) -->
-            <div v-if="hasDynamicForm">
+            <!-- NEW: Column Mapping Form (c1-c30 system) -->
+            <div v-if="hasColumnMapping && isEdit">
+              <ButirDataTableForm
+                :key="`butir-data-form-${form.butir_akreditasi_id}`"
+                :butir-id="form.butir_akreditasi_id"
+                :pengisian-butir-id="parseInt(route.params.id)"
+                :readonly="isLocked"
+                @saved="handleButirDataSaved"
+                @error="handleButirDataError"
+              />
+            </div>
+
+            <!-- DEPRECATED: Old Dynamic Form (form_config - will be removed) -->
+            <div v-else-if="hasDynamicForm">
+              <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+                <div class="flex items-center gap-2 text-yellow-800">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span class="font-medium">Form ini menggunakan sistem lama (form_config). Akan diupgrade ke column mapping.</span>
+                </div>
+              </div>
               <DynamicFormRenderer
                 :key="`dynamic-form-${form.butir_akreditasi_id}`"
                 :form-config="selectedButir.metadata?.form_config"
@@ -111,7 +169,7 @@
               />
             </div>
 
-            <!-- Legacy Rich Text Editor (default) -->
+            <!-- Legacy Rich Text Editor (default for narrative/free-text butirs) -->
             <div v-else>
               <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
                 Konten <span class="text-red-500">*</span>
@@ -125,7 +183,7 @@
           </div>
 
           <!-- Notes -->
-          <div>
+          <div v-if="!hasColumnMapping || isEdit">
             <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
               Catatan
             </label>
@@ -138,7 +196,7 @@
           </div>
 
           <!-- Completion Status -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div v-if="!hasColumnMapping || isEdit" class="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
                 Persentase Penyelesaian (%)
@@ -192,6 +250,17 @@
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Status akan berubah saat Anda mengajukan atau mereview pengisian
             </p>
+            <!-- Debug Info for Approval Buttons -->
+            <div v-if="form.status === 'draft'" class="mt-2 rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
+              <p class="text-xs text-blue-800 dark:text-blue-300">
+                💡 Tombol "Approve" dan "Minta Revisi" akan muncul setelah butir ini diajukan untuk review (status: submitted/review)
+              </p>
+            </div>
+            <div v-if="form.status === 'approved'" class="mt-2 rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
+              <p class="text-xs text-green-800 dark:text-green-300">
+                ✓ Butir ini sudah disetujui (approved). Tidak ada aksi lebih lanjut yang diperlukan.
+              </p>
+            </div>
           </div>
 
           <!-- Review Notes (if status is revision) -->
@@ -245,8 +314,75 @@
             </div>
           </div>
 
+          <!-- Column Mapping Info (no main save button needed) -->
+          <div v-if="hasColumnMapping && isEdit" class="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div class="flex-1">
+                <h4 class="text-sm font-medium text-green-800 mb-1">Data Column Mapping</h4>
+                <p class="text-sm text-green-700">
+                  Data untuk butir ini disimpan secara otomatis menggunakan sistem column mapping.
+                  Gunakan tombol "Simpan" di dalam tabel data untuk menyimpan perubahan.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Metadata Save Button (for column mapping mode) -->
+          <div v-if="hasColumnMapping && isEdit" class="flex items-center gap-3">
+            <button
+              type="button"
+              @click="handleSaveMetadata"
+              :disabled="loading"
+              class="rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+            >
+              <span v-if="loading">Menyimpan...</span>
+              <span v-else>Simpan Catatan & Status</span>
+            </button>
+            <button
+              v-if="form.status === 'draft'"
+              type="button"
+              @click="handleSubmitForReview"
+              :disabled="loading"
+              class="rounded-lg bg-green-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:opacity-50"
+            >
+              <span v-if="loading">Mengajukan...</span>
+              <span v-else>Ajukan untuk Review</span>
+            </button>
+            <!-- Reviewer Actions (Approve/Revision) -->
+            <button
+              v-if="isEdit && (form.status === 'submitted' || form.status === 'review')"
+              type="button"
+              @click="handleApprove"
+              :disabled="loading"
+              class="rounded-lg bg-green-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:opacity-50"
+            >
+              <span v-if="loading">Menyetujui...</span>
+              <span v-else>✓ Approve</span>
+            </button>
+            <button
+              v-if="isEdit && (form.status === 'submitted' || form.status === 'review')"
+              type="button"
+              @click="handleRequestRevision"
+              :disabled="loading"
+              class="rounded-lg bg-orange-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-300 disabled:opacity-50"
+            >
+              <span v-if="loading">Memproses...</span>
+              <span v-else">✎ Minta Revisi</span>
+            </button>
+            <button
+              type="button"
+              @click="handleCancel"
+              class="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-center text-sm font-medium text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+            >
+              Kembali
+            </button>
+          </div>
+
           <!-- Actions -->
-          <div class="flex items-center gap-3">
+          <div v-if="!hasColumnMapping" class="flex items-center gap-3">
             <button
               type="submit"
               :disabled="loading"
@@ -265,6 +401,27 @@
             >
               <span v-if="loading">Mengajukan...</span>
               <span v-else>Ajukan untuk Review</span>
+            </button>
+            <!-- Reviewer Actions (Approve/Revision) -->
+            <button
+              v-if="isEdit && (form.status === 'submitted' || form.status === 'review')"
+              type="button"
+              @click="handleApprove"
+              :disabled="loading"
+              class="rounded-lg bg-green-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:opacity-50"
+            >
+              <span v-if="loading">Menyetujui...</span>
+              <span v-else>✓ Approve</span>
+            </button>
+            <button
+              v-if="isEdit && (form.status === 'submitted' || form.status === 'review')"
+              type="button"
+              @click="handleRequestRevision"
+              :disabled="loading"
+              class="rounded-lg bg-orange-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-300 disabled:opacity-50"
+            >
+              <span v-if="loading">Memproses...</span>
+              <span v-else>✎ Minta Revisi</span>
             </button>
             <button
               type="button"
@@ -308,9 +465,11 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAkreditasiApi } from '@/composables/useAkreditasiApi'
+import { useButirData } from '@/composables/useButirData'
 import MainLayout from '@/layouts/MainLayout.vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import DynamicFormRenderer from '@/components/akreditasi/DynamicFormRenderer.vue'
+import ButirDataTableForm from '@/components/akreditasi/ButirDataTableForm.vue'
 import LockStatusIndicator from '@/components/akreditasi/LockStatusIndicator.vue'
 import VersionHistoryTimeline from '@/components/akreditasi/VersionHistoryTimeline.vue'
 import EditLockIndicator from '@/components/akreditasi/EditLockIndicator.vue'
@@ -319,14 +478,17 @@ import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
-const { loading, getPeriodeList, getButirList, savePengisian, updatePengisian, submitPengisian } = useAkreditasiApi()
+const { loading, getPeriodeList, getButirList, savePengisian, updatePengisian, submitPengisian, approvePengisian, revisionPengisian } = useAkreditasiApi()
+const { fetchMappings } = useButirData()
 
 const isEdit = computed(() => !!route.params.id)
 const localError = ref(null)
 const successMessage = ref(null)
 const loadingButirs = ref(false)
+const loadingMapping = ref(false)
 const isLocked = ref(false)
 const formIsValid = ref(true)
+const hasColumnMapping = ref(false)
 
 const form = ref({
   periode_akreditasi_id: '',
@@ -402,19 +564,33 @@ const handlePeriodeChange = () => {
   fetchButirs()
 }
 
-const handleButirChange = () => {
+const handleButirChange = async () => {
   const butir = butirList.value.find(b => b.id === form.value.butir_akreditasi_id)
   selectedButir.value = butir || null
 
-  // Debug logging
-  console.log('=== Butir Changed ===')
-  console.log('Selected Butir:', butir)
-  console.log('Has metadata:', !!butir?.metadata)
-  console.log('Metadata:', butir?.metadata)
-  console.log('Has form_config:', !!butir?.metadata?.form_config)
-  console.log('Form config:', butir?.metadata?.form_config)
-  console.log('hasDynamicForm computed:', hasDynamicForm.value)
-  console.log('===================')
+  // Check for column mapping (NEW system)
+  if (butir?.id) {
+    loadingMapping.value = true
+    try {
+      const mappings = await fetchMappings(butir.id)
+      hasColumnMapping.value = mappings && mappings.length > 0
+
+      console.log('=== Butir Changed ===')
+      console.log('Selected Butir:', butir)
+      console.log('Has Column Mapping:', hasColumnMapping.value)
+      console.log('Mappings count:', mappings?.length || 0)
+      console.log('Has form_config (old):', !!butir?.metadata?.form_config)
+      console.log('hasDynamicForm computed:', hasDynamicForm.value)
+      console.log('===================')
+    } catch (err) {
+      console.error('Failed to check column mapping:', err)
+      hasColumnMapping.value = false
+    } finally {
+      loadingMapping.value = false
+    }
+  } else {
+    hasColumnMapping.value = false
+  }
 }
 
 const formatFieldName = (field) => {
@@ -485,15 +661,84 @@ const handleCompletionChange = (completionPercentage) => {
   form.value.completion_percentage = completionPercentage
 }
 
+// NEW: Handlers for ButirDataTableForm
+const handleButirDataSaved = (data) => {
+  console.log('Butir data saved:', data)
+  successMessage.value = 'Data berhasil disimpan!'
+
+  // Update completion percentage
+  form.value.completion_percentage = 100
+  form.value.is_complete = true
+
+  // Clear after 3 seconds
+  setTimeout(() => {
+    successMessage.value = null
+  }, 3000)
+}
+
+const handleButirDataError = (error) => {
+  console.error('Butir data error:', error)
+  localError.value = error || 'Gagal menyimpan data butir'
+
+  // Scroll to top to show error
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+/**
+ * Save only metadata (notes, completion_percentage, is_complete, status)
+ * Used for column mapping mode where data is saved separately
+ */
+const handleSaveMetadata = async () => {
+  console.log('=== Handle Save Metadata - START ===')
+
+  try {
+    localError.value = null
+    successMessage.value = null
+
+    // Prepare metadata only
+    const data = {
+      notes: form.value.notes || null,
+      completion_percentage: form.value.completion_percentage || 0,
+      is_complete: form.value.is_complete || false,
+      status: form.value.status,
+    }
+
+    console.log('Saving metadata:', data)
+
+    if (isEdit.value) {
+      const response = await updatePengisian(route.params.id, data)
+      successMessage.value = 'Catatan dan status berhasil disimpan!'
+      console.log('✅ Metadata saved!', response)
+    }
+
+    // Show success message briefly
+    setTimeout(() => {
+      successMessage.value = null
+    }, 3000)
+
+  } catch (err) {
+    console.error('❌ Error saving metadata:', err)
+    handleError(err)
+  }
+}
+
 const handleSubmit = async () => {
   console.log('=== Handle Submit (Save Draft) - START ===')
   console.log('Timestamp:', new Date().toISOString())
   console.log('isEdit:', isEdit.value)
+  console.log('hasColumnMapping:', hasColumnMapping.value)
   console.log('hasDynamicForm:', hasDynamicForm.value)
   console.log('formIsValid:', formIsValid.value)
   console.log('form.form_data:', form.value.form_data)
   console.log('form.butir_akreditasi_id:', form.value.butir_akreditasi_id)
   console.log('form.periode_akreditasi_id:', form.value.periode_akreditasi_id)
+
+  // IMPORTANT: Block save for column mapping - data is saved via ButirDataTableForm
+  if (hasColumnMapping.value) {
+    console.log('🛑 BLOCKED: Column mapping detected. Use table save button instead.')
+    console.log('=== Handle Submit - END (BLOCKED) ===')
+    return
+  }
 
   try {
     localError.value = null
@@ -578,10 +823,77 @@ const handleSubmitForReview = async () => {
     successMessage.value = 'Pengisian berhasil diajukan untuk review!'
 
     setTimeout(() => {
-      router.push('/akreditasi/pengisian')
+      const periodeId = route.query.periode_id || form.value.periode_akreditasi_id
+      if (periodeId) {
+        router.push(`/akreditasi/periode/${periodeId}/pengisian`)
+      } else {
+        router.push('/akreditasi/pengisian')
+      }
     }, 1500)
   } catch (err) {
     console.error('Error submitting pengisian:', err)
+    handleError(err)
+  }
+}
+
+const handleApprove = async () => {
+  if (!confirm('Apakah Anda yakin ingin menyetujui pengisian butir ini?')) {
+    return
+  }
+
+  localError.value = null
+  successMessage.value = null
+
+  try {
+    const response = await approvePengisian(route.params.id)
+    successMessage.value = 'Pengisian butir berhasil disetujui!'
+
+    // Update form status
+    form.value.status = 'approved'
+
+    setTimeout(() => {
+      const periodeId = route.query.periode_id || form.value.periode_akreditasi_id
+      if (periodeId) {
+        router.push(`/akreditasi/periode/${periodeId}/pengisian`)
+      } else {
+        router.push('/akreditasi/pengisian')
+      }
+    }, 1500)
+  } catch (err) {
+    console.error('Error approving pengisian:', err)
+    handleError(err)
+  }
+}
+
+const handleRequestRevision = async () => {
+  const reviewNotes = prompt('Masukkan catatan revisi untuk PIC:')
+
+  if (!reviewNotes || reviewNotes.trim() === '') {
+    alert('Catatan revisi wajib diisi')
+    return
+  }
+
+  localError.value = null
+  successMessage.value = null
+
+  try {
+    const response = await revisionPengisian(route.params.id, reviewNotes)
+    successMessage.value = 'Permintaan revisi berhasil dikirim!'
+
+    // Update form status and notes
+    form.value.status = 'revision'
+    form.value.review_notes = reviewNotes
+
+    setTimeout(() => {
+      const periodeId = route.query.periode_id || form.value.periode_akreditasi_id
+      if (periodeId) {
+        router.push(`/akreditasi/periode/${periodeId}/pengisian`)
+      } else {
+        router.push('/akreditasi/pengisian')
+      }
+    }, 1500)
+  } catch (err) {
+    console.error('Error requesting revision:', err)
     handleError(err)
   }
 }
@@ -625,9 +937,12 @@ const handleContactAdmin = () => {
 
 // Cancel Handler - Navigate back to appropriate page
 const handleCancel = () => {
-  // If came from periode detail (has periode_id in query), go back to list
-  if (route.query.periode_id) {
-    router.push(`/akreditasi/periode/${route.query.periode_id}/pengisian`)
+  // Priority 1: periode_id from query params (for create mode)
+  // Priority 2: periode_id from form data (for edit mode)
+  const periodeId = route.query.periode_id || form.value.periode_akreditasi_id
+
+  if (periodeId) {
+    router.push(`/akreditasi/periode/${periodeId}/pengisian`)
   } else {
     router.push('/akreditasi/pengisian')
   }
