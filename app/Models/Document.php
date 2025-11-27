@@ -95,7 +95,15 @@ class Document extends Model
      */
     public function getDownloadUrlAttribute(): string
     {
-        return Storage::url($this->file_path);
+        return url("/api/documents/{$this->id}/download");
+    }
+
+    /**
+     * Get view/preview URL
+     */
+    public function getViewUrlAttribute(): string
+    {
+        return url("/api/documents/{$this->id}/view");
     }
 
     /**

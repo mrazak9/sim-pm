@@ -233,6 +233,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Document Routes
     Route::get('documents/my-documents', [DocumentController::class, 'myDocuments']);
     Route::get('documents/shared-with-me', [DocumentController::class, 'sharedWithMe']);
+    Route::get('documents/{id}/download', [DocumentController::class, 'download']);
+    Route::get('documents/{id}/view', [DocumentController::class, 'view']);
     Route::post('documents/{id}/upload-version', [DocumentController::class, 'uploadVersion']);
     Route::post('documents/{documentId}/restore-version/{versionNumber}', [DocumentController::class, 'restoreVersion']);
     Route::post('documents/{id}/update-status', [DocumentController::class, 'updateStatus']);

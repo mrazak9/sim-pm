@@ -7,6 +7,8 @@ use App\Services\DocumentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentController extends Controller
 {
@@ -434,6 +436,101 @@ class DocumentController extends Controller
                 'message' => 'Gagal menghapus permanen dokumen',
                 'error' => $e->getMessage(),
             ], $e->getMessage() === 'Hanya admin yang dapat menghapus permanen dokumen.' ? 403 : 500);
+        }
+    }
+
+    /**
+     * Download document file
+     */
+    public function download(int $id): StreamedResponse|JsonResponse
+    {
+        try {
+            $document = $this->documentService->findById($id);
+
+            if (!$document) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen tidak ditemukan',
+                ], 404);
+            }
+
+            // Check permission
+            $permission = $this->documentService->getPermission($document);
+            if (!in_array($permission, ['download', 'edit'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk mengunduh dokumen ini',
+                ], 403);
+            }
+
+            // Check if file exists
+            if (!Storage::exists($document->file_path)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File tidak ditemukan di storage',
+                ], 404);
+            }
+
+            // Log activity
+            $this->documentService->logActivity($document, 'downloaded');
+
+            // Return file download
+            return Storage::download($document->file_path, $document->file_name);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengunduh dokumen',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * View/preview document file
+     */
+    public function view(int $id): StreamedResponse|JsonResponse
+    {
+        try {
+            $document = $this->documentService->findById($id);
+
+            if (!$document) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen tidak ditemukan',
+                ], 404);
+            }
+
+            // Check permission - view requires at least view permission
+            $permission = $this->documentService->getPermission($document);
+            if (!$permission) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk melihat dokumen ini',
+                ], 403);
+            }
+
+            // Check if file exists
+            if (!Storage::exists($document->file_path)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File tidak ditemukan di storage',
+                ], 404);
+            }
+
+            // Log activity
+            $this->documentService->logActivity($document, 'viewed');
+
+            // Return file for inline viewing
+            return response()->file(Storage::path($document->file_path), [
+                'Content-Type' => $document->mime_type,
+                'Content-Disposition' => 'inline; filename="' . $document->file_name . '"',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menampilkan dokumen',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 }

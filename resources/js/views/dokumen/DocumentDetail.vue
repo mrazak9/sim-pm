@@ -51,6 +51,42 @@
         </div>
       </div>
 
+      <!-- Document Preview -->
+      <div v-if="canPreview" class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
+        <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Preview Dokumen</h2>
+
+        <!-- PDF Preview -->
+        <div v-if="document.file_type === 'pdf'" class="w-full" style="height: 600px;">
+          <iframe
+            :src="document.view_url"
+            class="h-full w-full rounded border border-gray-300 dark:border-gray-600"
+            frameborder="0"
+          ></iframe>
+        </div>
+
+        <!-- Image Preview -->
+        <div v-else-if="isImageType" class="flex justify-center">
+          <img
+            :src="document.view_url"
+            :alt="document.title"
+            class="max-h-96 rounded border border-gray-300 dark:border-gray-600"
+          />
+        </div>
+
+        <!-- Other file types - show download option -->
+        <div v-else class="rounded-lg border-2 border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            Preview tidak tersedia untuk tipe file ini
+          </p>
+          <p class="mt-1 text-xs text-gray-400">
+            Silakan download untuk melihat file
+          </p>
+        </div>
+      </div>
+
       <!-- Main Content Grid -->
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <!-- Left Column: Document Info & Metadata -->
@@ -326,6 +362,18 @@ const showShareModal = ref(false);
 
 const canEdit = computed(() => {
   return document.value?.user_permission === 'edit';
+});
+
+const canPreview = computed(() => {
+  if (!document.value) return false;
+  const previewableTypes = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+  return previewableTypes.includes(document.value.file_type?.toLowerCase());
+});
+
+const isImageType = computed(() => {
+  if (!document.value) return false;
+  const imageTypes = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+  return imageTypes.includes(document.value.file_type?.toLowerCase());
 });
 
 const availableStatusTransitions = computed(() => {
