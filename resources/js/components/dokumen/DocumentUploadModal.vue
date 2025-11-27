@@ -174,7 +174,7 @@
         </div>
 
         <!-- Retention Until -->
-        <div class="mb-6">
+        <div class="mb-4">
           <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
             Retensi Sampai
           </label>
@@ -183,6 +183,137 @@
             type="date"
             class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           />
+        </div>
+
+        <!-- Share After Upload Section -->
+        <div class="mb-6 rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+          <div class="mb-3 flex items-center">
+            <input
+              v-model="enableSharing"
+              type="checkbox"
+              id="enable-sharing"
+              class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+            />
+            <label for="enable-sharing" class="ml-2 text-sm font-medium text-gray-900 dark:text-white">
+              Bagikan dokumen ini ke user/tim lain setelah upload
+            </label>
+          </div>
+
+          <div v-if="enableSharing" class="space-y-4 border-t border-gray-200 pt-4 dark:border-gray-600">
+            <!-- Users Selection -->
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                Bagikan ke User <span class="text-red-500">*</span>
+              </label>
+              <div class="space-y-2">
+                <!-- Selected Users Display -->
+                <div v-if="shareData.selectedUsers.length > 0" class="flex flex-wrap gap-2">
+                  <span
+                    v-for="userId in shareData.selectedUsers"
+                    :key="userId"
+                    class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                  >
+                    {{ getUserName(userId) }}
+                    <button
+                      type="button"
+                      @click="removeUser(userId)"
+                      class="hover:text-blue-900 dark:hover:text-blue-100"
+                    >
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                </div>
+                <!-- User Selector -->
+                <select
+                  v-model="userToAdd"
+                  @change="addUser"
+                  class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="">+ Tambah User</option>
+                  <option
+                    v-for="user in availableUsers"
+                    :key="user.id"
+                    :value="user.id"
+                    :disabled="shareData.selectedUsers.includes(user.id)"
+                  >
+                    {{ user.name }} ({{ user.email }})
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Permission Level -->
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                Izin Akses <span class="text-red-500">*</span>
+              </label>
+              <div class="space-y-2">
+                <label class="flex items-center">
+                  <input
+                    v-model="shareData.permission"
+                    type="radio"
+                    value="view"
+                    class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span class="ml-2 text-sm text-gray-900 dark:text-white">
+                    <strong>View</strong> - Hanya dapat melihat dokumen
+                  </span>
+                </label>
+                <label class="flex items-center">
+                  <input
+                    v-model="shareData.permission"
+                    type="radio"
+                    value="download"
+                    class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span class="ml-2 text-sm text-gray-900 dark:text-white">
+                    <strong>Download</strong> - Dapat melihat dan mengunduh
+                  </span>
+                </label>
+                <label class="flex items-center">
+                  <input
+                    v-model="shareData.permission"
+                    type="radio"
+                    value="edit"
+                    class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span class="ml-2 text-sm text-gray-900 dark:text-white">
+                    <strong>Edit</strong> - Dapat melihat, mengunduh, dan mengedit
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Expires Date -->
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                Berlaku Sampai
+              </label>
+              <input
+                v-model="shareData.expires_at"
+                type="datetime-local"
+                class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Kosongkan jika tidak ada batas waktu
+              </p>
+            </div>
+
+            <!-- Notes -->
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                Catatan untuk Penerima
+              </label>
+              <textarea
+                v-model="shareData.notes"
+                rows="2"
+                class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                placeholder="Catatan tambahan (opsional)"
+              ></textarea>
+            </div>
+          </div>
         </div>
 
         <!-- Upload Progress -->
@@ -228,7 +359,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 
 const emit = defineEmits(['close', 'uploaded']);
@@ -239,6 +370,9 @@ const uploading = ref(false);
 const uploadProgress = ref(0);
 const errorMessage = ref('');
 const categories = ref([]);
+const users = ref([]);
+const enableSharing = ref(false);
+const userToAdd = ref('');
 
 const formData = ref({
   title: '',
@@ -250,7 +384,37 @@ const formData = ref({
   retention_until: '',
 });
 
+const shareData = ref({
+  selectedUsers: [],
+  permission: 'view',
+  expires_at: '',
+  notes: '',
+});
+
 const fileInput = ref(null);
+
+const availableUsers = computed(() => {
+  return users.value;
+});
+
+const getUserName = (userId) => {
+  const user = users.value.find(u => u.id === userId);
+  return user ? user.name : 'Unknown';
+};
+
+const addUser = () => {
+  if (userToAdd.value && !shareData.value.selectedUsers.includes(userToAdd.value)) {
+    shareData.value.selectedUsers.push(userToAdd.value);
+    userToAdd.value = '';
+  }
+};
+
+const removeUser = (userId) => {
+  const index = shareData.value.selectedUsers.indexOf(userId);
+  if (index > -1) {
+    shareData.value.selectedUsers.splice(index, 1);
+  }
+};
 
 const handleFileSelect = (event) => {
   const file = event.target.files[0];
@@ -292,11 +456,18 @@ const handleSubmit = async () => {
     return;
   }
 
+  // Validate sharing if enabled
+  if (enableSharing.value && shareData.value.selectedUsers.length === 0) {
+    errorMessage.value = 'Silakan pilih minimal 1 user untuk dibagikan';
+    return;
+  }
+
   uploading.value = true;
   errorMessage.value = '';
   uploadProgress.value = 0;
 
   try {
+    // Step 1: Upload document
     const formDataToSend = new FormData();
     formDataToSend.append('file', selectedFile.value);
     formDataToSend.append('title', formData.value.title);
@@ -318,7 +489,7 @@ const handleSubmit = async () => {
       formDataToSend.append('retention_until', formData.value.retention_until);
     }
 
-    const response = await axios.post('/api/documents', formDataToSend, {
+    const uploadResponse = await axios.post('/api/documents', formDataToSend, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -329,12 +500,39 @@ const handleSubmit = async () => {
       },
     });
 
-    if (response.data.success) {
-      emit('uploaded', response.data.data);
+    if (uploadResponse.data.success) {
+      const uploadedDocument = uploadResponse.data.data;
+
+      // Step 2: Share document if enabled
+      if (enableSharing.value && shareData.value.selectedUsers.length > 0) {
+        const sharePromises = shareData.value.selectedUsers.map(userId => {
+          return axios.post(`/api/documents/${uploadedDocument.id}/share`, {
+            user_id: userId,
+            permission: shareData.value.permission,
+            expires_at: shareData.value.expires_at || null,
+            notes: shareData.value.notes || null,
+          });
+        });
+
+        // Wait for all shares to complete
+        await Promise.all(sharePromises);
+      }
+
+      emit('uploaded', uploadedDocument);
     }
   } catch (error) {
-    errorMessage.value = error.response?.data?.message || 'Gagal mengupload dokumen';
     console.error('Upload error:', error);
+    console.error('Error response:', error.response);
+    console.error('Error data:', error.response?.data);
+
+    if (error.response?.data?.errors) {
+      // Validation errors
+      const errors = error.response.data.errors;
+      const errorMessages = Object.values(errors).flat().join(', ');
+      errorMessage.value = errorMessages;
+    } else {
+      errorMessage.value = error.response?.data?.message || 'Gagal mengupload dokumen';
+    }
   } finally {
     uploading.value = false;
   }
@@ -361,7 +559,19 @@ const fetchCategories = async () => {
   }
 };
 
+const fetchUsers = async () => {
+  try {
+    const response = await axios.get('/api/users');
+    if (response.data.success) {
+      users.value = response.data.data;
+    }
+  } catch (error) {
+    console.error('Failed to fetch users:', error);
+  }
+};
+
 onMounted(() => {
   fetchCategories();
+  fetchUsers();
 });
 </script>

@@ -61,7 +61,7 @@
               >
                 <option value="">Pilih Tahun Akademik</option>
                 <option v-for="ta in tahunAkademiks" :key="ta.id" :value="ta.id">
-                  {{ ta.nama }} ({{ ta.tahun_mulai }}/{{ ta.tahun_selesai }})
+                  {{ ta.nama_tahun }} - {{ ta.semester_label }}
                 </option>
               </select>
             </div>

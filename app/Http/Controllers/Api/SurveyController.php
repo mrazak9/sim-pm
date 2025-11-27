@@ -9,7 +9,6 @@ use App\Http\Resources\Survey\SurveyResource;
 use App\Services\SurveyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Exception;
 
 class SurveyController extends Controller
@@ -22,9 +21,9 @@ class SurveyController extends Controller
      * Display a listing of surveys.
      *
      * @param Request $request
-     * @return AnonymousResourceCollection
+     * @return JsonResponse
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         $filters = $request->only([
             'search',
@@ -39,7 +38,18 @@ class SurveyController extends Controller
         $perPage = $request->input('per_page', 15);
         $surveys = $this->service->getAllPaginated($filters, $perPage);
 
-        return SurveyResource::collection($surveys);
+        return response()->json([
+            'success' => true,
+            'data' => SurveyResource::collection($surveys)->resolve(),
+            'meta' => [
+                'current_page' => $surveys->currentPage(),
+                'from' => $surveys->firstItem(),
+                'last_page' => $surveys->lastPage(),
+                'per_page' => $surveys->perPage(),
+                'to' => $surveys->lastItem(),
+                'total' => $surveys->total(),
+            ],
+        ]);
     }
 
     /**

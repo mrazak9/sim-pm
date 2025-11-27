@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\IKUController;
 use App\Http\Controllers\Api\IKUTargetController;
 use App\Http\Controllers\Api\IKUProgressController;
 use App\Http\Controllers\Api\PeriodeAkreditasiController;
+use App\Http\Controllers\Api\InstrumenAkreditasiController;
 use App\Http\Controllers\Api\ButirAkreditasiController;
 use App\Http\Controllers\Api\ButirTemplateController;
 use App\Http\Controllers\Api\PengisianButirController;
@@ -139,7 +140,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Akreditasi Module Routes
 
     // Instrumen Akreditasi Routes
-    Route::get('instrumen-akreditasi', [InstrumenAkreditasiController::class, 'index']);
+    Route::get('instrumen-akreditasi/active', [InstrumenAkreditasiController::class, 'active']);
+    Route::get('instrumen-akreditasi/statistics', [InstrumenAkreditasiController::class, 'statistics']);
+    Route::post('instrumen-akreditasi/{id}/toggle-active', [InstrumenAkreditasiController::class, 'toggleActive']);
+    Route::apiResource('instrumen-akreditasi', InstrumenAkreditasiController::class);
 
     // Periode Akreditasi Routes
     Route::get('periode-akreditasi/{id}/dashboard', [PeriodeAkreditasiController::class, 'dashboard']);

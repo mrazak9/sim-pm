@@ -189,21 +189,30 @@
           </h4>
 
           <div class="space-y-3">
-            <button class="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors">
+            <button
+              @click="handleTambahDokumen"
+              class="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+            >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               Tambah Dokumen
             </button>
 
-            <button class="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium transition-colors">
+            <button
+              @click="handleBuatAudit"
+              class="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium transition-colors"
+            >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
               Buat Audit
             </button>
 
-            <button class="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium transition-colors">
+            <button
+              @click="handleLihatLaporan"
+              class="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium transition-colors"
+            >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
@@ -272,12 +281,15 @@
 
 <script setup>
 import { h, ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import MainLayout from '@/layouts/MainLayout.vue';
 import MetricCard from '@/components/dashboard/MetricCard.vue';
 import DoughnutChart from '@/components/charts/DoughnutChart.vue';
 import PieChart from '@/components/charts/PieChart.vue';
 import BarChart from '@/components/charts/BarChart.vue';
 import axios from 'axios';
+
+const router = useRouter();
 
 // Metrics data
 const metrics = ref({
@@ -410,6 +422,19 @@ const fetchDashboardSummary = async () => {
 onMounted(() => {
   fetchDashboardSummary();
 });
+
+// Quick Actions handlers
+const handleTambahDokumen = () => {
+  router.push('/dokumen');
+};
+
+const handleBuatAudit = () => {
+  router.push('/audit/plans');
+};
+
+const handleLihatLaporan = () => {
+  router.push('/akreditasi/periode');
+ };
 
 // Icon components as functions
 const DocumentIcon = () => h('svg', {

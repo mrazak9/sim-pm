@@ -141,6 +141,9 @@ class DocumentService
                 'version_number' => 1,
                 'file_name' => $file->getClientOriginalName(),
                 'file_path' => $path,
+                'file_type' => $file->getClientOriginalExtension(),
+                'mime_type' => $file->getMimeType(),
+                'file_size' => $file->getSize(),
                 'change_notes' => 'Initial upload',
             ]);
 
@@ -217,6 +220,9 @@ class DocumentService
                 'version_number' => $newVersion,
                 'file_name' => $file->getClientOriginalName(),
                 'file_path' => $path,
+                'file_type' => $file->getClientOriginalExtension(),
+                'mime_type' => $file->getMimeType(),
+                'file_size' => $file->getSize(),
                 'change_notes' => $changeNotes ?? "Version $newVersion",
             ]);
 
@@ -271,6 +277,9 @@ class DocumentService
                 'version_number' => $newVersion,
                 'file_name' => $version->file_name,
                 'file_path' => $newPath,
+                'file_type' => $version->file_type,
+                'mime_type' => $version->mime_type,
+                'file_size' => $version->file_size,
                 'change_notes' => "Restored from version $versionNumber",
             ]);
 

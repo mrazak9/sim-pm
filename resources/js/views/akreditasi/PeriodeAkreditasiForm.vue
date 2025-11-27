@@ -103,7 +103,7 @@
           >
             <option value="">{{ loadingProdi ? 'Memuat...' : 'Pilih Program Studi' }}</option>
             <option v-for="prodi in prodiList" :key="prodi.id" :value="prodi.id">
-              {{ prodi.nama }} ({{ prodi.jenjang }})
+              {{ prodi.nama_prodi }} ({{ prodi.jenjang }})
             </option>
           </select>
           <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -354,7 +354,7 @@ const loadInstrumen = async () => {
 const loadProdi = async () => {
   loadingProdi.value = true
   try {
-    const response = await axios.get('/api/program-studi')
+    const response = await axios.get('/api/program-studi/active')
     if (response.data.success) {
       prodiList.value = response.data.data
     }

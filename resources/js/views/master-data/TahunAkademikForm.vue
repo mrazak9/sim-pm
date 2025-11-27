@@ -11,20 +11,39 @@
       <!-- Form -->
       <form @submit.prevent="submitForm" class="p-6">
         <div class="space-y-6">
-          <!-- Tahun -->
+          <!-- Kode Tahun -->
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              Tahun Akademik <span class="text-red-600">*</span>
+              Kode Tahun <span class="text-red-600">*</span>
             </label>
             <input
-              v-model="form.tahun"
+              v-model="form.kode_tahun"
+              type="text"
+              placeholder="Contoh: TA-2024-2025"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+              :class="{ 'border-red-600': errors.kode_tahun }"
+              required
+            />
+            <p v-if="errors.kode_tahun" class="mt-1 text-sm text-red-600">{{ errors.kode_tahun[0] }}</p>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Kode unik untuk tahun akademik
+            </p>
+          </div>
+
+          <!-- Nama Tahun -->
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+              Nama Tahun Akademik <span class="text-red-600">*</span>
+            </label>
+            <input
+              v-model="form.nama_tahun"
               type="text"
               placeholder="Contoh: 2024/2025"
               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-              :class="{ 'border-red-600': errors.tahun }"
+              :class="{ 'border-red-600': errors.nama_tahun }"
               required
             />
-            <p v-if="errors.tahun" class="mt-1 text-sm text-red-600">{{ errors.tahun[0] }}</p>
+            <p v-if="errors.nama_tahun" class="mt-1 text-sm text-red-600">{{ errors.nama_tahun[0] }}</p>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Format: YYYY/YYYY (contoh: 2024/2025)
             </p>
@@ -44,7 +63,6 @@
               <option value="">Pilih Semester</option>
               <option value="ganjil">Ganjil</option>
               <option value="genap">Genap</option>
-              <option value="pendek">Pendek</option>
             </select>
             <p v-if="errors.semester" class="mt-1 text-sm text-red-600">{{ errors.semester[0] }}</p>
           </div>
@@ -155,7 +173,8 @@ const isEdit = ref(false);
 const tahunAkademikId = ref(null);
 
 const form = ref({
-  tahun: '',
+  kode_tahun: '',
+  nama_tahun: '',
   semester: '',
   tanggal_mulai: '',
   tanggal_selesai: '',
@@ -173,7 +192,8 @@ const fetchTahunAkademik = async () => {
     const data = response.data;
 
     form.value = {
-      tahun: data.nama_tahun || data.tahun,
+      kode_tahun: data.kode_tahun,
+      nama_tahun: data.nama_tahun,
       semester: data.semester,
       tanggal_mulai: data.tanggal_mulai,
       tanggal_selesai: data.tanggal_selesai,
