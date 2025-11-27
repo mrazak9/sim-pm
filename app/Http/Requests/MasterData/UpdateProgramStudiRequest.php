@@ -21,7 +21,8 @@ class UpdateProgramStudiRequest extends FormRequest
      */
     public function rules(): array
     {
-        $id = $this->route('id');
+        // Get ID from route parameter (apiResource uses singular form with underscore)
+        $id = $this->route('program_studi');
 
         return [
             'kode_prodi' => 'required|string|max:20|unique:program_studis,kode_prodi,' . $id,
