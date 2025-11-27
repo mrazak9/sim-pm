@@ -176,16 +176,15 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
                   </button>
-                  <a
-                    :href="doc.download_url"
-                    target="_blank"
+                  <button
+                    @click="downloadDocument(doc)"
                     class="text-green-600 hover:text-green-700 dark:text-green-400"
                     title="Download"
                   >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                  </a>
+                  </button>
                   <button
                     v-if="canEdit(doc)"
                     @click="shareDocument(doc)"
@@ -410,6 +409,26 @@ const confirmDelete = async (doc) => {
     } catch (error) {
       alert('Gagal menghapus dokumen: ' + (error.response?.data?.message || error.message));
     }
+  }
+};
+
+const downloadDocument = async (doc) => {
+  try {
+    const response = await axios.get(`/api/documents/${doc.id}/download`, {
+      responseType: 'blob'
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = window.document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', doc.file_name);
+    window.document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Download error:', error);
+    alert('Gagal mengunduh dokumen: ' + (error.response?.data?.message || error.message));
   }
 };
 

@@ -216,7 +216,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import MainLayout from '@/layouts/MainLayout.vue';
+import { useToast } from '@/composables/useToast';
 import axios from 'axios';
+
+const { success, error } = useToast();
 
 const categories = ref([]);
 const loading = ref(false);
@@ -240,9 +243,9 @@ const fetchCategories = async () => {
         originalData: null
       }));
     }
-  } catch (error) {
-    console.error('Failed to fetch categories:', error);
-    alert('Gagal memuat kategori');
+  } catch (err) {
+    console.error('Failed to fetch categories:', err);
+    error('Gagal memuat kategori');
   } finally {
     loading.value = false;
   }
@@ -299,7 +302,7 @@ const cancelEdit = (category) => {
 const saveCategory = async (category) => {
   // Validation
   if (!category.name || !category.code) {
-    alert('Nama dan Kode harus diisi');
+    error('Nama dan Kode harus diisi');
     return;
   }
 
@@ -324,12 +327,12 @@ const saveCategory = async (category) => {
     }
 
     if (response.data.success) {
-      alert(category.isNew ? 'Kategori berhasil ditambahkan' : 'Kategori berhasil diupdate');
+      success(category.isNew ? 'Kategori berhasil ditambahkan' : 'Kategori berhasil diupdate');
       await fetchCategories();
     }
-  } catch (error) {
-    console.error('Save error:', error);
-    alert('Gagal menyimpan kategori: ' + (error.response?.data?.message || error.message));
+  } catch (err) {
+    console.error('Save error:', err);
+    error('Gagal menyimpan kategori: ' + (err.response?.data?.message || err.message));
   } finally {
     saving.value = false;
   }
@@ -343,12 +346,12 @@ const confirmDelete = async (category) => {
   try {
     const response = await axios.delete(`/api/document-categories/${category.id}`);
     if (response.data.success) {
-      alert('Kategori berhasil dihapus');
+      success('Kategori berhasil dihapus');
       await fetchCategories();
     }
-  } catch (error) {
-    console.error('Delete error:', error);
-    alert('Gagal menghapus kategori: ' + (error.response?.data?.message || error.message));
+  } catch (err) {
+    console.error('Delete error:', err);
+    error('Gagal menghapus kategori: ' + (err.response?.data?.message || err.message));
   }
 };
 

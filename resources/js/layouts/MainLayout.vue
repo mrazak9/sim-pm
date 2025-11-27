@@ -31,12 +31,16 @@
         </div>
       </main>
     </div>
+
+    <!-- Toast Container -->
+    <ToastContainer />
   </div>
 </template>
 
 <script setup>
 import Sidebar from '@/components/layout/Sidebar.vue';
 import Header from '@/components/layout/Header.vue';
+import ToastContainer from '@/components/ToastContainer.vue';
 import { useSidebar } from '@/composables/useSidebar';
 
 const { sidebarExpanded, sidebarMobileOpen, closeMobileSidebar } = useSidebar();
