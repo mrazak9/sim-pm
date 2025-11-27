@@ -92,7 +92,7 @@
               >
                 <option :value="null">Tidak ada parent</option>
                 <option v-for="uk in parentOptions" :key="uk.id" :value="uk.id">
-                  {{ uk.nama }}
+                  {{ uk.nama_unit || uk.nama }}
                 </option>
               </select>
               <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
