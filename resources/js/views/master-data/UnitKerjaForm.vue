@@ -21,10 +21,12 @@
               type="text"
               placeholder="Contoh: UK-001"
               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-              :class="{ 'border-red-600': errors.kode }"
+              :class="{ 'border-red-600': errors.kode || errors.kode_unit }"
               required
             />
-            <p v-if="errors.kode" class="mt-1 text-sm text-red-600">{{ errors.kode[0] }}</p>
+            <p v-if="errors.kode || errors.kode_unit" class="mt-1 text-sm text-red-600">
+              {{ errors.kode?.[0] || errors.kode_unit?.[0] }}
+            </p>
           </div>
 
           <!-- Nama -->
@@ -37,10 +39,12 @@
               type="text"
               placeholder="Nama lengkap unit kerja"
               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-              :class="{ 'border-red-600': errors.nama }"
+              :class="{ 'border-red-600': errors.nama || errors.nama_unit }"
               required
             />
-            <p v-if="errors.nama" class="mt-1 text-sm text-red-600">{{ errors.nama[0] }}</p>
+            <p v-if="errors.nama || errors.nama_unit" class="mt-1 text-sm text-red-600">
+              {{ errors.nama?.[0] || errors.nama_unit?.[0] }}
+            </p>
           </div>
 
           <!-- Nama Singkat -->
@@ -65,21 +69,18 @@
               <select
                 v-model="form.jenis"
                 class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
-                :class="{ 'border-red-600': errors.jenis }"
+                :class="{ 'border-red-600': errors.jenis || errors.jenis_unit }"
                 required
               >
                 <option value="">Pilih Jenis</option>
-                <option value="universitas">Universitas</option>
                 <option value="fakultas">Fakultas</option>
-                <option value="jurusan">Jurusan</option>
-                <option value="prodi">Program Studi</option>
-                <option value="unit_pendukung">Unit Pendukung</option>
+                <option value="program_studi">Program Studi</option>
                 <option value="lembaga">Lembaga</option>
-                <option value="biro">Biro</option>
-                <option value="pusat">Pusat</option>
-                <option value="laboratorium">Laboratorium</option>
+                <option value="unit_pendukung">Unit Pendukung</option>
               </select>
-              <p v-if="errors.jenis" class="mt-1 text-sm text-red-600">{{ errors.jenis[0] }}</p>
+              <p v-if="errors.jenis || errors.jenis_unit" class="mt-1 text-sm text-red-600">
+                {{ errors.jenis?.[0] || errors.jenis_unit?.[0] }}
+              </p>
             </div>
 
             <div>
@@ -290,10 +291,25 @@ const submitForm = async () => {
   errors.value = {};
 
   try {
+    // Transform form data to match API expectations
+    const payload = {
+      kode_unit: form.value.kode,
+      nama_unit: form.value.nama,
+      nama_singkat: form.value.nama_singkat,
+      jenis_unit: form.value.jenis,
+      parent_id: form.value.parent_id,
+      deskripsi: form.value.deskripsi,
+      email: form.value.email,
+      telepon: form.value.telepon,
+      alamat: form.value.alamat,
+      website: form.value.website,
+      is_active: form.value.is_active,
+    };
+
     if (isEdit.value) {
-      await updateUnitKerja(unitKerjaId.value, form.value);
+      await updateUnitKerja(unitKerjaId.value, payload);
     } else {
-      await createUnitKerja(form.value);
+      await createUnitKerja(payload);
     }
 
     router.push({ name: 'unit-kerja-list' });
