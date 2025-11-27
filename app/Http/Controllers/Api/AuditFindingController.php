@@ -9,7 +9,6 @@ use App\Http\Resources\Audit\AuditFindingResource;
 use App\Services\AuditFindingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Exception;
 
 class AuditFindingController extends Controller
@@ -21,7 +20,7 @@ class AuditFindingController extends Controller
     /**
      * Display a listing of findings.
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         $filters = $request->only([
             'audit_schedule_id',
@@ -39,7 +38,18 @@ class AuditFindingController extends Controller
         $perPage = $request->input('per_page', 15);
         $findings = $this->service->getAllPaginated($filters, $perPage);
 
-        return AuditFindingResource::collection($findings);
+        return response()->json([
+            'success' => true,
+            'data' => AuditFindingResource::collection($findings),
+            'meta' => [
+                'current_page' => $findings->currentPage(),
+                'last_page' => $findings->lastPage(),
+                'per_page' => $findings->perPage(),
+                'total' => $findings->total(),
+                'from' => $findings->firstItem(),
+                'to' => $findings->lastItem(),
+            ],
+        ]);
     }
 
     /**
@@ -218,19 +228,25 @@ class AuditFindingController extends Controller
     /**
      * Get overdue findings.
      */
-    public function overdue(): AnonymousResourceCollection
+    public function overdue(): JsonResponse
     {
         $findings = $this->service->getOverdue();
-        return AuditFindingResource::collection($findings);
+        return response()->json([
+            'success' => true,
+            'data' => AuditFindingResource::collection($findings),
+        ]);
     }
 
     /**
      * Get findings needing attention.
      */
-    public function needingAttention(): AnonymousResourceCollection
+    public function needingAttention(): JsonResponse
     {
         $findings = $this->service->getNeedingAttention();
-        return AuditFindingResource::collection($findings);
+        return response()->json([
+            'success' => true,
+            'data' => AuditFindingResource::collection($findings),
+        ]);
     }
 
     /**

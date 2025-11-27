@@ -116,11 +116,11 @@
             </tr>
             <tr v-else v-for="rtl in rtls" :key="rtl.id" class="border-b border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
               <td class="px-6 py-4">
-                <p class="font-medium text-gray-900 dark:text-white">{{ rtl.code || '-' }}</p>
+                <p class="font-medium text-gray-900 dark:text-white">{{ rtl.rtl_code || '-' }}</p>
               </td>
               <td class="px-6 py-4">
                 <p class="text-sm text-gray-900 dark:text-white line-clamp-1">
-                  {{ rtl.audit_finding?.title || '-' }}
+                  {{ rtl.audit_finding?.description || rtl.audit_finding?.finding_code || '-' }}
                 </p>
               </td>
               <td class="px-6 py-4">

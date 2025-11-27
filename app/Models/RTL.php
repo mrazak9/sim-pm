@@ -100,7 +100,7 @@ class RTL extends Model
      */
     public function progressUpdates(): HasMany
     {
-        return $this->hasMany(RTLProgress::class);
+        return $this->hasMany(RTLProgress::class, 'rtl_id');
     }
 
     /**
@@ -108,7 +108,7 @@ class RTL extends Model
      */
     public function latestProgress()
     {
-        return $this->hasOne(RTLProgress::class)->latestOfMany('progress_date');
+        return $this->hasOne(RTLProgress::class, 'rtl_id')->latestOfMany('progress_date');
     }
 
     /**

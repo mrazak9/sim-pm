@@ -9,7 +9,6 @@ use App\Http\Resources\Audit\AuditPlanResource;
 use App\Services\AuditPlanService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Exception;
 
 class AuditPlanController extends Controller
@@ -21,7 +20,7 @@ class AuditPlanController extends Controller
     /**
      * Display a listing of audit plans.
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         $filters = $request->only([
             'tahun_akademik_id',
@@ -36,7 +35,18 @@ class AuditPlanController extends Controller
         $perPage = $request->input('per_page', 15);
         $auditPlans = $this->service->getAllPaginated($filters, $perPage);
 
-        return AuditPlanResource::collection($auditPlans);
+        return response()->json([
+            'success' => true,
+            'data' => AuditPlanResource::collection($auditPlans),
+            'meta' => [
+                'current_page' => $auditPlans->currentPage(),
+                'last_page' => $auditPlans->lastPage(),
+                'per_page' => $auditPlans->perPage(),
+                'total' => $auditPlans->total(),
+                'from' => $auditPlans->firstItem(),
+                'to' => $auditPlans->lastItem(),
+            ],
+        ]);
     }
 
     /**

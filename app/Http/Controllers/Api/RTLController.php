@@ -9,7 +9,6 @@ use App\Http\Resources\Audit\RTLResource;
 use App\Services\RTLService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Exception;
 
 class RTLController extends Controller
@@ -21,7 +20,7 @@ class RTLController extends Controller
     /**
      * Display a listing of RTLs.
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         $filters = $request->only([
             'audit_finding_id',
@@ -43,7 +42,18 @@ class RTLController extends Controller
         $perPage = $request->input('per_page', 15);
         $rtls = $this->service->getAllPaginated($filters, $perPage);
 
-        return RTLResource::collection($rtls);
+        return response()->json([
+            'success' => true,
+            'data' => RTLResource::collection($rtls),
+            'meta' => [
+                'current_page' => $rtls->currentPage(),
+                'last_page' => $rtls->lastPage(),
+                'per_page' => $rtls->perPage(),
+                'total' => $rtls->total(),
+                'from' => $rtls->firstItem(),
+                'to' => $rtls->lastItem(),
+            ],
+        ]);
     }
 
     /**
@@ -226,29 +236,38 @@ class RTLController extends Controller
     /**
      * Get overdue RTLs.
      */
-    public function overdue(): AnonymousResourceCollection
+    public function overdue(): JsonResponse
     {
         $rtls = $this->service->getOverdue();
-        return RTLResource::collection($rtls);
+        return response()->json([
+            'success' => true,
+            'data' => RTLResource::collection($rtls),
+        ]);
     }
 
     /**
      * Get RTLs due soon.
      */
-    public function dueSoon(Request $request): AnonymousResourceCollection
+    public function dueSoon(Request $request): JsonResponse
     {
         $days = $request->input('days', 7);
         $rtls = $this->service->getDueSoon($days);
-        return RTLResource::collection($rtls);
+        return response()->json([
+            'success' => true,
+            'data' => RTLResource::collection($rtls),
+        ]);
     }
 
     /**
      * Get RTLs pending verification.
      */
-    public function pendingVerification(): AnonymousResourceCollection
+    public function pendingVerification(): JsonResponse
     {
         $rtls = $this->service->getPendingVerification();
-        return RTLResource::collection($rtls);
+        return response()->json([
+            'success' => true,
+            'data' => RTLResource::collection($rtls),
+        ]);
     }
 
     /**

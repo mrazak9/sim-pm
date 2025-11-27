@@ -9,7 +9,6 @@ use App\Http\Resources\Audit\AuditScheduleResource;
 use App\Services\AuditScheduleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Exception;
 
 class AuditScheduleController extends Controller
@@ -21,7 +20,7 @@ class AuditScheduleController extends Controller
     /**
      * Display a listing of audit schedules.
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         $filters = $request->only([
             'audit_plan_id',
@@ -38,7 +37,18 @@ class AuditScheduleController extends Controller
         $perPage = $request->input('per_page', 15);
         $schedules = $this->service->getAllPaginated($filters, $perPage);
 
-        return AuditScheduleResource::collection($schedules);
+        return response()->json([
+            'success' => true,
+            'data' => AuditScheduleResource::collection($schedules),
+            'meta' => [
+                'current_page' => $schedules->currentPage(),
+                'last_page' => $schedules->lastPage(),
+                'per_page' => $schedules->perPage(),
+                'total' => $schedules->total(),
+                'from' => $schedules->firstItem(),
+                'to' => $schedules->lastItem(),
+            ],
+        ]);
     }
 
     /**
@@ -196,11 +206,14 @@ class AuditScheduleController extends Controller
     /**
      * Get upcoming schedules.
      */
-    public function upcoming(Request $request): AnonymousResourceCollection
+    public function upcoming(Request $request): JsonResponse
     {
         $days = $request->input('days', 7);
         $schedules = $this->service->getUpcoming($days);
-        return AuditScheduleResource::collection($schedules);
+        return response()->json([
+            'success' => true,
+            'data' => AuditScheduleResource::collection($schedules),
+        ]);
     }
 
     /**

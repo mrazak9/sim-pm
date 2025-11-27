@@ -28,14 +28,18 @@
             </label>
             <select
               v-model="form.audit_finding_id"
+              @change="onAuditFindingChange"
               required
               class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             >
               <option value="">Pilih Temuan Audit</option>
               <option v-for="finding in auditFindings" :key="finding.id" :value="finding.id">
-                {{ finding.code }} - {{ finding.title }}
+                {{ finding.finding_code || 'N/A' }} - {{ finding.description?.substring(0, 100) }}{{ finding.description?.length > 100 ? '...' : '' }}
               </option>
             </select>
+            <p v-if="form.unit_kerja_id" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Unit Kerja: {{ selectedUnitKerjaName }}
+            </p>
           </div>
 
           <!-- Action Plan -->
@@ -71,13 +75,11 @@
             <label class="block text-sm font-medium text-gray-900 dark:text-white">
               Penanggung Jawab (PIC) <span class="text-red-600">*</span>
             </label>
-            <input
+            <UserSelect
               v-model="form.pic_id"
-              type="text"
-              placeholder="ID User (TODO: gunakan user select component)"
-              class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              :required="true"
+              placeholder="Pilih Penanggung Jawab"
             />
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">TODO: Implementasikan user select component yang proper</p>
           </div>
 
           <!-- Target Date -->
@@ -154,12 +156,15 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MainLayout from '@/layouts/MainLayout.vue';
+import UserSelect from '@/components/common/UserSelect.vue';
 import { useAuditApi } from '@/composables/useAuditApi';
+import { useToast } from '@/composables/useToast';
 
 const route = useRoute();
 const router = useRouter();
 
 const { getAuditFindings, getRTL, createRTL, updateRTL, loading } = useAuditApi();
+const { success, error } = useToast();
 
 const isEditMode = computed(() => !!route.params.id);
 
@@ -167,6 +172,7 @@ const auditFindings = ref([]);
 
 const form = ref({
   audit_finding_id: '',
+  unit_kerja_id: '',
   action_plan: '',
   success_indicator: '',
   pic_id: '',
@@ -193,6 +199,7 @@ const fetchRTL = async () => {
       const rtl = response.data;
       form.value = {
         audit_finding_id: rtl.audit_finding_id,
+        unit_kerja_id: rtl.unit_kerja_id,
         action_plan: rtl.action_plan,
         success_indicator: rtl.success_indicator || '',
         pic_id: rtl.pic_id,
@@ -201,12 +208,25 @@ const fetchRTL = async () => {
         risk_level: rtl.risk_level,
       };
     }
-  } catch (error) {
-    console.error('Failed to fetch RTL:', error);
-    alert('Gagal memuat data RTL');
+  } catch (err) {
+    console.error('Failed to fetch RTL:', err);
+    error('Gagal memuat data RTL');
     router.push('/audit/rtls');
   }
 };
+
+const onAuditFindingChange = () => {
+  const selectedFinding = auditFindings.value.find(f => f.id === form.value.audit_finding_id);
+  if (selectedFinding && selectedFinding.unit_kerja_id) {
+    form.value.unit_kerja_id = selectedFinding.unit_kerja_id;
+  }
+};
+
+const selectedUnitKerjaName = computed(() => {
+  if (!form.value.unit_kerja_id) return '';
+  const selectedFinding = auditFindings.value.find(f => f.id === form.value.audit_finding_id);
+  return selectedFinding?.unit_kerja?.nama || '';
+});
 
 const handleSubmit = async () => {
   try {
@@ -215,11 +235,27 @@ const handleSubmit = async () => {
       : await createRTL(form.value);
 
     if (response.success) {
-      alert(isEditMode.value ? 'RTL berhasil diperbarui' : 'RTL berhasil dibuat');
+      success(isEditMode.value ? 'RTL berhasil diperbarui' : 'RTL berhasil dibuat');
       router.push('/audit/rtls');
     }
-  } catch (error) {
-    alert('Gagal menyimpan RTL: ' + (error.response?.data?.message || error.message));
+  } catch (err) {
+    console.error('Error saving RTL:', err);
+
+    let errorMessage = 'Gagal menyimpan RTL';
+
+    if (err.response?.data) {
+      const data = err.response.data;
+      if (data.errors) {
+        const errorList = Object.values(data.errors).flat();
+        errorMessage = errorList.join(', ');
+      } else if (data.message) {
+        errorMessage = data.message;
+      }
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+
+    error(errorMessage, 5000);
   }
 };
 

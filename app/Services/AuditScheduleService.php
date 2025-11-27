@@ -307,13 +307,22 @@ class AuditScheduleService
         $endDateTime = clone $scheduledDateTime;
         $endDateTime->modify("+{$estimatedDuration} minutes");
 
+        $driver = DB::connection()->getDriverName();
+
         $existingSchedule = AuditSchedule::where('auditor_lead_id', $auditorId)
             ->where('status', '!=', 'cancelled')
-            ->where(function ($query) use ($scheduledDateTime, $endDateTime) {
+            ->where(function ($query) use ($scheduledDateTime, $endDateTime, $driver) {
                 $query->whereBetween('scheduled_date', [$scheduledDateTime, $endDateTime])
-                    ->orWhere(function ($q) use ($scheduledDateTime, $endDateTime) {
-                        $q->where('scheduled_date', '<=', $scheduledDateTime)
-                          ->whereRaw('DATE_ADD(scheduled_date, INTERVAL estimated_duration MINUTE) >= ?', [$scheduledDateTime]);
+                    ->orWhere(function ($q) use ($scheduledDateTime, $driver) {
+                        $q->where('scheduled_date', '<=', $scheduledDateTime);
+
+                        // Use database-specific date addition syntax
+                        if ($driver === 'pgsql') {
+                            $q->whereRaw("scheduled_date + (estimated_duration || ' minutes')::interval >= ?", [$scheduledDateTime]);
+                        } else {
+                            // MySQL syntax
+                            $q->whereRaw('DATE_ADD(scheduled_date, INTERVAL estimated_duration MINUTE) >= ?', [$scheduledDateTime]);
+                        }
                     });
             });
 

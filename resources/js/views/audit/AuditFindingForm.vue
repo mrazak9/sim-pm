@@ -28,6 +28,7 @@
             </label>
             <select
               v-model="form.audit_schedule_id"
+              @change="onAuditScheduleChange"
               required
               class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             >
@@ -36,6 +37,9 @@
                 {{ schedule.unit_kerja?.nama }} ({{ formatDate(schedule.scheduled_date) }})
               </option>
             </select>
+            <p v-if="form.unit_kerja_id" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Unit Kerja: {{ selectedUnitKerjaName }}
+            </p>
           </div>
 
           <!-- Category Selection (Radio) -->
@@ -177,19 +181,17 @@
           <!-- Severity -->
           <div>
             <label class="block text-sm font-medium text-gray-900 dark:text-white">
-              Tingkat Keparahan (1-5) <span class="text-red-600">*</span>
+              Tingkat Keparahan <span class="text-red-600">*</span>
             </label>
             <select
-              v-model.number="form.severity"
+              v-model="form.severity"
               required
               class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             >
               <option value="">Pilih Tingkat Keparahan</option>
-              <option value="1">1 - Minimal</option>
-              <option value="2">2 - Rendah</option>
-              <option value="3">3 - Sedang</option>
-              <option value="4">4 - Tinggi</option>
-              <option value="5">5 - Maksimal</option>
+              <option value="low">Rendah</option>
+              <option value="medium">Sedang</option>
+              <option value="high">Tinggi</option>
             </select>
           </div>
         </div>
@@ -225,11 +227,13 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MainLayout from '@/layouts/MainLayout.vue';
 import { useAuditApi } from '@/composables/useAuditApi';
+import { useToast } from '@/composables/useToast';
 
 const route = useRoute();
 const router = useRouter();
 
 const { getAuditSchedules, getAuditFinding, createAuditFinding, updateAuditFinding, loading } = useAuditApi();
+const { success, error } = useToast();
 
 const isEditMode = computed(() => !!route.params.id);
 
@@ -237,6 +241,7 @@ const auditSchedules = ref([]);
 
 const form = ref({
   audit_schedule_id: '',
+  unit_kerja_id: '',
   category: 'major',
   title: '',
   description: '',
@@ -244,7 +249,7 @@ const form = ref({
   root_cause: '',
   recommendation: '',
   priority: 'medium',
-  severity: 3,
+  severity: 'medium',
 });
 
 const fetchAuditSchedules = async () => {
@@ -253,8 +258,9 @@ const fetchAuditSchedules = async () => {
     if (response.success) {
       auditSchedules.value = response.data;
     }
-  } catch (error) {
-    console.error('Failed to fetch audit schedules:', error);
+  } catch (err) {
+    console.error('Failed to fetch audit schedules:', err);
+    error('Gagal memuat daftar jadwal audit');
   }
 };
 
@@ -265,6 +271,7 @@ const fetchAuditFinding = async () => {
       const finding = response.data;
       form.value = {
         audit_schedule_id: finding.audit_schedule_id,
+        unit_kerja_id: finding.unit_kerja_id,
         category: finding.category,
         title: finding.title,
         description: finding.description,
@@ -275,9 +282,9 @@ const fetchAuditFinding = async () => {
         severity: finding.severity,
       };
     }
-  } catch (error) {
-    console.error('Failed to fetch audit finding:', error);
-    alert('Gagal memuat data temuan audit');
+  } catch (err) {
+    console.error('Failed to fetch audit finding:', err);
+    error('Gagal memuat data temuan audit');
     router.push('/audit/findings');
   }
 };
@@ -289,11 +296,41 @@ const handleSubmit = async () => {
       : await createAuditFinding(form.value);
 
     if (response.success) {
-      alert(isEditMode.value ? 'Temuan audit berhasil diperbarui' : 'Temuan audit berhasil dibuat');
+      success(isEditMode.value ? 'Temuan audit berhasil diperbarui' : 'Temuan audit berhasil dibuat');
       router.push('/audit/findings');
+    } else {
+      // Handle case when success is false
+      const errorMsg = response.message || 'Gagal menyimpan temuan audit';
+      error(errorMsg);
     }
-  } catch (error) {
-    alert('Gagal menyimpan temuan audit: ' + (error.response?.data?.message || error.message));
+  } catch (err) {
+    console.error('Error saving audit finding:', err);
+    console.error('Error response:', err.response);
+    console.error('Error response data:', err.response?.data);
+
+    // Extract error message from different possible error structures
+    let errorMessage = 'Gagal menyimpan temuan audit';
+
+    if (err.response?.data) {
+      const data = err.response.data;
+
+      console.log('Parsing error data:', data);
+
+      // Check for validation errors
+      if (data.errors) {
+        const errorList = Object.values(data.errors).flat();
+        errorMessage = errorList.join(', ');
+        console.log('Validation errors:', errorMessage);
+      } else if (data.message) {
+        errorMessage = data.message;
+        console.log('Error message:', errorMessage);
+      }
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+
+    console.log('Final error message to show:', errorMessage);
+    error(errorMessage, 5000); // Show for 5 seconds
   }
 };
 
@@ -308,6 +345,19 @@ const formatDate = (dateString) => {
     minute: '2-digit',
   });
 };
+
+const onAuditScheduleChange = () => {
+  const selectedSchedule = auditSchedules.value.find(s => s.id === form.value.audit_schedule_id);
+  if (selectedSchedule && selectedSchedule.unit_kerja_id) {
+    form.value.unit_kerja_id = selectedSchedule.unit_kerja_id;
+  }
+};
+
+const selectedUnitKerjaName = computed(() => {
+  if (!form.value.unit_kerja_id) return '';
+  const selectedSchedule = auditSchedules.value.find(s => s.id === form.value.audit_schedule_id);
+  return selectedSchedule?.unit_kerja?.nama || '';
+});
 
 onMounted(() => {
   fetchAuditSchedules();

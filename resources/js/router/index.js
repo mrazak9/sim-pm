@@ -374,20 +374,26 @@ const routes = [
   },
   // RTL (Rencana Tindak Lanjut)
   {
-    path: '/audit/rtl',
+    path: '/audit/rtls',
     name: 'rtl-list',
     component: () => import('@/views/audit/RTLList.vue'),
     meta: { requiresAuth: true },
   },
   {
-    path: '/audit/rtl/create',
+    path: '/audit/rtls/create',
     name: 'rtl-create',
     component: () => import('@/views/audit/RTLForm.vue'),
     meta: { requiresAuth: true },
   },
   {
-    path: '/audit/rtl/:id/edit',
+    path: '/audit/rtls/:id/edit',
     name: 'rtl-edit',
+    component: () => import('@/views/audit/RTLForm.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/audit/rtls/:id/progress',
+    name: 'rtl-progress',
     component: () => import('@/views/audit/RTLForm.vue'),
     meta: { requiresAuth: true },
   },

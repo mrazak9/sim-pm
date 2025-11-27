@@ -52,11 +52,11 @@
             <label class="block text-sm font-medium text-gray-900 dark:text-white">
               Auditor Lead <span class="text-red-600">*</span>
             </label>
-            <input v-model="form.auditor_lead_id" type="text"
-              placeholder="ID Auditor (TODO: gunakan user select component)"
-              class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">TODO: Implementasikan user select component yang
-              proper</p>
+            <UserSelect
+              v-model="form.auditor_lead_id"
+              placeholder="Pilih Auditor Lead..."
+              :required="true"
+            />
           </div>
 
           <!-- Scheduled Date -->
@@ -90,11 +90,18 @@
               placeholder="Masukkan catatan jadwal audit"></textarea>
           </div>
 
-          <!-- Auditors (TODO) -->
-          <div class="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
-            <p class="text-sm text-yellow-800 dark:text-yellow-300">
-              <span class="font-medium">TODO:</span> Tambahkan fitur untuk memilih auditor tambahan (array dari user
-              IDs)
+          <!-- Additional Auditors -->
+          <div>
+            <label class="block text-sm font-medium text-gray-900 dark:text-white">
+              Auditor Tambahan
+            </label>
+            <UserSelect
+              v-model="form.auditor_ids"
+              :multiple="true"
+              placeholder="Pilih auditor tambahan..."
+            />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Pilih satu atau lebih auditor tambahan untuk membantu audit ini
             </p>
           </div>
         </div>
@@ -125,6 +132,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MainLayout from '@/layouts/MainLayout.vue';
+import UserSelect from '@/components/common/UserSelect.vue';
 import { useAuditApi } from '@/composables/useAuditApi';
 import { useMasterDataApi } from '@/composables/useMasterDataApi';
 
@@ -143,6 +151,7 @@ const form = ref({
   audit_plan_id: '',
   unit_kerja_id: '',
   auditor_lead_id: '',
+  auditor_ids: [],
   scheduled_date: '',
   estimated_duration: 120,
   notes: '',
@@ -183,6 +192,7 @@ const fetchAuditSchedule = async () => {
         audit_plan_id: schedule.audit_plan_id,
         unit_kerja_id: schedule.unit_kerja_id,
         auditor_lead_id: schedule.auditor_lead_id,
+        auditor_ids: schedule.auditors ? schedule.auditors.map(a => a.id) : [],
         scheduled_date: schedule.scheduled_date,
         estimated_duration: schedule.estimated_duration,
         notes: schedule.notes || '',

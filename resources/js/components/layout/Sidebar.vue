@@ -343,11 +343,11 @@
           <!-- RTL -->
           <li>
             <router-link
-              to="/audit/rtl"
+              to="/audit/rtls"
               @click="closeMobileSidebar"
               :class="[
                 'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
-                $route.path.startsWith('/audit/rtl')
+                $route.path.startsWith('/audit/rtls')
                   ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
               ]"
