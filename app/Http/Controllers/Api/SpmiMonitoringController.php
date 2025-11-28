@@ -9,7 +9,6 @@ use App\Http\Resources\SPMI\SpmiMonitoringResource;
 use App\Services\SpmiMonitoringService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Exception;
 
 class SpmiMonitoringController extends Controller
@@ -21,13 +20,15 @@ class SpmiMonitoringController extends Controller
     /**
      * Display a listing of SPMI monitoring records.
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         $filters = $request->only([
             'search',
             'spmi_standard_id',
             'tahun_akademik_id',
             'status',
+            'monitoring_type',
+            'unit_kerja_id',
             'order_by',
             'order_dir'
         ]);
@@ -35,7 +36,18 @@ class SpmiMonitoringController extends Controller
         $perPage = $request->input('per_page', 15);
         $monitorings = $this->service->getAllPaginated($filters, $perPage);
 
-        return SpmiMonitoringResource::collection($monitorings);
+        return response()->json([
+            'success' => true,
+            'data' => SpmiMonitoringResource::collection($monitorings)->resolve(),
+            'meta' => [
+                'current_page' => $monitorings->currentPage(),
+                'last_page' => $monitorings->lastPage(),
+                'per_page' => $monitorings->perPage(),
+                'total' => $monitorings->total(),
+                'from' => $monitorings->firstItem(),
+                'to' => $monitorings->lastItem(),
+            ],
+        ]);
     }
 
     /**

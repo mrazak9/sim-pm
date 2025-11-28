@@ -76,7 +76,7 @@
             >
               <option value="">Semua Tahun Akademik</option>
               <option v-for="ta in tahunAkademiks" :key="ta.id" :value="ta.id">
-                {{ ta.nama }} ({{ ta.tahun_mulai }}/{{ ta.tahun_selesai }})
+                {{ ta.nama_tahun }} - {{ ta.semester_label }}
               </option>
             </select>
           </div>
@@ -137,10 +137,10 @@
                 </p>
               </td>
               <td class="px-6 py-4 text-gray-900 dark:text-white">
-                {{ rtm.chairman_id || '-' }}
+                {{ rtm.chairman?.name || '-' }}
               </td>
               <td class="px-6 py-4 text-gray-900 dark:text-white">
-                {{ rtm.secretary_id || '-' }}
+                {{ rtm.secretary?.name || '-' }}
               </td>
               <td class="px-6 py-4 text-gray-900 dark:text-white">
                 {{ rtm.participants_count || 0 }}
@@ -253,9 +253,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import MainLayout from '@/layouts/MainLayout.vue';
 import { useSPMIApi } from '@/composables/useSPMIApi';
 import { useMasterDataApi } from '@/composables/useMasterDataApi';
+import { useToast } from '@/composables/useToast';
+
+const router = useRouter();
+const { success, error } = useToast();
 
 const { getRTMs, getRTMStatistics, deleteRTM, startRTM: startRTM_action, completeRTM: completeRTM_action, cancelRTM: cancelRTM_action, loading } = useSPMIApi();
 const { getTahunAkademiks } = useMasterDataApi();
@@ -360,12 +365,13 @@ const startRTM = async (rtm) => {
     try {
       const response = await startRTM_action(rtm.id);
       if (response.success) {
-        alert('RTM berhasil dimulai');
+        success('RTM berhasil dimulai');
         fetchRTMs(pagination.value.current_page);
         fetchStatistics();
       }
-    } catch (error) {
-      alert('Gagal memulai RTM: ' + (error.response?.data?.message || error.message));
+    } catch (err) {
+      console.error('Failed to start RTM:', err);
+      error('Gagal memulai RTM: ' + (err.response?.data?.message || err.message));
     }
   }
 };
@@ -375,12 +381,13 @@ const completeRTM = async (rtm) => {
     try {
       const response = await completeRTM_action(rtm.id, {});
       if (response.success) {
-        alert('RTM berhasil diselesaikan');
+        success('RTM berhasil diselesaikan');
         fetchRTMs(pagination.value.current_page);
         fetchStatistics();
       }
-    } catch (error) {
-      alert('Gagal menyelesaikan RTM: ' + (error.response?.data?.message || error.message));
+    } catch (err) {
+      console.error('Failed to complete RTM:', err);
+      error('Gagal menyelesaikan RTM: ' + (err.response?.data?.message || err.message));
     }
   }
 };
@@ -390,12 +397,13 @@ const cancelRTM = async (rtm) => {
     try {
       const response = await cancelRTM_action(rtm.id, {});
       if (response.success) {
-        alert('RTM berhasil dibatalkan');
+        success('RTM berhasil dibatalkan');
         fetchRTMs(pagination.value.current_page);
         fetchStatistics();
       }
-    } catch (error) {
-      alert('Gagal membatalkan RTM: ' + (error.response?.data?.message || error.message));
+    } catch (err) {
+      console.error('Failed to cancel RTM:', err);
+      error('Gagal membatalkan RTM: ' + (err.response?.data?.message || err.message));
     }
   }
 };
@@ -405,12 +413,13 @@ const confirmDelete = async (rtm) => {
     try {
       const response = await deleteRTM(rtm.id);
       if (response.success) {
-        alert('RTM berhasil dihapus');
+        success('RTM berhasil dihapus');
         fetchRTMs(pagination.value.current_page);
         fetchStatistics();
       }
-    } catch (error) {
-      alert('Gagal menghapus RTM: ' + (error.response?.data?.message || error.message));
+    } catch (err) {
+      console.error('Failed to delete RTM:', err);
+      error('Gagal menghapus RTM: ' + (err.response?.data?.message || err.message));
     }
   }
 };

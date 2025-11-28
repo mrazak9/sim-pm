@@ -65,12 +65,22 @@ class RTMService
             // Set status
             $data['status'] = $data['status'] ?? 'planned';
 
+            // Extract participants before creating RTM
+            $participants = $data['participants'] ?? [];
+            Log::info('RTM Create - Participants data', ['participants' => $participants]);
+            unset($data['participants']);
+
             $rtm = $this->repository->create($data);
+
+            // Sync participants if provided
+            if (!empty($participants)) {
+                $this->syncParticipants($rtm->id, $participants);
+            }
 
             DB::commit();
             Log::info('RTM created', ['id' => $rtm->id, 'code' => $rtm->rtm_code]);
 
-            return $rtm;
+            return $rtm->fresh(['participants', 'chairman', 'secretary', 'tahunAkademik']);
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Failed to create RTM', ['error' => $e->getMessage()]);
@@ -117,12 +127,21 @@ class RTMService
                 }
             }
 
+            // Extract participants before updating RTM
+            $participants = $data['participants'] ?? null;
+            unset($data['participants']);
+
             $this->repository->update($rtm, $data);
+
+            // Sync participants if provided
+            if ($participants !== null) {
+                $this->syncParticipants($rtm->id, $participants);
+            }
 
             DB::commit();
             Log::info('RTM updated', ['id' => $rtm->id]);
 
-            return $rtm->fresh();
+            return $rtm->fresh(['participants', 'chairman', 'secretary', 'tahunAkademik']);
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Failed to update RTM', ['id' => $id, 'error' => $e->getMessage()]);
@@ -481,5 +500,40 @@ class RTMService
         } catch (Exception $e) {
             throw new Exception('Invalid meeting date format');
         }
+    }
+
+    /**
+     * Sync participants for RTM.
+     */
+    private function syncParticipants(int $rtmId, array $participants): void
+    {
+        $rtm = $this->repository->findById($rtmId);
+
+        if (!$rtm) {
+            throw new Exception('RTM not found');
+        }
+
+        // Prepare sync data
+        $syncData = [];
+        foreach ($participants as $participant) {
+            if (isset($participant['user_id'])) {
+                $syncData[$participant['user_id']] = [
+                    'role' => $participant['role'] ?? 'Peserta',
+                    'is_present' => $participant['attended'] ?? false,
+                    'notes' => $participant['notes'] ?? null,
+                ];
+            }
+        }
+
+        Log::info('RTM Sync Participants', [
+            'rtm_id' => $rtmId,
+            'sync_data' => $syncData,
+            'participants_count' => count($syncData)
+        ]);
+
+        // Sync participants (will add new ones, update existing, and remove ones not in the array)
+        $rtm->participants()->sync($syncData);
+
+        Log::info('RTM Participants synced successfully', ['rtm_id' => $rtmId]);
     }
 }

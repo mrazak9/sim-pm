@@ -9,7 +9,6 @@ use App\Http\Resources\SPMI\SpmiStandardResource;
 use App\Services\SpmiStandardService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Exception;
 
 class SpmiStandardController extends Controller
@@ -21,7 +20,7 @@ class SpmiStandardController extends Controller
     /**
      * Display a listing of SPMI standards.
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         $filters = $request->only([
             'search',
@@ -35,7 +34,18 @@ class SpmiStandardController extends Controller
         $perPage = $request->input('per_page', 15);
         $standards = $this->service->getAllPaginated($filters, $perPage);
 
-        return SpmiStandardResource::collection($standards);
+        return response()->json([
+            'success' => true,
+            'data' => SpmiStandardResource::collection($standards)->resolve(),
+            'meta' => [
+                'current_page' => $standards->currentPage(),
+                'last_page' => $standards->lastPage(),
+                'per_page' => $standards->perPage(),
+                'total' => $standards->total(),
+                'from' => $standards->firstItem(),
+                'to' => $standards->lastItem(),
+            ],
+        ]);
     }
 
     /**
@@ -213,7 +223,7 @@ class SpmiStandardController extends Controller
     /**
      * Get SPMI standards due for review.
      */
-    public function getDueForReview(Request $request): AnonymousResourceCollection
+    public function getDueForReview(Request $request): JsonResponse
     {
         $filters = $request->only([
             'order_by',
@@ -223,6 +233,17 @@ class SpmiStandardController extends Controller
         $perPage = $request->input('per_page', 15);
         $standards = $this->service->getDueForReview($filters, $perPage);
 
-        return SpmiStandardResource::collection($standards);
+        return response()->json([
+            'success' => true,
+            'data' => SpmiStandardResource::collection($standards)->resolve(),
+            'meta' => [
+                'current_page' => $standards->currentPage(),
+                'last_page' => $standards->lastPage(),
+                'per_page' => $standards->perPage(),
+                'total' => $standards->total(),
+                'from' => $standards->firstItem(),
+                'to' => $standards->lastItem(),
+            ],
+        ]);
     }
 }

@@ -394,7 +394,7 @@ const routes = [
   {
     path: '/audit/rtls/:id/progress',
     name: 'rtl-progress',
-    component: () => import('@/views/audit/RTLForm.vue'),
+    component: () => import('@/views/audit/RTLProgressForm.vue'),
     meta: { requiresAuth: true },
   },
   // SPMI Module Routes

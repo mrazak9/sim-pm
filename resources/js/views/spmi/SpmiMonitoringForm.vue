@@ -50,7 +50,7 @@
               >
                 <option value="">Pilih Tahun Akademik</option>
                 <option v-for="ta in tahunAkademiks" :key="ta.id" :value="ta.id">
-                  {{ ta.nama }} ({{ ta.tahun_mulai }}/{{ ta.tahun_selesai }})
+                  {{ ta.nama_tahun }} - {{ ta.semester_label }}
                 </option>
               </select>
             </div>
@@ -129,7 +129,7 @@
               >
                 <option value="">Pilih Unit Kerja</option>
                 <option v-for="unit in unitKerjas" :key="unit.id" :value="unit.id">
-                  {{ unit.nama }}
+                  {{ unit.nama_unit || unit.nama }}
                 </option>
               </select>
             </div>
@@ -138,13 +138,12 @@
               <label class="block text-sm font-medium text-gray-900 dark:text-white">
                 Dimonitor Oleh
               </label>
-              <input
+              <UserSelect
                 v-model="form.monitored_by"
-                type="text"
-                class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                placeholder="TODO: User select"
+                :multiple="false"
+                placeholder="Pilih User"
+                class="mt-1"
               />
-              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">TODO: Integrasi dengan user select</p>
             </div>
           </div>
 
@@ -295,11 +294,14 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MainLayout from '@/layouts/MainLayout.vue';
+import UserSelect from '@/components/common/UserSelect.vue';
 import { useSPMIApi } from '@/composables/useSPMIApi';
 import { useMasterDataApi } from '@/composables/useMasterDataApi';
+import { useToast } from '@/composables/useToast';
 
 const route = useRoute();
 const router = useRouter();
+const { success, error } = useToast();
 
 const { getSPMIMonitoring, createSPMIMonitoring, updateSPMIMonitoring, getSPMIStandards, loading } = useSPMIApi();
 const { getTahunAkademiks, getUnitKerjas } = useMasterDataApi();
@@ -388,9 +390,9 @@ const fetchMonitoring = async () => {
         compliance_score: monitoring.compliance_score,
       };
     }
-  } catch (error) {
-    console.error('Failed to fetch monitoring:', error);
-    alert('Gagal memuat data monitoring');
+  } catch (err) {
+    console.error('Failed to fetch monitoring:', err);
+    error('Gagal memuat data monitoring');
     router.push('/spmi/monitorings');
   }
 };
@@ -402,11 +404,12 @@ const handleSubmit = async () => {
       : await createSPMIMonitoring(form.value);
 
     if (response.success) {
-      alert(isEditMode.value ? 'Monitoring berhasil diperbarui' : 'Monitoring berhasil dibuat');
+      success(isEditMode.value ? 'Monitoring berhasil diperbarui' : 'Monitoring berhasil dibuat');
       router.push('/spmi/monitorings');
     }
-  } catch (error) {
-    alert('Gagal menyimpan monitoring: ' + (error.response?.data?.message || error.message));
+  } catch (err) {
+    console.error('Failed to save monitoring:', err);
+    error('Gagal menyimpan monitoring: ' + (err.response?.data?.message || err.message));
   }
 };
 

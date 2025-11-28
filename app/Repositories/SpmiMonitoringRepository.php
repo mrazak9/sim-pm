@@ -209,9 +209,9 @@ class SpmiMonitoringRepository
     public function getStatistics(): array
     {
         $total = SpmiMonitoring::count();
+        $planned = SpmiMonitoring::where('status', 'planned')->count();
+        $ongoing = SpmiMonitoring::where('status', 'ongoing')->count();
         $completed = SpmiMonitoring::where('status', 'completed')->count();
-        $pending = SpmiMonitoring::where('status', 'pending')->count();
-        $in_progress = SpmiMonitoring::where('status', 'in_progress')->count();
 
         $complianceLevels = SpmiMonitoring::selectRaw('compliance_level, COUNT(*) as count')
             ->whereNotNull('compliance_level')
@@ -232,9 +232,9 @@ class SpmiMonitoringRepository
 
         return [
             'total' => $total,
+            'planned' => $planned,
+            'ongoing' => $ongoing,
             'completed' => $completed,
-            'pending' => $pending,
-            'in_progress' => $in_progress,
             'average_compliance_score' => round($avgComplianceScore, 2),
             'compliance_levels_count' => count($complianceLevels),
             'compliance_levels' => $complianceLevels,

@@ -238,15 +238,17 @@ watch(() => props.modelValue, (newVal) => {
   }
 });
 
-onMounted(() => {
-  fetchUsers();
-
-  // Set initial display value for single select
-  if (!props.multiple && props.modelValue) {
-    const selectedUser = users.value.find(u => u.id === props.modelValue);
+// Watch users list to update display when data is loaded
+watch(() => users.value, (newUsers) => {
+  if (!props.multiple && props.modelValue && newUsers.length > 0) {
+    const selectedUser = newUsers.find(u => u.id === props.modelValue);
     if (selectedUser) {
       searchQuery.value = selectedUser.name;
     }
   }
+});
+
+onMounted(() => {
+  fetchUsers();
 });
 </script>

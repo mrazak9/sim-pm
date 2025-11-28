@@ -26,11 +26,13 @@ class RTMResource extends JsonResource
         return [
             'id' => $this->id,
             'rtm_code' => $this->rtm_code,
+            'code' => $this->rtm_code, // Alias for frontend compatibility
             'title' => $this->title,
             'description' => $this->description,
+            'tahun_akademik_id' => $this->tahun_akademik_id,
             'meeting_date' => $this->meeting_date?->format('Y-m-d'),
-            'start_time' => $this->start_time,
-            'end_time' => $this->end_time,
+            'start_time' => $this->start_time ? substr($this->start_time, 0, 5) : null, // Format to HH:MM
+            'end_time' => $this->end_time ? substr($this->end_time, 0, 5) : null, // Format to HH:MM
             'duration' => $duration,
             'location' => $this->location,
             'agenda' => $this->agenda,
@@ -47,6 +49,7 @@ class RTMResource extends JsonResource
                     'semester' => $this->tahunAkademik->semester,
                 ];
             }),
+            'chairman_id' => $this->chairman_id,
             'chairman' => $this->whenLoaded('chairman', function () {
                 return [
                     'id' => $this->chairman->id,
@@ -54,12 +57,23 @@ class RTMResource extends JsonResource
                     'email' => $this->chairman->email,
                 ];
             }),
+            'secretary_id' => $this->secretary_id,
             'secretary' => $this->whenLoaded('secretary', function () {
                 return [
                     'id' => $this->secretary->id,
                     'name' => $this->secretary->name,
                     'email' => $this->secretary->email,
                 ];
+            }),
+            'participants' => $this->whenLoaded('participants', function () {
+                return $this->participants->map(function ($participant) {
+                    return [
+                        'user_id' => $participant->id,
+                        'user_name' => $participant->name,
+                        'role' => $participant->pivot->role ?? 'Peserta',
+                        'attended' => $participant->pivot->is_present ?? false,
+                    ];
+                });
             }),
             'participants_count' => $this->whenCounted('participants'),
             'action_items_count' => $this->whenCounted('actionItems'),
@@ -77,8 +91,11 @@ class RTMResource extends JsonResource
     private function getStatusLabel(): string
     {
         return match($this->status) {
-            'draft' => 'Draft',
+            'planned' => 'Direncanakan',
+            'ongoing' => 'Berlangsung',
             'completed' => 'Selesai',
+            'cancelled' => 'Dibatalkan',
+            'draft' => 'Draft',
             'published' => 'Dipublikasikan',
             default => $this->status,
         };

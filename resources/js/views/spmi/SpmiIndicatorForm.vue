@@ -34,7 +34,7 @@
               >
                 <option value="">Pilih Standar</option>
                 <option v-for="standard in standards" :key="standard.id" :value="standard.id">
-                  {{ standard.name }}
+                  {{ standard.code }} - {{ standard.name }}
                 </option>
               </select>
             </div>
@@ -161,13 +161,12 @@
               <label class="block text-sm font-medium text-gray-900 dark:text-white">
                 Penanggung Jawab (PIC)
               </label>
-              <input
+              <UserSelect
                 v-model="form.pic_id"
-                type="text"
-                class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                placeholder="TODO: User select"
+                :multiple="false"
+                placeholder="Pilih PIC"
+                class="mt-1"
               />
-              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">TODO: Integrasi dengan user select</p>
             </div>
           </div>
         </div>
@@ -202,10 +201,13 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MainLayout from '@/layouts/MainLayout.vue';
+import UserSelect from '@/components/common/UserSelect.vue';
 import { useSPMIApi } from '@/composables/useSPMIApi';
+import { useToast } from '@/composables/useToast';
 
 const route = useRoute();
 const router = useRouter();
+const { success, error } = useToast();
 
 const { getSPMIIndicator, createSPMIIndicator, updateSPMIIndicator, getSPMIStandards, loading } = useSPMIApi();
 
@@ -232,8 +234,9 @@ const fetchStandards = async () => {
     if (response.success) {
       standards.value = response.data;
     }
-  } catch (error) {
-    console.error('Failed to fetch standards:', error);
+  } catch (err) {
+    console.error('Failed to fetch standards:', err);
+    error('Gagal memuat data standar SPMI');
   }
 };
 
@@ -255,9 +258,9 @@ const fetchIndicator = async () => {
         pic_id: indicator.pic_id || '',
       };
     }
-  } catch (error) {
-    console.error('Failed to fetch indicator:', error);
-    alert('Gagal memuat data indikator');
+  } catch (err) {
+    console.error('Failed to fetch indicator:', err);
+    error('Gagal memuat data indikator');
     router.push('/spmi/indicators');
   }
 };
@@ -269,11 +272,12 @@ const handleSubmit = async () => {
       : await createSPMIIndicator(form.value);
 
     if (response.success) {
-      alert(isEditMode.value ? 'Indikator berhasil diperbarui' : 'Indikator berhasil dibuat');
+      success(isEditMode.value ? 'Indikator berhasil diperbarui' : 'Indikator berhasil dibuat');
       router.push('/spmi/indicators');
     }
-  } catch (error) {
-    alert('Gagal menyimpan indikator: ' + (error.response?.data?.message || error.message));
+  } catch (err) {
+    console.error('Failed to save indicator:', err);
+    error('Gagal menyimpan indikator: ' + (err.response?.data?.message || err.message));
   }
 };
 

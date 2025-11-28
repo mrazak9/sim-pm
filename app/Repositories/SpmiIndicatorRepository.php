@@ -179,9 +179,9 @@ class SpmiIndicatorRepository
             'total' => $total,
             'active' => $active,
             'inactive' => $inactive,
-            'measurement_types_count' => count($measurementTypes),
+            'kuantitatif' => $measurementTypes['kuantitatif'] ?? 0,
+            'kualitatif' => $measurementTypes['kualitatif'] ?? 0,
             'measurement_types' => $measurementTypes,
-            'frequencies_count' => count($frequencies),
             'frequencies' => $frequencies,
         ];
     }

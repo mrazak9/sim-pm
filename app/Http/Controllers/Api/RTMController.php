@@ -21,7 +21,7 @@ class RTMController extends Controller
     /**
      * Display a listing of RTMs.
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         $filters = $request->only([
             'search',
@@ -36,7 +36,18 @@ class RTMController extends Controller
         $perPage = $request->input('per_page', 15);
         $rtms = $this->service->getAllPaginated($filters, $perPage);
 
-        return RTMResource::collection($rtms);
+        return response()->json([
+            'success' => true,
+            'data' => RTMResource::collection($rtms)->resolve(),
+            'meta' => [
+                'current_page' => $rtms->currentPage(),
+                'last_page' => $rtms->lastPage(),
+                'per_page' => $rtms->perPage(),
+                'total' => $rtms->total(),
+                'from' => $rtms->firstItem(),
+                'to' => $rtms->lastItem(),
+            ],
+        ]);
     }
 
     /**

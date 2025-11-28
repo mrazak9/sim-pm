@@ -16,10 +16,9 @@ class RTMRepository
         $query = RTM::with([
             'tahunAkademik',
             'chairman',
-            'secretary',
-            'participants',
-            'actionItems'
-        ]);
+            'secretary'
+        ])
+        ->withCount(['participants', 'actionItems']);
 
         // Apply filters
         if (isset($filters['tahun_akademik_id'])) {
@@ -201,15 +200,23 @@ class RTMRepository
     public function getStatistics(): array
     {
         $total = RTM::count();
-        $completed = RTM::where('status', 'completed')->count();
-        $draft = RTM::where('status', 'draft')->count();
+        $planned = RTM::where('status', 'planned')->count();
         $ongoing = RTM::where('status', 'ongoing')->count();
+        $completed = RTM::where('status', 'completed')->count();
+
+        // RTMs happening this month
+        $upcomingThisMonth = RTM::where('status', '!=', 'completed')
+            ->where('status', '!=', 'cancelled')
+            ->whereYear('meeting_date', now()->year)
+            ->whereMonth('meeting_date', now()->month)
+            ->count();
 
         return [
             'total' => $total,
-            'completed' => $completed,
-            'draft' => $draft,
+            'planned' => $planned,
             'ongoing' => $ongoing,
+            'completed' => $completed,
+            'upcoming_this_month' => $upcomingThisMonth,
             'completion_rate' => $total > 0
                 ? round(($completed / $total) * 100, 2)
                 : 0,
@@ -217,6 +224,7 @@ class RTMRepository
                 ->get()
                 ->sum('action_items_count'),
             'upcoming_7_days' => RTM::where('status', '!=', 'completed')
+                ->where('status', '!=', 'cancelled')
                 ->where('meeting_date', '<=', now()->addDays(7))
                 ->where('meeting_date', '>=', now()->toDateString())
                 ->count(),

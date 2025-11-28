@@ -36,6 +36,10 @@ class StoreRTMRequest extends FormRequest
             'follow_up_plan' => ['nullable', 'string'],
             'chairman_id' => ['required', 'exists:users,id', 'different:secretary_id'],
             'secretary_id' => ['required', 'exists:users,id'],
+            'participants' => ['nullable', 'array'],
+            'participants.*.user_id' => ['required', 'exists:users,id'],
+            'participants.*.role' => ['nullable', 'string'],
+            'participants.*.attended' => ['nullable', 'boolean'],
             'minutes_file' => ['nullable', 'file', 'mimes:pdf,doc,docx'],
             'attendance_file' => ['nullable', 'file', 'mimes:pdf,doc,docx,xlsx,xls'],
         ];

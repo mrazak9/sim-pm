@@ -14,6 +14,13 @@ class RTM extends Model
     use HasFactory, SoftDeletes;
 
     /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'rtms';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
@@ -46,8 +53,6 @@ class RTM extends Model
      */
     protected $casts = [
         'meeting_date' => 'date',
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
     ];
 
     /**
@@ -79,7 +84,7 @@ class RTM extends Model
      */
     public function participants(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'rtm_participants')
+        return $this->belongsToMany(User::class, 'rtm_participants', 'rtm_id', 'user_id')
                     ->withPivot('role', 'is_present', 'notes')
                     ->withTimestamps();
     }

@@ -24,7 +24,7 @@ class UpdateSpmiIndicatorRequest extends FormRequest
     {
         return [
             'spmi_standard_id' => ['sometimes', 'required', 'exists:spmi_standards,id'],
-            'code' => ['sometimes', 'required', 'string', Rule::unique('spmi_indicators', 'code')->ignore($this->route('id'))],
+            'code' => ['sometimes', 'required', 'string', Rule::unique('spmi_indicators', 'code')->ignore($this->route('spmi_indicator'))],
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'measurement_unit' => ['nullable', 'string'],

@@ -80,7 +80,7 @@
               >
                 <option value="">Pilih Unit Kerja</option>
                 <option v-for="unit in unitKerjas" :key="unit.id" :value="unit.id">
-                  {{ unit.nama }}
+                  {{ unit.nama_unit || unit.nama }}
                 </option>
               </select>
             </div>
@@ -211,9 +211,11 @@ import { useRoute, useRouter } from 'vue-router';
 import MainLayout from '@/layouts/MainLayout.vue';
 import { useSPMIApi } from '@/composables/useSPMIApi';
 import { useMasterDataApi } from '@/composables/useMasterDataApi';
+import { useToast } from '@/composables/useToast';
 
 const route = useRoute();
 const router = useRouter();
+const { success, error } = useToast();
 
 const { getSPMIStandard, createSPMIStandard, updateSPMIStandard, loading } = useSPMIApi();
 const { getUnitKerjas } = useMasterDataApi();
@@ -242,8 +244,9 @@ const fetchUnitKerjas = async () => {
     if (response.success) {
       unitKerjas.value = response.data;
     }
-  } catch (error) {
-    console.error('Failed to fetch unit kerjas:', error);
+  } catch (err) {
+    console.error('Failed to fetch unit kerjas:', err);
+    error('Gagal memuat data unit kerja');
   }
 };
 
@@ -266,9 +269,9 @@ const fetchStandard = async () => {
         version: standard.version,
       };
     }
-  } catch (error) {
-    console.error('Failed to fetch standard:', error);
-    alert('Gagal memuat data standar');
+  } catch (err) {
+    console.error('Failed to fetch standard:', err);
+    error('Gagal memuat data standar');
     router.push('/spmi/standards');
   }
 };
@@ -280,11 +283,12 @@ const handleSubmit = async () => {
       : await createSPMIStandard(form.value);
 
     if (response.success) {
-      alert(isEditMode.value ? 'Standar berhasil diperbarui' : 'Standar berhasil dibuat');
+      success(isEditMode.value ? 'Standar berhasil diperbarui' : 'Standar berhasil dibuat');
       router.push('/spmi/standards');
     }
-  } catch (error) {
-    alert('Gagal menyimpan standar: ' + (error.response?.data?.message || error.message));
+  } catch (err) {
+    console.error('Failed to save standard:', err);
+    error('Gagal menyimpan standar: ' + (err.response?.data?.message || err.message));
   }
 };
 

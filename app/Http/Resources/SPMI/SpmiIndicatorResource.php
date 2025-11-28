@@ -16,6 +16,7 @@ class SpmiIndicatorResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'spmi_standard_id' => $this->spmi_standard_id,
             'code' => $this->code,
             'name' => $this->name,
             'description' => $this->description,
@@ -26,6 +27,7 @@ class SpmiIndicatorResource extends JsonResource
             'data_source' => $this->data_source,
             'frequency' => $this->frequency,
             'frequency_label' => $this->getFrequencyLabel(),
+            'pic_id' => $this->pic_id,
             'is_active' => (bool) $this->is_active,
             'spmi_standard' => $this->whenLoaded('spmiStandard', function () {
                 return [

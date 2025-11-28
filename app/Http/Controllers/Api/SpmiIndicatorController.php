@@ -9,7 +9,6 @@ use App\Http\Resources\SPMI\SpmiIndicatorResource;
 use App\Services\SpmiIndicatorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Exception;
 
 class SpmiIndicatorController extends Controller
@@ -21,7 +20,7 @@ class SpmiIndicatorController extends Controller
     /**
      * Display a listing of SPMI indicators.
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         $filters = $request->only([
             'search',
@@ -34,7 +33,18 @@ class SpmiIndicatorController extends Controller
         $perPage = $request->input('per_page', 15);
         $indicators = $this->service->getAllPaginated($filters, $perPage);
 
-        return SpmiIndicatorResource::collection($indicators);
+        return response()->json([
+            'success' => true,
+            'data' => SpmiIndicatorResource::collection($indicators)->resolve(),
+            'meta' => [
+                'current_page' => $indicators->currentPage(),
+                'last_page' => $indicators->lastPage(),
+                'per_page' => $indicators->perPage(),
+                'total' => $indicators->total(),
+                'from' => $indicators->firstItem(),
+                'to' => $indicators->lastItem(),
+            ],
+        ]);
     }
 
     /**

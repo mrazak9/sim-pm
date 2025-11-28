@@ -21,22 +21,46 @@
 
       <!-- Statistics Cards -->
       <div v-if="statistics" class="grid grid-cols-1 gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-700 md:grid-cols-4">
-        <div class="rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
+        <button
+          @click="filterByType('')"
+          :class="[
+            'rounded-lg p-4 text-left transition-all hover:shadow-md',
+            filters.measurement_type === '' ? 'ring-2 ring-gray-400 bg-gray-100 dark:bg-gray-600' : 'bg-gray-50 dark:bg-gray-700'
+          ]"
+        >
           <p class="text-sm text-gray-600 dark:text-gray-400">Total</p>
           <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ statistics.total }}</p>
-        </div>
-        <div class="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+        </button>
+        <button
+          @click="filterByType('kuantitatif')"
+          :class="[
+            'rounded-lg p-4 text-left transition-all hover:shadow-md',
+            filters.measurement_type === 'kuantitatif' ? 'ring-2 ring-blue-400 bg-blue-100 dark:bg-blue-800/40' : 'bg-blue-50 dark:bg-blue-900/20'
+          ]"
+        >
           <p class="text-sm text-blue-600 dark:text-blue-400">Kuantitatif</p>
           <p class="text-2xl font-bold text-blue-700 dark:text-blue-300">{{ statistics.kuantitatif }}</p>
-        </div>
-        <div class="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
+        </button>
+        <button
+          @click="filterByType('kualitatif')"
+          :class="[
+            'rounded-lg p-4 text-left transition-all hover:shadow-md',
+            filters.measurement_type === 'kualitatif' ? 'ring-2 ring-green-400 bg-green-100 dark:bg-green-800/40' : 'bg-green-50 dark:bg-green-900/20'
+          ]"
+        >
           <p class="text-sm text-green-600 dark:text-green-400">Kualitatif</p>
           <p class="text-2xl font-bold text-green-700 dark:text-green-300">{{ statistics.kualitatif }}</p>
-        </div>
-        <div class="rounded-lg bg-purple-50 p-4 dark:bg-purple-900/20">
+        </button>
+        <button
+          @click="filterByStatus(true)"
+          :class="[
+            'rounded-lg p-4 text-left transition-all hover:shadow-md',
+            filters.is_active === true ? 'ring-2 ring-purple-400 bg-purple-100 dark:bg-purple-800/40' : 'bg-purple-50 dark:bg-purple-900/20'
+          ]"
+        >
           <p class="text-sm text-purple-600 dark:text-purple-400">Aktif</p>
           <p class="text-2xl font-bold text-purple-700 dark:text-purple-300">{{ statistics.active }}</p>
-        </div>
+        </button>
       </div>
 
       <!-- Filters -->
@@ -244,8 +268,10 @@
 import { ref, computed, onMounted } from 'vue';
 import MainLayout from '@/layouts/MainLayout.vue';
 import { useSPMIApi } from '@/composables/useSPMIApi';
+import { useToast } from '@/composables/useToast';
 
 const { getSPMIIndicators, getSPMIIndicatorStatistics, deleteSPMIIndicator, activateSPMIIndicator, deactivateSPMIIndicator, getSPMIStandards, loading } = useSPMIApi();
+const { success, error } = useToast();
 
 const indicators = ref([]);
 const statistics = ref(null);
@@ -341,17 +367,27 @@ const changePage = (page) => {
   }
 };
 
+const filterByType = (type) => {
+  filters.value.measurement_type = type;
+  fetchIndicators();
+};
+
+const filterByStatus = (status) => {
+  filters.value.is_active = filters.value.is_active === status ? '' : status;
+  fetchIndicators();
+};
+
 const activateIndicator = async (indicator) => {
   if (confirm(`Apakah Anda yakin ingin mengaktifkan indikator "${indicator.name}"?`)) {
     try {
       const response = await activateSPMIIndicator(indicator.id);
       if (response.success) {
-        alert('Indikator berhasil diaktifkan');
+        success('Indikator berhasil diaktifkan');
         fetchIndicators(pagination.value.current_page);
         fetchStatistics();
       }
-    } catch (error) {
-      alert('Gagal mengaktifkan indikator: ' + (error.response?.data?.message || error.message));
+    } catch (err) {
+      error('Gagal mengaktifkan indikator: ' + (err.response?.data?.message || err.message));
     }
   }
 };
@@ -361,12 +397,12 @@ const deactivateIndicator = async (indicator) => {
     try {
       const response = await deactivateSPMIIndicator(indicator.id);
       if (response.success) {
-        alert('Indikator berhasil dinonaktifkan');
+        success('Indikator berhasil dinonaktifkan');
         fetchIndicators(pagination.value.current_page);
         fetchStatistics();
       }
-    } catch (error) {
-      alert('Gagal menonaktifkan indikator: ' + (error.response?.data?.message || error.message));
+    } catch (err) {
+      error('Gagal menonaktifkan indikator: ' + (err.response?.data?.message || err.message));
     }
   }
 };
@@ -376,12 +412,12 @@ const confirmDelete = async (indicator) => {
     try {
       const response = await deleteSPMIIndicator(indicator.id);
       if (response.success) {
-        alert('Indikator berhasil dihapus');
+        success('Indikator berhasil dihapus');
         fetchIndicators(pagination.value.current_page);
         fetchStatistics();
       }
-    } catch (error) {
-      alert('Gagal menghapus indikator: ' + (error.response?.data?.message || error.message));
+    } catch (err) {
+      error('Gagal menghapus indikator: ' + (err.response?.data?.message || err.message));
     }
   }
 };

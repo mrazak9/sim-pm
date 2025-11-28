@@ -88,13 +88,11 @@
               <label class="block text-sm font-medium text-gray-900 dark:text-white">
                 Penanggung Jawab (PIC)
               </label>
-              <input
+              <UserSelect
                 v-model="form.pic_id"
-                type="text"
-                class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                placeholder="TODO: User select"
+                placeholder="Pilih Penanggung Jawab"
+                class="mt-1"
               />
-              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">TODO: Integrasi dengan user select</p>
             </div>
           </div>
 
@@ -111,7 +109,7 @@
               >
                 <option value="">Pilih Unit Kerja</option>
                 <option v-for="unit in unitKerjas" :key="unit.id" :value="unit.id">
-                  {{ unit.nama }}
+                  {{ unit.nama_unit }}
                 </option>
               </select>
             </div>
@@ -160,6 +158,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MainLayout from '@/layouts/MainLayout.vue';
+import UserSelect from '@/components/common/UserSelect.vue';
 import { useSPMIApi } from '@/composables/useSPMIApi';
 import { useMasterDataApi } from '@/composables/useMasterDataApi';
 

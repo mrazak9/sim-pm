@@ -89,7 +89,7 @@
             >
               <option value="">Semua Unit Kerja</option>
               <option v-for="unit in unitKerjas" :key="unit.id" :value="unit.id">
-                {{ unit.nama }}
+                {{ unit.nama_unit || unit.nama }}
               </option>
             </select>
           </div>
@@ -129,7 +129,7 @@
             </tr>
             <tr v-else v-for="monitoring in monitorings" :key="monitoring.id" class="border-b border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
               <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                {{ monitoring.code }}
+                {{ monitoring.monitoring_code }}
               </td>
               <td class="px-6 py-4">
                 <p class="font-medium text-gray-900 dark:text-white">{{ monitoring.title }}</p>
@@ -246,9 +246,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import MainLayout from '@/layouts/MainLayout.vue';
 import { useSPMIApi } from '@/composables/useSPMIApi';
 import { useMasterDataApi } from '@/composables/useMasterDataApi';
+import { useToast } from '@/composables/useToast';
+
+const router = useRouter();
+const { success, error } = useToast();
 
 const { getSPMIMonitorings, getSPMIMonitoringStatistics, deleteSPMIMonitoring, startSPMIMonitoring, completeSPMIMonitoring, loading } = useSPMIApi();
 const { getUnitKerjas } = useMasterDataApi();
@@ -354,12 +359,13 @@ const startMonitoring = async (monitoring) => {
     try {
       const response = await startSPMIMonitoring(monitoring.id);
       if (response.success) {
-        alert('Monitoring berhasil dimulai');
+        success('Monitoring berhasil dimulai');
         fetchMonitorings(pagination.value.current_page);
         fetchStatistics();
       }
-    } catch (error) {
-      alert('Gagal memulai monitoring: ' + (error.response?.data?.message || error.message));
+    } catch (err) {
+      console.error('Failed to start monitoring:', err);
+      error('Gagal memulai monitoring: ' + (err.response?.data?.message || err.message));
     }
   }
 };
@@ -375,12 +381,13 @@ const confirmDelete = async (monitoring) => {
     try {
       const response = await deleteSPMIMonitoring(monitoring.id);
       if (response.success) {
-        alert('Monitoring berhasil dihapus');
+        success('Monitoring berhasil dihapus');
         fetchMonitorings(pagination.value.current_page);
         fetchStatistics();
       }
-    } catch (error) {
-      alert('Gagal menghapus monitoring: ' + (error.response?.data?.message || error.message));
+    } catch (err) {
+      console.error('Failed to delete monitoring:', err);
+      error('Gagal menghapus monitoring: ' + (err.response?.data?.message || err.message));
     }
   }
 };

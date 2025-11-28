@@ -72,6 +72,10 @@ class SpmiMonitoringResource extends JsonResource
      */
     private function getMonitoringTypeLabel(): string
     {
+        if (!$this->monitoring_type) {
+            return '-';
+        }
+
         return match($this->monitoring_type) {
             'desk_evaluation' => 'Desk Evaluation',
             'field_visit' => 'Field Visit',
@@ -87,7 +91,16 @@ class SpmiMonitoringResource extends JsonResource
      */
     private function getComplianceLevelLabel(): string
     {
+        if (!$this->compliance_level) {
+            return '-';
+        }
+
         return match($this->compliance_level) {
+            'very_low' => 'Sangat Rendah',
+            'low' => 'Rendah',
+            'medium' => 'Sedang',
+            'high' => 'Tinggi',
+            'very_high' => 'Sangat Tinggi',
             'belum_terpenuhi' => 'Belum Terpenuhi',
             'terpenuhi_sebagian' => 'Terpenuhi Sebagian',
             'terpenuhi' => 'Terpenuhi',
@@ -101,9 +114,15 @@ class SpmiMonitoringResource extends JsonResource
      */
     private function getStatusLabel(): string
     {
+        if (!$this->status) {
+            return '-';
+        }
+
         return match($this->status) {
-            'draft' => 'Draft',
+            'planned' => 'Direncanakan',
+            'ongoing' => 'Sedang Berlangsung',
             'completed' => 'Selesai',
+            'draft' => 'Draft',
             'published' => 'Dipublikasikan',
             default => $this->status,
         };

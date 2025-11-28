@@ -23,7 +23,7 @@ class UpdateSpmiStandardRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => ['sometimes', 'required', 'string', Rule::unique('spmi_standards', 'code')->ignore($this->route('id'))],
+            'code' => ['sometimes', 'required', 'string', Rule::unique('spmi_standards', 'code')->ignore($this->route('spmi_standard'))],
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'category' => ['sometimes', 'required', 'in:pendidikan,penelitian,pengabdian,pengelolaan'],
             'description' => ['nullable', 'string'],
@@ -35,6 +35,7 @@ class UpdateSpmiStandardRequest extends FormRequest
             'unit_kerja_id' => ['nullable', 'exists:unit_kerjas,id'],
             'status' => ['nullable', 'in:draft,active,inactive'],
             'is_active' => ['nullable', 'boolean'],
+            'version' => ['nullable', 'string', 'max:50'],
         ];
     }
 

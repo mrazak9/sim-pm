@@ -45,7 +45,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('rtm_id')->constrained('rtms')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->enum('role', ['chairman', 'secretary', 'participant', 'invitee'])->default('participant');
+            $table->string('role')->default('Peserta');
             $table->boolean('is_present')->default(false);
             $table->text('notes')->nullable();
             $table->timestamps();

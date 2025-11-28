@@ -36,7 +36,11 @@ class UpdateRTMRequest extends FormRequest
             'follow_up_plan' => ['nullable', 'string'],
             'chairman_id' => ['sometimes', 'required', 'exists:users,id'],
             'secretary_id' => ['sometimes', 'required', 'exists:users,id'],
-            'status' => ['nullable', 'in:draft,completed,published'],
+            'participants' => ['nullable', 'array'],
+            'participants.*.user_id' => ['required', 'exists:users,id'],
+            'participants.*.role' => ['nullable', 'string'],
+            'participants.*.attended' => ['nullable', 'boolean'],
+            'status' => ['nullable', 'in:draft,planned,ongoing,completed,cancelled,published'],
             'minutes_file' => ['nullable', 'file', 'mimes:pdf,doc,docx'],
             'attendance_file' => ['nullable', 'file', 'mimes:pdf,doc,docx,xlsx,xls'],
         ];
